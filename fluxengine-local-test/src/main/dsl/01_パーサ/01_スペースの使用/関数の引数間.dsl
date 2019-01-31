@@ -1,0 +1,7 @@
+number n1: round(123.45,1)
+number n2: round( 123.45,1)
+number n3: round(123.45 ,1)
+number n4: round( 123.45 ,1)
+number n5: round(123.45, 1)
+number n6: round(123.45,1 )
+number n7: round(123.45, 1 )
