@@ -21,7 +21,7 @@ import jp.co.fluxengine.stateengine.test.TestDsl;
  * VM引数 ※当javaファイル実行時に、以下のVM引数を設定 -Dlog4j.configurationFile=<log4j2.xmlへのパスを設定>
  *
  * 環境変数 ※当javaファイル実行時に、以下の環境変数 CONF ... propertiesファイルなどがまとめられているディレクトリを設定 例)
- * C:\\SampleLocalProject\\conf\\ ※Fluxengine設定ファイルの他に業務処理依存の設定ファイルもここに置くこと
+ * C:\\TestProject\\conf\\ ※Fluxengine設定ファイルの他に業務処理依存の設定ファイルもここに置くこと
  */
 public class DslTestExecutor {
 
