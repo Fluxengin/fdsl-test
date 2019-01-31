@@ -2,6 +2,7 @@ package jp.co.fluxengine.example.plugin.function;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -88,4 +89,9 @@ public class Utility {
 		return false;
 	}
 
+	@DslName("customsum2")
+	public static int customsum2(int a, int b) {
+		return a + b;
+	}
+	
 }
