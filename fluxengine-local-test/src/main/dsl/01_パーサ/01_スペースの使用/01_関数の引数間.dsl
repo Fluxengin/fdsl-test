@@ -28,7 +28,8 @@ number npc6: ユーティリティ.customsum2(1,2 )
 number npc7: ユーティリティ.customsum2(1, 2 )
 
 date d1: today()
-date d2: today(+1d)
+# ここから下はパースエラーとなる
+#date d2: today(+1d)
 #date d3: today( +1d)
 #date d4: today(+1d )
 #date d5: today( +1d )
