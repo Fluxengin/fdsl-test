@@ -25,6 +25,7 @@ number n23: 1 + (-1 )
 number n24: 1+2*3
 number n25: 1 +2*3
 number n26: 1+ 2*3
-number n27: 1+2 *3
-number n28: 1+ 2 *3
+number n27: 1 + 2*3
+number n28: 1+2 *3
 number n29: 1+2* 3
+number n30: 1+2 * 3
