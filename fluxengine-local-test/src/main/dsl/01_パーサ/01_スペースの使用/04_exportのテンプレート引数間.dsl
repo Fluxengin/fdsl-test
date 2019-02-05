@@ -11,7 +11,7 @@ export string オウム返し3< target>:
 export string オウム返し4<target >:
     get(target):
 
-export string オウム返し5<target　>:
+export string オウム返し5< target >:
     get(target):
 
 export number 加算1<a,b>:
