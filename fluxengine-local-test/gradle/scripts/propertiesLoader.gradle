@@ -1,0 +1,69 @@
+/*
+  Load application properties based on profile.
+ */
+
+import org.apache.tools.ant.filters.ReplaceTokens
+apply from: "${rootDir}/gradle/scripts/profileLoader.gradle"
+
+
+def loadProperties(filename) {
+    def props = new Properties()
+    file(filename).withInputStream {
+        props.load(it)
+    }
+    def ret = new Properties()
+    props.each {key, val ->
+      if (key ==~ /^$profile\..*/) {
+        ret.setProperty(key.replaceFirst(/^$profile\./, ''), val)
+      }
+    }
+    return ret
+}
+
+task replaceJdbcProperties(type: Copy) {
+  from "src/main/resources/jdbc"
+  into 'src/main/resources'
+  include "jdbc.${profile}.properties"
+  rename(/jdbc\.(.+)\.properties$/, 'jdbc.properties')
+}
+compileJava.dependsOn replaceJdbcProperties
+
+task replaceAppProperties(type: Copy) {
+  outputs.upToDateWhen {
+    false
+  }
+  from "src/main/resources/appproperty"
+  into 'src/main/resources'
+  include 'application.default.properties'
+  rename('application.default.properties', 'application.properties')
+  filteringCharset = 'UTF-8'
+  filter(
+    ReplaceTokens,
+    tokens: loadProperties("${projectDir}/src/main/resources/appproperty/environment.properties")
+  )
+}
+compileJava.dependsOn replaceAppProperties
+
+task replaceLogback(type: Copy) {
+  outputs.upToDateWhen {
+    false
+  }
+  from "src/main/resources/logback"
+  into 'src/main/resources'
+//---------------------------------------------------------------------
+// Edit this block to load logback setting by profile.
+//---------------------------------------------------------------------
+//  if (['local', 'staging'].contains(profile)) {
+//    include "logback.default.xml"
+//  } else {
+//    include "logback.slack.xml"
+//  }
+  include "logback.default.xml"
+  rename(/logback\.(.+)\.xml$/, 'logback-spring.xml')
+  filteringCharset = 'UTF-8'
+  filter(
+    ReplaceTokens,
+    tokens: ['profile': profile]
+  )
+}
+compileJava.dependsOn replaceLogback

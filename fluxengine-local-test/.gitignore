@@ -4,3 +4,6 @@
 /debug.log
 /.settings/
 /out/
+/bin/
+/build/
+/.gradle/

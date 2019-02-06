@@ -1,0 +1,39 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'application'
+
+defaultTasks 'compileJava', 'cleanEclipse', 'eclipse'
+tasks.withType(AbstractCompile)*.options*.encoding = 'UTF-8'
+
+mainClassName = 'jp.co.fluxengine.stateengine.test.TestDsl'
+
+sourceSets {
+  main.resources {
+    srcDirs files('conf')
+  }
+}
+
+run {
+    if (project.hasProperty('args')) {
+        args project.args.split('\\s+')
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile fileTree(dir: 'lib', include: '*.jar')
+}
+
+test{
+
+}
+
+
+group   = "jp.co.fluxengine"
+version = "1.0.2"
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8

@@ -1,0 +1,38 @@
+/*
+  Enable code obfuscation by proguard.
+  Obfuscated jar file will be outputed as "${project.name}-obfuscated.jar".
+  "obfuscated" configuration will be added to include obfuscated jar file into another project.
+  To include obfuscated jar, add the following dependency:
+    - compile project(path: ":projectName", configuration: "obfuscated")
+ */
+
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+
+  dependencies {
+    classpath 'net.sf.proguard:proguard-gradle:5.3'
+  }
+}
+
+import proguard.gradle.ProGuardTask
+
+configurations {
+    obfuscated {
+      extendsFrom compile
+    }
+}
+def obfuscatedArtifact = "${buildDir}/libs/${project.name}-obfuscated.jar"
+task proguard(type: ProGuardTask) {
+  configuration 'proguard.conf'
+  injars "${buildDir}/libs/${jar.archiveName}"
+  outjars obfuscatedArtifact
+}
+proguard.dependsOn jar
+task obfuscate {
+  dependsOn tasks.withType(ProGuardTask)
+}
+artifacts {
+  obfuscated file: file(obfuscatedArtifact), builtBy: obfuscate
+}

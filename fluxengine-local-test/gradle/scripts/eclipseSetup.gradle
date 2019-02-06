@@ -1,0 +1,131 @@
+/*
+  Setup development environment for Eclipse.
+  It will configure static analysis tools, such as checkstyle, and coding style preferences.
+  Plugins installation is required prior to run this script.
+ */
+
+import groovy.xml.MarkupBuilder
+import org.apache.tools.ant.filters.ReplaceTokens
+
+eclipse {
+  pathVariables GRADLE_REPO: file(System.properties['user.home'] + '/.gradle/cache')
+  project {
+    natures 'net.sf.eclipsecs.core.CheckstyleNature'
+    buildCommand 'net.sf.eclipsecs.core.CheckstyleBuilder'
+    natures 'edu.umd.cs.findbugs.plugin.eclipse.findbugsNature'
+    buildCommand 'edu.umd.cs.findbugs.plugin.eclipse.findbugsBuilder'
+  }
+}
+
+eclipse.jdt.file {
+  withProperties { properties ->
+    def formatter = new XmlSlurper().parse("${rootDir}/config/eclipse-java-style.xml")
+
+    formatter.profile.setting.each {
+      properties.put(it.@id as String, it.@value as String)
+    }
+  }
+}
+
+tasks.cleanEclipse.doLast {
+  delete("${project.projectDir}/.checkstyle")
+  delete("${project.projectDir}/.settings/org.eclipse.jdt.ui.prefs")
+}
+
+tasks.eclipse.doLast {
+  // ファイル初期化
+  replaceStaticAnalysis()
+
+  def checkstyleXmlPath = file("${rootDir}/config/checkstyle.xml").getAbsoluteFile()
+  def writer = new File("${project.projectDir}/.checkstyle").newWriter()
+  def xml = new MarkupBuilder(writer)
+  xml.mkp.xmlDeclaration(version: "1.0", encoding: "UTF-8")
+  xml.'fileset-config'('file-format-version': '1.2.0', 'simple-config': 'true', 'sync-formatter': 'false') {
+    'local-check-config'('name': 'ACTS Checks', 'location': checkstyleXmlPath, 'type': 'external', 'description': '') {
+      'additional-data'('name': 'protect-config-file', 'value': 'false')
+    }
+    'fileset'('name': 'all', 'enabled': 'true', 'check-config-name': 'ACTS Checks', 'local': 'true') {
+      'file-match-pattern'('match-pattern': '.', 'include-pattern': 'true')
+    }
+    'filter'('name':'FilesFromPackage', 'enabled':'true') {
+      'filter-data'('value': 'src/test/java')
+      'filter-data'('value': 'src/test/assertions')
+    }
+  }
+
+  def importOrder = [:]
+  file("${rootDir}/config/eclipse-java-importorder.importorder").readLines().each {
+    if (it =~ /^[0-9]*=/) {
+      def line = it.split('=')
+      importOrder[Integer.decode(line[0])] = line[1]
+    }
+  }
+  def orderSort = []
+  importOrder.sort().each { k, v ->
+    orderSort << v
+  }
+
+  def saveActionPrefs = file("${project.projectDir}/.settings/org.eclipse.jdt.ui.prefs")
+  saveActionPrefs.append("""\
+                        eclipse.preferences.version=1
+                        formatter_profile=_JavaCodeStyle
+                        formatter_settings_version=12
+                        org.eclipse.jdt.ui.ignorelowercasenames=true
+                        org.eclipse.jdt.ui.importorder=${orderSort.join(';')};
+                        org.eclipse.jdt.ui.ondemandthreshold=99
+                        org.eclipse.jdt.ui.staticondemandthreshold=99
+                        editor_save_participant_org.eclipse.jdt.ui.postsavelistener.cleanup=true
+                        sp_cleanup.format_source_code=true
+                        sp_cleanup.organize_imports=true
+                        """.stripIndent())
+  def runtimePrefs = file("${project.projectDir}/.settings/org.eclipse.core.runtime.prefs")
+  runtimePrefs.setText("""\
+                        eclipse.preferences.version=1
+                        line.separator=\\n
+                        """.stripIndent())
+  def resourcesPrefs = file("${project.projectDir}/.settings/org.eclipse.core.resources.prefs")
+  resourcesPrefs.setText("""\
+                        eclipse.preferences.version=1
+                        encoding/<project>=UTF-8
+                        """.stripIndent())
+}
+
+def replaceStaticAnalysis() {
+  def packages = getProperty('acn.project.packages').split(',')
+  def packageIndex = 3 + packages.size()
+  def importBuff = new StringBuilder()
+  packages.reverseEach {
+    if (importBuff.length() != 0) {
+      importBuff << '\n'
+    }
+    importBuff << "${ packageIndex-- }=$it"
+  }
+
+  def chBuff = new StringBuilder('com')
+  packages.each {
+    chBuff << "|$it"
+  }
+
+  copy {
+    from("${rootDir}/config") {
+      include '*.org'
+    }
+    into "${rootDir}/config"
+    rename {
+        it.replace('.org', '')
+    }
+    filteringCharset = 'UTF-8'
+    filter(
+      ReplaceTokens,
+      tokens: ['packages': chBuff.toString(), importorder : importBuff.toString()]
+    )
+  }
+}
+
+task staticAnalysis {
+  doLast {
+    replaceStaticAnalysis()
+  }
+}
+
+compileJava.dependsOn staticAnalysis
