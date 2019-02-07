@@ -7,7 +7,7 @@ import jp.co.fluxengine.stateengine.annotation.DslName;
 import jp.co.fluxengine.stateengine.annotation.Effector;
 import jp.co.fluxengine.stateengine.annotation.Post;
 
-@Effector("07_watchの引数間#f")
+@Effector("07_watchの引数間#f1")
 public class Effector1 {
 
 	private static final Logger log = LogManager.getLogger(Effector1.class);
