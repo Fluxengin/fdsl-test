@@ -1,4 +1,6 @@
-# 現状、effect解析失敗：07_watchの引数間#f■詳細: c e.code というエラーが出る
+effector f:
+    c: string
+    v: number
 
 event e:
     code: string
