@@ -17,7 +17,7 @@ public class SpaceTest {
 		@Test
 		void afterSecond() {
 			assertThatThrownBy(() -> {
-				testDsl("dsl/01_パーサ/01_スペースの使用/関数の引数間/round第二引数の後");
+				testDsl("dsl/junit/01_パーサ/01_スペースの使用/関数の引数間/round第二引数の後");
 			}).isInstanceOf(DslParserException.class);
 		}
 
@@ -25,8 +25,18 @@ public class SpaceTest {
 		@Test
 		void beforeSecond() {
 			assertDoesNotThrow(() -> {
-				testDsl("dsl/01_パーサ/01_スペースの使用/関数の引数間/round第二引数の前");
+				testDsl("dsl/junit/01_パーサ/01_スペースの使用/関数の引数間/round第二引数の前");
 			});
+		}
+	}
+	
+	@Nested
+	class TodayFunction {
+		@Test
+		void before() {
+			assertDoesNotThrow(() -> {
+				testDsl("dsl/junit/01_パーサ/01_スペースの使用/関数の引数間/today引数の前");
+			}); 
 		}
 	}
 
