@@ -25,12 +25,16 @@ repositories {
 
 dependencies {
     compile fileTree(dir: 'lib', include: '*.jar')
+    testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.3.2'
+    testRuntime group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.3.2'
+    testCompile 'org.assertj:assertj-core:3.11.1'
 }
 
 test{
-
+    useJUnitPlatform {
+        includeEngines 'junit-jupiter'
+    }
 }
-
 
 group   = "jp.co.fluxengine"
 version = "1.0.2"
