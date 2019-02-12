@@ -1,27 +1,22 @@
 package jp.co.fluxengine.example;
 
 import static jp.co.fluxengine.apptest.TestUtils.testDsl;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import jp.co.fluxengine.stateengine.exceptions.DslParserException;
-
 public class SpaceTest {
 
 	@Nested
 	class RoundFunction {
-		// パースエラーになるべきテスト
 		@Test
 		void afterSecond() {
-			assertThatThrownBy(() -> {
+			assertDoesNotThrow(() -> {
 				testDsl("dsl/junit/01_パーサ/01_スペースの使用/関数の引数間/round第二引数の後");
-			}).isInstanceOf(DslParserException.class);
+			});
 		}
 
-		// パースエラーになるべきでないテスト
 		@Test
 		void beforeSecond() {
 			assertDoesNotThrow(() -> {
@@ -37,6 +32,23 @@ public class SpaceTest {
 			assertDoesNotThrow(() -> {
 				testDsl("dsl/junit/01_パーサ/01_スペースの使用/関数の引数間/today引数の前");
 			}); 
+		}
+	}
+	
+	@Nested
+	class Persist {
+		@Test
+		void before() {
+			assertDoesNotThrow(() -> {
+				testDsl("dsl/junit/01_パーサ/01_スペースの使用/persistの引数/引数前");
+			});
+		}
+
+		@Test
+		void after() {
+			assertDoesNotThrow(() -> {
+				testDsl("dsl/junit/01_パーサ/01_スペースの使用/persistの引数/引数後");
+			});
 		}
 	}
 

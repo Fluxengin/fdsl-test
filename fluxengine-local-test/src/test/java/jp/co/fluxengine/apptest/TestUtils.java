@@ -8,7 +8,7 @@ public class TestUtils {
 
 	private static final File mainDir;
 	private static final File testDir;
-	private static final File outDir;
+	private static final File outRoot;
 	private static final File logFile;
 	
 	static {
@@ -17,11 +17,13 @@ public class TestUtils {
 		File baseDir = confDir.getParentFile();
 		mainDir = new File(baseDir, "src/main");
 		testDir = new File(baseDir, "src/test");
-		outDir = new File(baseDir, "out");
+		outRoot = new File(baseDir, "out");
 		logFile = new File(baseDir, "debug.log");
 	}
 	
 	public static void testDsl(String dslPath) throws Exception {
+		File outDir = new File(outRoot, dslPath);
+		outDir.mkdirs();
 		TestDsl.main(new String[] {
 				new File(mainDir, dslPath).getAbsolutePath(),
 				new File(testDir, dslPath).getAbsolutePath(),
