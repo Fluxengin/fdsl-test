@@ -30,14 +30,14 @@ dependencies {
     testCompile 'org.assertj:assertj-core:3.11.1'
 }
 
-test{
+test {
     useJUnitPlatform {
         includeEngines 'junit-jupiter'
     }
 }
 
 group   = "jp.co.fluxengine"
-version = "1.0.2"
+version = "1.0.3"
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8

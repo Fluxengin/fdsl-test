@@ -1,7 +1,7 @@
 export string オウム返し1<target>:
     get(target):
 
-# パースエラーとなる
+# パースエラーとなる(パースエラーとなるのが正しい仕様)
 #export string オウム返し2 <target>:
 #    get(target):
     

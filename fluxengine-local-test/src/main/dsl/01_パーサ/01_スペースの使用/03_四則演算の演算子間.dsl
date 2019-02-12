@@ -14,7 +14,7 @@ number n13: 1/1
 number n14: 1 /1
 number n15: 1/ 1
 number n16: 1 / 1
-# パースエラー[Error: illegal use of operator: -]となる
+# パースエラーとなる
 #number n17: 1+-1
 number n18: 1+(-1)
 number n19: 1 +(-1)

@@ -1,5 +1,3 @@
-import customsum: ユーティリティ
-
 number np1: round(123.45,1)
 number np2: round( 123.45,1)
 number np3: round(123.45 ,1)
@@ -27,9 +25,8 @@ number npc5: ユーティリティ.customsum2(1, 2)
 number npc6: ユーティリティ.customsum2(1,2 )
 number npc7: ユーティリティ.customsum2(1, 2 )
 
-date d1: today()
-# ここから下はパースエラーとなる
-#date d2: today(+1d)
-#date d3: today( +1d)
-#date d4: today(+1d )
-#date d5: today( +1d )
+date d1: today( )
+date d2: today(+1d)
+date d3: today( +1d)
+date d4: today(+1d )
+date d5: today( +1d )

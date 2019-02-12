@@ -190,7 +190,7 @@ rule r5_1:
     watch(e5):
 
 rule r5_2:
-    e5.code == "code05":
+    e5.code == "code 05":
     watch(e5):
 
 rule r5_3:
