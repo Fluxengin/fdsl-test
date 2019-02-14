@@ -50,6 +50,147 @@ public class SpaceTest {
 				testDsl("dsl/junit/01_パーサ/01_スペースの使用/persistの引数/引数後");
 			});
 		}
+		
+		@Test
+		void beforeAndAfter() {
+			assertDoesNotThrow(() -> {
+				testDsl("dsl/junit/01_パーサ/01_スペースの使用/persistの引数/引数前後");
+			});
+		}
+	}
+	
+	@Nested
+	class ComparisonOperator {
+		@Test
+		void equal() {
+			assertDoesNotThrow(() -> {
+				testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/イコール");
+			});
+		}
+		
+		@Nested
+		class LessThan {
+			@Test
+			void noSpace() {
+				assertDoesNotThrow(() -> {
+					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なり/スペースなし");
+				});
+			}
+
+			@Test
+			void before() {
+				assertDoesNotThrow(() -> {
+					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なり/演算子の前");
+				});
+			}
+			
+			@Test
+			void after() {
+				assertDoesNotThrow(() -> {
+					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なり/演算子の後");
+				});
+			}
+			
+			@Test
+			void beforeAndAfter() {
+				assertDoesNotThrow(() -> {
+					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なり/演算子の前後");
+				});
+			}
+		}
+		
+		@Nested
+		class GraterThan {
+			@Test
+			void noSpace() {
+				assertDoesNotThrow(() -> {
+					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なり/スペースなし");
+				});
+			}
+
+			@Test
+			void before() {
+				assertDoesNotThrow(() -> {
+					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なり/演算子の前");
+				});
+			}
+			
+			@Test
+			void after() {
+				assertDoesNotThrow(() -> {
+					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なり/演算子の後");
+				});
+			}
+			
+			@Test
+			void beforeAndAfter() {
+				assertDoesNotThrow(() -> {
+					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なり/演算子の前後");
+				});
+			}
+		}
+		
+		@Nested
+		class LessThanOrEqualTo {
+			@Test
+			void noSpace() {
+				assertDoesNotThrow(() -> {
+					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なりイコール/スペースなし");
+				});
+			}
+
+			@Test
+			void before() {
+				assertDoesNotThrow(() -> {
+					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なりイコール/演算子の前");
+				});
+			}
+			
+			@Test
+			void after() {
+				assertDoesNotThrow(() -> {
+					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なりイコール/演算子の後");
+				});
+			}
+			
+			@Test
+			void beforeAndAfter() {
+				assertDoesNotThrow(() -> {
+					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なりイコール/演算子の前後");
+				});
+			}
+		}
+		
+		@Nested
+		class GraterThanOrEqualTo {
+			@Test
+			void noSpace() {
+				assertDoesNotThrow(() -> {
+					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なりイコール/スペースなし");
+				});
+			}
+
+			@Test
+			void before() {
+				assertDoesNotThrow(() -> {
+					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なりイコール/演算子の前");
+				});
+			}
+			
+			@Test
+			void after() {
+				assertDoesNotThrow(() -> {
+					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なりイコール/演算子の後");
+				});
+			}
+			
+			@Test
+			void beforeAndAfter() {
+				assertDoesNotThrow(() -> {
+					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なりイコール/演算子の前後");
+				});
+			}
+		}
 	}
 
 }
