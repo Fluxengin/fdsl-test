@@ -5,3 +5,4 @@ test 1 パース正常:
             v: 1000
         inspect:
             p.exists():
+            n == 2:
