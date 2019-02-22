@@ -3,7 +3,7 @@ package jp.co.fluxengine.example.plugin.variant;
 import jp.co.fluxengine.stateengine.annotation.DslName;
 import jp.co.fluxengine.stateengine.annotation.Variant;
 
-@Variant("exportのテンプレート引数間#s")
+@Variant("export#オウム返し")
 public class EchoVariant6 {
 
 	@DslName("get")

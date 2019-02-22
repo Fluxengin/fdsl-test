@@ -33,10 +33,8 @@ public class TestUtils {
 	}
 
 	/*
-	 * TestDsl.mainの軽いラッパー
-	 * JUnitで複数のテストを同時に動かせるように、
-	 * outのフォルダをそれぞれのテストごとに作るようにしている
-	 * */
+	 * TestDsl.mainの軽いラッパー JUnitで複数のテストを同時に動かせるように、 outのフォルダをそれぞれのテストごとに作るようにしている
+	 */
 	public static void testDsl(String dslPath) throws Exception {
 		File outDir = new File(outRoot, dslPath);
 		outDir.mkdirs();
@@ -45,11 +43,32 @@ public class TestUtils {
 	}
 
 	/*
-	 * ここから下は、上のtestDslで実行した結果のtest-result.jsonを
-	 * 簡単に参照できるようにしたメソッド群
-	 * パースエラーがなく実行できた場合は、
-	 * DSLのテストが成功したかどうかも見たいはず
-	 * */
+	 * ここから下は、上のtestDslで実行した結果のtest-result.jsonを 簡単に参照できるようにしたメソッド群
+	 * パースエラーがなく実行できた場合は、 DSLのテストが成功したかどうかも見たいはず
+	 */
+	public static List<TestResult> testDslAndGetResults(String dslPath) {
+		try {
+			testDsl(dslPath);
+		} catch (RuntimeException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+		return getAllResults(dslPath);
+	}
+
+	public static List<TestResult> getAllResults(String folderPath) {
+		return withResultStream(folderPath, testResultStream -> testResultStream.collect(Collectors.toList()));
+	}
+
+	public static Optional<TestResult> findResult(String folderPath, String testFileName, String testNo) {
+		return withResultStream(folderPath,
+				testResultStream -> testResultStream
+						.filter(testResult -> testResult.getTestFileName().equals(testFileName)
+								&& testResult.getTestNo().equals(testNo))
+						.findFirst());
+	}
+
 	public static <R> R withResultStream(String folderPath, Function<Stream<TestResult>, R> body) {
 		try (Stream<String> stream = Files.lines(outRoot.toPath().resolve(folderPath).resolve("test-result.json"),
 				Charset.forName("UTF-8"))) {
@@ -66,17 +85,5 @@ public class TestUtils {
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
-	}
-
-	public static List<TestResult> getAllResults(String folderPath) {
-		return withResultStream(folderPath, testResultStream -> testResultStream.collect(Collectors.toList()));
-	}
-
-	public static Optional<TestResult> findResult(String folderPath, String testFileName, String testNo) {
-		return withResultStream(folderPath,
-				testResultStream -> testResultStream
-						.filter(testResult -> testResult.getTestFileName().equals(testFileName)
-								&& testResult.getTestNo().equals(testNo))
-						.findFirst());
 	}
 }
