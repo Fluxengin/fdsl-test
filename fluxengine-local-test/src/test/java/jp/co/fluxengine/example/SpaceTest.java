@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import jp.co.fluxengine.apptest.TestResult;
 import jp.co.fluxengine.stateengine.exceptions.DslParserException;
 
 public class SpaceTest {
@@ -26,7 +27,7 @@ public class SpaceTest {
 			}).isInstanceOf(DslParserException.class).hasMessageContaining("解析失敗");
 		}
 	}
-	
+
 	@Nested
 	class Import {
 		@Test
@@ -66,7 +67,17 @@ public class SpaceTest {
 			}
 		}
 	}
-	
+
+	@Nested
+	class Method {
+		@Test
+		void exists() {
+			// TODO 1.0.3では失敗する
+			assertThat(testDslAndGetResults("dsl/junit/01_パーサ/01_スペースの使用/メソッドの引数間/existsの括弧の中")).hasSize(1)
+					.allMatch(TestResult::isSucceeded);
+		}
+	}
+
 	@Nested
 	class Arithmetic {
 		@Test
@@ -76,7 +87,7 @@ public class SpaceTest {
 			}).isInstanceOf(DslParserException.class).hasMessageContaining("1+-1");
 		}
 	}
-	
+
 	@Nested
 	class Persist {
 		@Test

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import jp.co.fluxengine.apptest.TestResult;
+import jp.co.fluxengine.stateengine.exceptions.DslParserException;
 
 public class LoadingTest {
 
@@ -42,20 +43,29 @@ public class LoadingTest {
 				testDsl("dsl/junit/01_パーサ/02_ローディング順/ファイル内/rule相互参照");
 			}).isInstanceOf(StackOverflowError.class);
 		}
+
+		@Test
+		void persisterWithoutEvent() {
+			// TODO 1.0.3では失敗する
+			assertThat(testDslAndGetResults("dsl/junit/01_パーサ/02_ローディング順/ファイル内/イベントを作成しないときのpersister")).hasSize(1)
+					.allMatch(TestResult::isSucceeded);
+		}
 	}
 
 	@Nested
 	class InterFiles {
 		@Test
 		void crossImport() {
+			// TODO 1.0.3では失敗する
 			assertThat(testDslAndGetResults("dsl/junit/01_パーサ/02_ローディング順/ファイル間/相互にimport")).hasSize(2)
 					.allMatch(TestResult::isSucceeded);
 		}
 
 		@Test
 		void variantCrossImport() {
-			assertThat(testDslAndGetResults("dsl/junit/01_パーサ/02_ローディング順/ファイル間/variant相互参照")).hasSize(2)
-					.allMatch(TestResult::isSucceeded);
+			assertThatThrownBy(() -> {
+				testDsl("dsl/junit/01_パーサ/02_ローディング順/ファイル間/variant相互参照");
+			}).isInstanceOf(DslParserException.class).hasMessageContaining("無限ループ");
 		}
 
 		@Test

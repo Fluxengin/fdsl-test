@@ -4,5 +4,5 @@ test 1 パース正常:
             k: "keystring"
             v: 1000
         inspect:
-            n == 2:    # ???
+            n == 1:
 

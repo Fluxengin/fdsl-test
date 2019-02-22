@@ -9,4 +9,4 @@ persist p:
     c: "abc"
     watch( e):
 
-bool b: p.exists()
+bool b: p.exists( )
