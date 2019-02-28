@@ -80,4 +80,15 @@ public class TypeValidation {
 					.allMatch(TestResult::isSucceeded);
 		}
 	}
+
+	@Nested
+	class Date {
+		@Test
+		void fromPlugin() {
+			// TODO 比較結果がfalseになる。dateとjava.util.Dateは違うのか？
+			assertThat(testDslAndGetResults("dsl/junit/01_パーサ/03_型の検証/date/プラグインからの値の受け取り")).hasSize(1)
+					.allMatch(TestResult::isSucceeded);
+		}
+	}
+
 }

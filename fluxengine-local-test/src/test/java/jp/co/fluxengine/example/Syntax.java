@@ -1,11 +1,14 @@
 package jp.co.fluxengine.example;
 
 import static jp.co.fluxengine.apptest.TestUtils.testDsl;
+import static jp.co.fluxengine.apptest.TestUtils.testDslAndGetResults;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import jp.co.fluxengine.apptest.TestResult;
 import jp.co.fluxengine.stateengine.exceptions.DslParserException;
 
 public class Syntax {
@@ -55,10 +58,8 @@ public class Syntax {
 
 		@Test
 		void importDuplication() {
-			// TODO 1.0.3では実行できてしまう
-			assertThatThrownBy(() -> {
-				testDsl("dsl/junit/01_パーサ/04_構文/export_import/同じものを重複してimport");
-			}).isInstanceOf(DslParserException.class).hasMessageContaining("aaa");
+			assertThat(testDslAndGetResults("dsl/junit/01_パーサ/04_構文/export_import/同じものを重複してimport")).hasSize(1)
+					.allMatch(TestResult::isSucceeded);
 		}
 
 		@Test
@@ -78,6 +79,28 @@ public class Syntax {
 			assertThatThrownBy(() -> {
 				testDsl("dsl/junit/01_パーサ/04_構文/state/persistがない");
 			}).isInstanceOf(DslParserException.class).hasMessageContaining("state");
+		}
+	}
+	
+	@Nested
+	class Persister {
+		@Test
+		void unnecessaryWatch() {
+			// TODO 1.0.3ではNullPointerExceptionになり、何を直せばよいかわからない
+			assertThatThrownBy(() -> {
+				testDsl("dsl/junit/01_パーサ/04_構文/persister/watchがある");
+			}).isInstanceOf(DslParserException.class).hasMessageContaining("watch");
+		}
+	}
+	
+	@Nested
+	class Rule {
+		@Test
+		void watchDuplicated() {
+			// TODO 1.0.3ではパースが通ってしまう
+			assertThatThrownBy(() -> {
+				testDsl("dsl/junit/01_パーサ/04_構文/rule/複数のwatch");
+			}).isInstanceOf(DslParserException.class).hasMessageContaining("watch");
 		}
 	}
 }
