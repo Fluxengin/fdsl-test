@@ -1,7 +1,9 @@
 package jp.co.fluxengine.example;
 
-import static jp.co.fluxengine.apptest.TestUtils.*;
-import static org.assertj.core.api.Assertions.*;
+import static jp.co.fluxengine.apptest.TestUtils.testDsl;
+import static jp.co.fluxengine.apptest.TestUtils.testDslAndGetResults;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import org.junit.jupiter.api.Nested;
