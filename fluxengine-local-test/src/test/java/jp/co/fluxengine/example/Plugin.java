@@ -46,10 +46,20 @@ public class Plugin {
 
 	@Test
 	void methodWithoutAnnotation() {
-		// TODO 1.0.3では『variant解析失敗：「メソッドにアノテーション忘れ#createDate」 詳細:「get()」』というエラーメッセージで少し分かりづらい
+		// TODO 1.0.3では『variant解析失敗：「メソッドにアノテーション忘れ#createDate」
+		// 詳細:「get()」』というエラーメッセージで少し分かりづらい
 		assertThatThrownBy(() -> {
 			testDsl("dsl/junit/01_パーサ/05_プラグイン/メソッドにアノテーション忘れ");
 		}).isInstanceOf(DslParserException.class).hasMessageContaining("createDate").hasMessageContaining("見つかりませんでした");
 	}
 
+	@Test
+	void classWithoutAnnotation() {
+		// TODO 1.0.4では『variant解析失敗：「クラスにアノテーション忘れ#ultimateNumber」
+		// 詳細:「get()」』というエラーメッセージで少し分かりづらい
+		assertThatThrownBy(() -> {
+			testDsl("dsl/junit/01_パーサ/05_プラグイン/クラスにアノテーション忘れ");
+		}).isInstanceOf(DslParserException.class).hasMessageContaining("ultimateNumber")
+				.hasMessageContaining("見つかりませんでした");
+	}
 }

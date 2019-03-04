@@ -11,6 +11,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jp.co.fluxengine.stateengine.test.TestDsl;
@@ -21,6 +24,7 @@ public class TestUtils {
 	private static final File testDir;
 	private static final File outRoot;
 	private static final File logFile;
+	private static final Logger LOG;
 
 	static {
 		String confPath = System.getenv("CONF");
@@ -30,6 +34,7 @@ public class TestUtils {
 		testDir = new File(baseDir, "src/test");
 		outRoot = new File(baseDir, "out");
 		logFile = new File(baseDir, "debug.log");
+		LOG = LogManager.getLogger(TestUtils.class);
 	}
 
 	/*
@@ -38,6 +43,7 @@ public class TestUtils {
 	public static void testDsl(String dslPath) throws Exception {
 		File outDir = new File(outRoot, dslPath);
 		outDir.mkdirs();
+		LOG.info("テストを開始します: " + dslPath);
 		TestDsl.main(new String[] { new File(mainDir, dslPath).getAbsolutePath(),
 				new File(testDir, dslPath).getAbsolutePath(), outDir.getAbsolutePath(), logFile.getAbsolutePath() });
 	}

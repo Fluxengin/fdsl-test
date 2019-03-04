@@ -7,31 +7,38 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+import jp.co.fluxengine.apptest.DslPath;
+import jp.co.fluxengine.apptest.DslPathResolver;
 import jp.co.fluxengine.apptest.TestResult;
 import jp.co.fluxengine.stateengine.exceptions.DslParserException;
 
+@ExtendWith(DslPathResolver.class)
+@DslPath("dsl/junit/01_パーサ/03_型の検証")
 public class TypeValidation {
 
 	@Nested
+	@DslPath("enum")
 	class Enum {
 		@Test
-		void numberAndString() {
-			assertThat(testDslAndGetResults("dsl/junit/01_パーサ/03_型の検証/enum/数値と文字列")).hasSize(2)
-					.allMatch(TestResult::isSucceeded);
+		@DslPath("数値と文字列")
+		void numberAndString(String dslPath) {
+			assertThat(testDslAndGetResults(dslPath)).hasSize(2).allMatch(TestResult::isSucceeded);
 		}
 
 		@Test
-		void sameName() {
+		@DslPath("同じ名称")
+		void sameName(String dslPath) {
 			assertThatThrownBy(() -> {
-				testDsl("dsl/junit/01_パーサ/03_型の検証/enum/同じ名称");
+				testDsl(dslPath);
 			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("重複");
 		}
 
 		@Test
-		void sameValue() {
-			assertThat(testDslAndGetResults("dsl/junit/01_パーサ/03_型の検証/enum/同じ値")).hasSize(1)
-					.allMatch(TestResult::isSucceeded);
+		@DslPath("同じ値")
+		void sameValue(String dslPath) {
+			assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
 		}
 	}
 
@@ -85,6 +92,19 @@ public class TypeValidation {
 			// TODO 比較結果がfalseになる。dateとjava.util.Dateは違うのか？
 			assertThat(testDslAndGetResults("dsl/junit/01_パーサ/03_型の検証/date/プラグインからの値の受け取り")).hasSize(1)
 					.allMatch(TestResult::isSucceeded);
+		}
+	}
+
+	@Nested
+	@DslPath("persist")
+	class Persist {
+		
+		@Test
+		@DslPath("persisterなし")
+		void missingPersister(String dslPath) {
+			assertThatThrownBy(() -> {
+				testDsl(dslPath);
+			}).isInstanceOf(DslParserException.class).hasMessageContaining("persister").hasMessageContaining("存在しません");
 		}
 	}
 

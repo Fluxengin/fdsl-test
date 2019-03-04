@@ -1,0 +1,2 @@
+number ultimateNumber:
+    get():
