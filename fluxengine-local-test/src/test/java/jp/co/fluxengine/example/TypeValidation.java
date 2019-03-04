@@ -17,17 +17,15 @@ public class TypeValidation {
 	class Enum {
 		@Test
 		void numberAndString() {
-			// TODO 1.0.3では失敗する
 			assertThat(testDslAndGetResults("dsl/junit/01_パーサ/03_型の検証/enum/数値と文字列")).hasSize(2)
 					.allMatch(TestResult::isSucceeded);
 		}
 
 		@Test
 		void sameName() {
-			// TODO 1.0.3では失敗する
 			assertThatThrownBy(() -> {
 				testDsl("dsl/junit/01_パーサ/03_型の検証/enum/同じ名称");
-			}).isInstanceOf(DslParserException.class);
+			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("重複");
 		}
 
 		@Test
@@ -41,10 +39,9 @@ public class TypeValidation {
 	class ExportImport {
 		@Test
 		void typeOmitted() {
-			// TODO 1.0.3では失敗する
 			assertThatThrownBy(() -> {
 				testDsl("dsl/junit/01_パーサ/03_型の検証/export_import/型の省略");
-			}).isInstanceOf(DslParserException.class);
+			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("型が不明");
 		}
 	}
 
@@ -66,7 +63,7 @@ public class TypeValidation {
 
 		@Test
 		void complexConditionInBranch() {
-			// TODO 1.0.3では失敗する
+			// TODO 1.0.4では失敗する
 			assertThat(testDslAndGetResults("dsl/junit/01_パーサ/03_型の検証/bool/条件に複雑な条件式")).hasSize(1)
 					.allMatch(TestResult::isSucceeded);
 		}

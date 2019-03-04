@@ -22,20 +22,17 @@ public class Syntax {
 
 	@Test
 	void typoOfReservedWord() {
-		// TODO 1.0.3では実行できてしまう
 		assertThatThrownBy(() -> {
 			testDsl("dsl/junit/01_パーサ/04_構文/予約語タイプミス");
-		}).isInstanceOf(DslParserException.class).hasMessageContaining("strig");
+		}).isInstanceOf(DslParserException.class).hasStackTraceContaining("strig");
 	}
 
 	@Test
 	void inspectWithoutColon() {
-		// TODO 1.0.3では
-		// "string_imported"が「fluxengineabcde_string_importedfluxengineabcde_」となってしまう
 		assertThatThrownBy(() -> {
 			testDsl("dsl/junit/01_パーサ/04_構文/inspectにコロンの付け忘れ");
-		}).isInstanceOf(DslParserException.class).hasMessageContaining("s1")
-				.hasMessageContaining("\"string imported\"");
+		}).isInstanceOf(DslParserException.class).hasMessageContaining("s1").hasMessageContaining("\"string_imported\"")
+				.hasMessageContaining("\":\" を付けてください");
 	}
 
 	@Nested
@@ -49,11 +46,10 @@ public class Syntax {
 
 		@Test
 		void fileNotfound() {
-			// TODO 1.0.3ではエラーメッセージが不自然
 			assertThatThrownBy(() -> {
 				testDsl("dsl/junit/01_パーサ/04_構文/export_import/import対象のファイルが存在しない");
 			}).isInstanceOf(DslParserException.class).hasMessageContaining("s")
-					.hasMessageContaining("「notfound.dsl」が存在しません");
+					.hasMessageContaining("「notfound.dsl」が見つかりませんでした");
 		}
 
 		@Test
@@ -64,7 +60,6 @@ public class Syntax {
 
 		@Test
 		void aliasDuplication() {
-			// TODO 1.0.3では実行できてしまう
 			assertThatThrownBy(() -> {
 				testDsl("dsl/junit/01_パーサ/04_構文/export_import/別名が重複");
 			}).isInstanceOf(DslParserException.class).hasMessageContaining("バリアント");
@@ -75,32 +70,29 @@ public class Syntax {
 	class State {
 		@Test
 		void withoutPersist() {
-			// TODO 1.0.3ではNullPointerExceptionになり、何を直せばよいかわからない
 			assertThatThrownBy(() -> {
 				testDsl("dsl/junit/01_パーサ/04_構文/state/persistがない");
-			}).isInstanceOf(DslParserException.class).hasMessageContaining("state");
+			}).isInstanceOf(DslParserException.class).hasMessageContaining("persist");
 		}
 	}
-	
+
 	@Nested
 	class Persister {
 		@Test
 		void unnecessaryWatch() {
-			// TODO 1.0.3ではNullPointerExceptionになり、何を直せばよいかわからない
 			assertThatThrownBy(() -> {
 				testDsl("dsl/junit/01_パーサ/04_構文/persister/watchがある");
-			}).isInstanceOf(DslParserException.class).hasMessageContaining("watch");
+			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("watch");
 		}
 	}
-	
+
 	@Nested
 	class Rule {
 		@Test
 		void watchDuplicated() {
-			// TODO 1.0.3ではパースが通ってしまう
 			assertThatThrownBy(() -> {
 				testDsl("dsl/junit/01_パーサ/04_構文/rule/複数のwatch");
-			}).isInstanceOf(DslParserException.class).hasMessageContaining("watch");
+			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("watch").hasStackTraceContaining("重複");
 		}
 	}
 }

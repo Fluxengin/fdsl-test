@@ -46,7 +46,6 @@ public class LoadingTest {
 
 		@Test
 		void persisterWithoutEvent() {
-			// TODO 1.0.3では失敗する
 			assertThat(testDslAndGetResults("dsl/junit/01_パーサ/02_ローディング順/ファイル内/イベントを作成しないときのpersister")).hasSize(1)
 					.allMatch(TestResult::isSucceeded);
 		}
@@ -56,7 +55,6 @@ public class LoadingTest {
 	class InterFiles {
 		@Test
 		void crossImport() {
-			// TODO 1.0.3では失敗する
 			assertThat(testDslAndGetResults("dsl/junit/01_パーサ/02_ローディング順/ファイル間/相互にimport")).hasSize(2)
 					.allMatch(TestResult::isSucceeded);
 		}

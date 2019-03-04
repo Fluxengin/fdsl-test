@@ -74,7 +74,6 @@ public class SpaceTest {
 	class Method {
 		@Test
 		void exists() {
-			// TODO 1.0.3では失敗する
 			assertThat(testDslAndGetResults("dsl/junit/01_パーサ/01_スペースの使用/メソッドの引数間/existsの括弧の中")).hasSize(1)
 					.allMatch(TestResult::isSucceeded);
 		}
