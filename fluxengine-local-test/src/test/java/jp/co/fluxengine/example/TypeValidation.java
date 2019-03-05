@@ -43,11 +43,14 @@ public class TypeValidation {
 	}
 
 	@Nested
+	@DslPath("export_import")
 	class ExportImport {
 		@Test
-		void typeOmitted() {
+		@DslPath("型の省略")
+		void typeOmitted(String dslPath) {
+			// 1.0.4ではエラーメッセージが分かりづらい
 			assertThatThrownBy(() -> {
-				testDsl("dsl/junit/01_パーサ/03_型の検証/export_import/型の省略");
+				testDsl(dslPath);
 			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("型が不明");
 		}
 	}
@@ -98,13 +101,38 @@ public class TypeValidation {
 	@Nested
 	@DslPath("persist")
 	class Persist {
-		
 		@Test
 		@DslPath("persisterなし")
 		void missingPersister(String dslPath) {
+			// TODO 1.0.4ではNullPointerExceptionになり、何を直せばよいのかわからない。
 			assertThatThrownBy(() -> {
 				testDsl(dslPath);
 			}).isInstanceOf(DslParserException.class).hasMessageContaining("persister").hasMessageContaining("存在しません");
+		}
+	}
+
+	@Nested
+	@DslPath("effect")
+	class Effect {
+		@Test
+		@DslPath("effectorなし")
+		void missingEffector(String dslPath) {
+			assertThatThrownBy(() -> {
+				testDsl(dslPath);
+			}).isInstanceOf(DslParserException.class);
+		}
+	}
+
+	@Nested
+	@DslPath("variant")
+	class Variant {
+		@Test
+		@DslPath("宣言無しで使用")
+		void missingDeclaration(String dslPath) {
+			// TODO 1.0.4ではエラーメッセージに"s1"が登場しないため、直すべき箇所が分かりづらい。
+			assertThatThrownBy(() -> {
+				testDsl(dslPath);
+			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1").hasStackTraceContaining("s2");
 		}
 	}
 

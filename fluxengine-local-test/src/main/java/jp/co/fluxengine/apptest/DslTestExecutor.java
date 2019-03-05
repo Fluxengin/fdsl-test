@@ -22,6 +22,8 @@ import jp.co.fluxengine.stateengine.test.TestDsl;
  *
  * 環境変数 ※当javaファイル実行時に、以下の環境変数 CONF ... propertiesファイルなどがまとめられているディレクトリを設定 例)
  * C:\\TestProject\\conf\\ ※Fluxengine設定ファイルの他に業務処理依存の設定ファイルもここに置くこと
+ * 
+ * テストはJUnitを使うようにしたため、このクラスは基本的に使わないようになった
  */
 public class DslTestExecutor {
 
