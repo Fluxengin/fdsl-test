@@ -146,4 +146,16 @@ public class TypeValidation {
 			assertThat(getLog(dslPath)).anyMatch(line -> line.contains("evt") && line.contains("宣言"));
 		}
 	}
+
+	@Nested
+	@DslPath("state")
+	class State {
+		@Test
+		@DslPath("状態なしで現在の状態を参照")
+		void noState(String dslPath) {
+			assertThatThrownBy(() -> {
+				testDsl(dslPath);
+			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1").hasStackTraceContaining("状態");
+		}
+	}
 }
