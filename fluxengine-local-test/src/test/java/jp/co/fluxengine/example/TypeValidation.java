@@ -1,7 +1,6 @@
 package jp.co.fluxengine.example;
 
-import static jp.co.fluxengine.apptest.TestUtils.testDsl;
-import static jp.co.fluxengine.apptest.TestUtils.testDslAndGetResults;
+import static jp.co.fluxengine.apptest.TestUtils.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -92,7 +91,6 @@ public class TypeValidation {
 	class Date {
 		@Test
 		void fromPlugin() {
-			// TODO 比較結果がfalseになる。dateとjava.util.Dateは違うのか？
 			assertThat(testDslAndGetResults("dsl/junit/01_パーサ/03_型の検証/date/プラグインからの値の受け取り")).hasSize(1)
 					.allMatch(TestResult::isSucceeded);
 		}
@@ -136,4 +134,16 @@ public class TypeValidation {
 		}
 	}
 
+	@Nested
+	@DslPath("event")
+	class Event {
+		@Test
+		@DslPath("宣言無しで使用")
+		void missingDeclaration(String dslPath) {
+			assertThatThrownBy(() -> {
+				testDsl(dslPath);
+			}).isInstanceOf(DslParserException.class);
+			assertThat(getLog(dslPath)).anyMatch(line -> line.contains("evt") && line.contains("宣言"));
+		}
+	}
 }

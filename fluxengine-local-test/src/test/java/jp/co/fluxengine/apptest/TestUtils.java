@@ -126,4 +126,23 @@ public class TestUtils {
 			throw new UncheckedIOException(e);
 		}
 	}
+
+	public static List<String> getLog(String dslPath) {
+		try {
+			List<String> lines = Files.readAllLines(LOG_FILE.toPath(), Charset.forName("UTF-8"));
+			for (int startIndex = 0; startIndex < lines.size(); startIndex++) {
+				if (lines.get(startIndex).contains("INFO  テストを開始します: " + dslPath)) {
+					for (int endIndex = startIndex + 1; endIndex < lines.size(); endIndex++) {
+						if (lines.get(endIndex).contains("INFO  テストを開始します: ")) {
+							return lines.subList(startIndex, endIndex);
+						}
+					}
+					return lines.subList(startIndex, lines.size());
+				}
+			}
+			return Lists.newArrayList();
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+	}
 }

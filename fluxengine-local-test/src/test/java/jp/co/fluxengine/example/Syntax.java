@@ -7,10 +7,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+import jp.co.fluxengine.apptest.DslPath;
+import jp.co.fluxengine.apptest.DslPathResolver;
 import jp.co.fluxengine.apptest.TestResult;
 import jp.co.fluxengine.stateengine.exceptions.DslParserException;
 
+@ExtendWith(DslPathResolver.class)
+@DslPath("dsl/junit/01_パーサ/04_構文")
 public class Syntax {
 
 	@Test
@@ -93,6 +98,18 @@ public class Syntax {
 			assertThatThrownBy(() -> {
 				testDsl("dsl/junit/01_パーサ/04_構文/rule/複数のwatch");
 			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("watch").hasStackTraceContaining("重複");
+		}
+	}
+	
+	@Nested
+	@DslPath("メソッド")
+	class Method {
+		@Test
+		@DslPath("引数なしのメソッドに引数を入れる")
+		void paramInNoArgMethod(String dslPath) {
+			assertThatThrownBy(() -> {
+				testDsl(dslPath);
+			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("dummy");
 		}
 	}
 }

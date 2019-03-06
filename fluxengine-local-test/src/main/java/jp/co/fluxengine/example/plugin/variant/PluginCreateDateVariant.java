@@ -1,16 +1,15 @@
 package jp.co.fluxengine.example.plugin.variant;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDate;
 
 import jp.co.fluxengine.stateengine.annotation.Variant;
 
 @Variant("メソッドにアノテーション忘れ#createDate")
 public class PluginCreateDateVariant {
 
-	public Date get() {
+	public LocalDate get() {
 		try {
-			return new SimpleDateFormat("yyyy/MM/dd").parse("2019/02/28");
+			return LocalDate.of(2019, 2, 28);
 		} catch (Exception e) {
 			return null;
 		}
