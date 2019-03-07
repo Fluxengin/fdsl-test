@@ -160,12 +160,30 @@ public class Syntax {
   @Nested
   @DslPath("識別子")
   class Identifier {
+
     @Test
     @DslPath("使用できない文字")
     void startsWithNumber(String dslPath) {
       assertThatThrownBy(() -> {
         testDsl(dslPath);
-      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("1astring").hasStackTraceContaining("invalid number literal");
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("1astring")
+          .hasStackTraceContaining("invalid number literal");
+    }
+
+    @Test
+    @DslPath("使用可能な文字")
+    void availableCharacters(String dslPath) {
+      // TODO どうやら"☆彡文字列（＾＾）"は識別子になれない？
+      assertThat(testDslAndGetResults(dslPath)).hasSize(2).allMatch(TestResult::isSucceeded);
+    }
+
+    @Test
+    @DslPath("予約語を識別子に使う")
+    void reservedWord(String dslPath) {
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("number")
+          .hasStackTraceContaining("使えません");
     }
   }
 }
