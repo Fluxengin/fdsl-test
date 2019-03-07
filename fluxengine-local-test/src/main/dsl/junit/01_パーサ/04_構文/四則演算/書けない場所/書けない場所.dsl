@@ -1,0 +1,1 @@
+string s1: "abc" * 3

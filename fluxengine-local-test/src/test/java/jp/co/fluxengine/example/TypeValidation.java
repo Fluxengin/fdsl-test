@@ -47,7 +47,7 @@ public class TypeValidation {
 		@Test
 		@DslPath("型の省略")
 		void typeOmitted(String dslPath) {
-			// 1.0.4ではエラーメッセージが分かりづらい
+			// TODO 1.0.4ではエラーメッセージが分かりづらい
 			assertThatThrownBy(() -> {
 				testDsl(dslPath);
 			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("型が不明");
@@ -140,6 +140,7 @@ public class TypeValidation {
 		@Test
 		@DslPath("宣言無しで使用")
 		void missingDeclaration(String dslPath) {
+			// TODO 1.0.4ではエラーメッセージが分かりづらい。"evt"が登場せず、何を直すべきか分かりづらい。
 			assertThatThrownBy(() -> {
 				testDsl(dslPath);
 			}).isInstanceOf(DslParserException.class);
@@ -153,6 +154,7 @@ public class TypeValidation {
 		@Test
 		@DslPath("状態なしで現在の状態を参照")
 		void noState(String dslPath) {
+			// TODO 1.0.4ではNoSuchElementExceptionになる
 			assertThatThrownBy(() -> {
 				testDsl(dslPath);
 			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1").hasStackTraceContaining("状態");
