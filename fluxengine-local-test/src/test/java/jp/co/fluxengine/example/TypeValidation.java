@@ -160,4 +160,26 @@ public class TypeValidation {
 			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1").hasStackTraceContaining("状態");
 		}
 	}
+
+	@Nested
+	@DslPath("string")
+	class FDSLString {
+		@Test
+		@DslPath("ダブルクオート忘れ")
+		void missingDoubleQuote(String dslPath) {
+			// TODO 1.0.4ではエラーが起こらず実行できてしまう
+			assertThatThrownBy(() -> {
+				testDsl(dslPath);
+			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1").hasStackTraceContaining("abcdef").hasStackTraceContaining("定義されていません");
+		}
+
+		@Test
+		@DslPath("ダブルクオート非対応")
+		void missingEndDoubleQuote(String dslPath) {
+			// TODO 1.0.4ではエラー箇所が string s1: "fluxengineabcde_abcdef と表示されるため分かりづらい
+			assertThatThrownBy(() -> {
+				testDsl(dslPath);
+			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1").hasStackTraceContaining("\"abcdef").hasStackTraceContaining("対応が取れていません");
+		}
+	}
 }

@@ -171,6 +171,14 @@ public class Syntax {
     }
 
     @Test
+    @DslPath("使用できない文字2")
+    void includingPlus(String dslPath) {
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("abc+123");
+    }
+
+    @Test
     @DslPath("使用可能な文字")
     void availableCharacters(String dslPath) {
       // TODO どうやら"☆彡文字列（＾＾）"は識別子になれない？
