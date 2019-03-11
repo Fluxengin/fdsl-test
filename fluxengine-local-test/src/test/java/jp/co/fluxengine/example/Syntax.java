@@ -194,4 +194,49 @@ public class Syntax {
           .hasStackTraceContaining("使えません");
     }
   }
+
+  @Nested
+  @DslPath("関数")
+  class Function {
+
+    @Test
+    @DslPath("引数が少ない")
+    void missingArguments(String dslPath) {
+      // TODO 1.0.4ではDslParserExceptionではなくStateEngineExceptionであったが問題ないか？
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("round")
+          .hasStackTraceContaining("wrong number of arguments");
+    }
+
+    @Test
+    @DslPath("引数の数が多い")
+    void tooMuchArguments(String dslPath) {
+      // TODO 1.0.4ではエラーメッセージが分かりづらい
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("round")
+          .hasStackTraceContaining("wrong number of arguments");
+    }
+
+    @Test
+    @DslPath("引数の型が異なる")
+    void wrongArgumentType(String dslPath) {
+      // TODO 1.0.4ではエラーが起きず実行できてしまったが問題ないか？
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("round")
+          .hasStackTraceContaining("wrong type");
+    }
+
+    @Test
+    @DslPath("関数名タイプミス")
+    void typoInName(String dslPath) {
+      // TODO 1.0.4では"roud"という関数が存在しないことが分かりづらい
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("roud")
+          .hasStackTraceContaining("doesn't exist");
+    }
+  }
 }
