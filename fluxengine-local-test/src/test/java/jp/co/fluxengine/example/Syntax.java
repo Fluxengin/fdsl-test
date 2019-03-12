@@ -121,6 +121,35 @@ public class Syntax {
         testDsl(dslPath);
       }).isInstanceOf(DslParserException.class).hasStackTraceContaining("dummy");
     }
+
+    @Test
+    @DslPath("引数の数が少ない")
+    void missingParameter(String dslPath) {
+      // TODO 1.0.4ではエラーにならない
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("引数")
+          .hasStackTraceContaining("足りない");
+    }
+
+    @Test
+    @DslPath("引数の型が異なる")
+    void wrongArgumentType(String dslPath) {
+      // TODO 1.0.4では、パースエラーではなく実行時エラーになる
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("endsWith")
+          .hasStackTraceContaining("型");
+    }
+
+    @Test
+    @DslPath("存在しないメソッドの呼び出し")
+    void wrongMethod(String dslPath) {
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("contains")
+          .hasStackTraceContaining("n1");
+    }
   }
 
   @Nested
@@ -181,7 +210,6 @@ public class Syntax {
     @Test
     @DslPath("使用可能な文字")
     void availableCharacters(String dslPath) {
-      // TODO どうやら"☆彡文字列（＾＾）"は識別子になれない？
       assertThat(testDslAndGetResults(dslPath)).hasSize(2).allMatch(TestResult::isSucceeded);
     }
 
@@ -237,6 +265,16 @@ public class Syntax {
         testDsl(dslPath);
       }).isInstanceOf(DslParserException.class).hasStackTraceContaining("roud")
           .hasStackTraceContaining("doesn't exist");
+    }
+
+    @Test
+    @DslPath("書けない場所")
+    void forbidden(String dslPath) {
+      // TODO 1.0.4ではエラーにならず、テストが実行できてしまった。単純に無視されているのか？
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("now()")
+          .hasStackTraceContaining("識別子");
     }
   }
 }
