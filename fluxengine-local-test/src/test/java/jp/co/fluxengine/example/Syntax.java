@@ -145,10 +145,21 @@ public class Syntax {
     @Test
     @DslPath("存在しないメソッドの呼び出し")
     void wrongMethod(String dslPath) {
+      // TODO 1.0.4では、パースエラーではなく実行時エラーになる
       assertThatThrownBy(() -> {
         testDsl(dslPath);
       }).isInstanceOf(DslParserException.class).hasStackTraceContaining("contains")
           .hasStackTraceContaining("n1");
+    }
+
+    @Test
+    @DslPath("書けない場所")
+    void forbidden(String dslPath) {
+      // TODO 1.0.4では、「list l1: "fluxengineabcde_1,2,3f ...」というメッセージで分かりづらい
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("split")
+          .hasStackTraceContaining("リテラル");
     }
   }
 
