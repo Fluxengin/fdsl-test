@@ -16,6 +16,13 @@ public class Effector {
   @Test
   @DslPath("属性無し")
   void noAttribute(String dslPath) {
+    // TODO 1.0.4では属性無しにするとエラーになる
+    assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
+  }
+
+  @Test
+  @DslPath("エイリアス")
+  void alias(String dslPath) {
     assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
   }
 }
