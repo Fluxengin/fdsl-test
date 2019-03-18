@@ -288,4 +288,17 @@ public class Syntax {
           .hasStackTraceContaining("識別子");
     }
   }
+
+  @Nested
+  @DslPath("watch")
+  class Watch {
+
+    @Test
+    @DslPath("複雑な合流")
+    void complexJoin(String dslPath) {
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasMessageContaining("watch対象が存在しない");
+    }
+  }
 }
