@@ -22,7 +22,7 @@ public class Persister {
   @Test
   @DslPath("複雑な属性")
   void complexAttributes(String dslPath) {
-    // TODO 1.0.4では、なぜか ユーザ情報.操作履歴.count() と ユーザ情報.操作履歴.join(",") が true と評価され、しかもそれによって比較結果が true になる
+    // TODO 1.0.4では、なぜか ユーザ情報.オプション情報.操作履歴.count() と ユーザ情報.オプション情報.操作履歴.join(",") が true と評価され、しかもそれによって比較結果が true になる
     assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
   }
 }
