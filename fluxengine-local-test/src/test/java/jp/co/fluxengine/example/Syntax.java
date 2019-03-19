@@ -76,6 +76,7 @@ public class Syntax {
   }
 
   @Nested
+  @DslPath("state")
   class State {
 
     @Test
@@ -83,6 +84,14 @@ public class Syntax {
       assertThatThrownBy(() -> {
         testDsl("dsl/junit/01_パーサ/04_構文/state/persistがない");
       }).isInstanceOf(DslParserException.class).hasMessageContaining("persist");
+    }
+
+    @Test
+    @DslPath("状態がない")
+    void missingState(String dslPath) {
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasMessageContaining("s1").hasMessageContaining("状態").hasMessageContaining("ない");
     }
   }
 
@@ -216,6 +225,14 @@ public class Syntax {
       assertThatThrownBy(() -> {
         testDsl(dslPath);
       }).isInstanceOf(DslParserException.class).hasStackTraceContaining("abc+123");
+    }
+
+    @Test
+    @DslPath("使用できない文字3")
+    void includingForbiddenCharInJava(String dslPath) {
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasMessageContaining("条件式解析異常:「━§×±.Γ〈 == true」");
     }
 
     @Test
