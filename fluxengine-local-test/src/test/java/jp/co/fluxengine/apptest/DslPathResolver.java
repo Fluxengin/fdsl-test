@@ -27,7 +27,7 @@ public class DslPathResolver implements ParameterResolver {
 			throws ParameterResolutionException {
 		
 		return extensionContext.getTestMethod().map(method -> {
-			LinkedList<String> dslPathHierarchy = new LinkedList<String>();
+			LinkedList<String> dslPathHierarchy = new LinkedList<>();
 
 			DslPath methodDslPath = method.getAnnotation(DslPath.class);
 			if (methodDslPath != null && methodDslPath.value() != null) {
