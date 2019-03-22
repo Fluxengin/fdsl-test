@@ -19,4 +19,16 @@ public class Variant {
     // TODO 1.0.4では日時がパースできない
     assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
   }
+
+  @Test
+  @DslPath("mapの中にenum")
+  void enumInMap(String dslPath) {
+    assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
+  }
+
+  @Test
+  @DslPath("テストからの値の設定")
+  void setValueFromTest(String dslPath) {
+    assertThat(testDslAndGetResults(dslPath)).hasSize(2).allMatch(TestResult::isSucceeded);
+  }
 }

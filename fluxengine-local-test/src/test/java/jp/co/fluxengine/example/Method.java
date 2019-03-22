@@ -53,6 +53,7 @@ public class Method {
     @Test
     @DslPath("contains")
     void contains(String dslPath) {
+      // TODO 1.0.4では、containsの引数に日付のリテラルを使うとエラーが起こる
       assertThat(testDslAndGetResults(dslPath)).hasSize(3).allMatch(TestResult::isSucceeded);
     }
   }

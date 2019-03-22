@@ -26,4 +26,11 @@ public class Event {
     // TODO 1.0.4では、test 1でname, birthday, registration_datetimeがnullになっていた
     assertThat(testDslAndGetResults(dslPath)).hasSize(2).allMatch(TestResult::isSucceeded);
   }
+
+  @Test
+  @DslPath("mapにenum")
+  void enumInMap(String dslPath) {
+    // TODO 1.0.4ではなぜかパースエラーになる
+    assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
+  }
 }

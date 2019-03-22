@@ -25,4 +25,11 @@ public class Effector {
   void alias(String dslPath) {
     assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
   }
+
+  @Test
+  @DslPath("エイリアスのインスタンス")
+  void reuseEffector(String dslPath) {
+    assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
+  }
 }
+

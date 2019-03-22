@@ -41,6 +41,12 @@ public class TypeValidation {
     void sameValue(String dslPath) {
       assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
     }
+
+    @Test
+    @DslPath("混在")
+    void mixed(String dslPath) {
+      assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
+    }
   }
 
   @Nested
