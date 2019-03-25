@@ -57,4 +57,35 @@ public class Method {
       assertThat(testDslAndGetResults(dslPath)).hasSize(3).allMatch(TestResult::isSucceeded);
     }
   }
+
+  @Nested
+  @DslPath("string")
+  class FDSLString {
+
+    @Test
+    @DslPath("split")
+    void split(String dslPath) {
+      // TODO 1.0.4では、splitで正規表現が使えてしまう
+      assertThat(testDslAndGetResults(dslPath)).hasSize(2).allMatch(TestResult::isSucceeded);
+    }
+
+    @Test
+    @DslPath("format")
+    void format(String dslPath) {
+      assertThat(testDslAndGetResults(dslPath)).hasSize(2).allMatch(TestResult::isSucceeded);
+    }
+
+    @Test
+    @DslPath("contains")
+    void contains(String dslPath) {
+      // TODO 1.0.4では、正しいDSLなのにパースエラーになってしまう。
+      assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
+    }
+
+    @Test
+    @DslPath("startsWith")
+    void startsWith(String dslPath) {
+      assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
+    }
+  }
 }

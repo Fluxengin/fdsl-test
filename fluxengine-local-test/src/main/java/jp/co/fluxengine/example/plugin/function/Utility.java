@@ -93,5 +93,9 @@ public class Utility {
 	public static int customsum2(int a, int b) {
 		return a + b;
 	}
-	
+
+	@DslName("root")
+	public static double root(double n) {
+		return Math.sqrt(n);
+	}
 }

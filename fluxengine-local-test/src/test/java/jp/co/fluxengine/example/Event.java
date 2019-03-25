@@ -30,7 +30,8 @@ public class Event {
   @Test
   @DslPath("mapにenum")
   void enumInMap(String dslPath) {
-    // TODO 1.0.4ではなぜかパースエラーになる
+    // TODO 1.0.4ではイベントの一部に値が入らずテスト結果がfalseになる
+    // 恐らくcomplexAttributeStructureと同じ自称
     assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
   }
 }

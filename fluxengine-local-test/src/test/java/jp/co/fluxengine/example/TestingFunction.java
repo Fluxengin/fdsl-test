@@ -19,4 +19,18 @@ public class TestingFunction {
     // TODO 1.0.4ではNullPointerExceptionになる
     assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
   }
+
+  @Test
+  @DslPath("関数のモック化2")
+  void mockFunction2(String dslPath) {
+    // TODO 1.0.4では"runner"がパースエラーになる
+    assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
+  }
+
+  @Test
+  @DslPath("パイプライン全体のテスト")
+  void testPipeline(String dslPath) {
+    // TODO 1.0.4ではruleが未確定になってしまう
+    assertThat(testDslAndGetResults(dslPath)).hasSize(5).allMatch(TestResult::isSucceeded);
+  }
 }
