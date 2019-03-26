@@ -215,4 +215,17 @@ public class TypeValidation {
           .hasStackTraceContaining("\"abcdef").hasStackTraceContaining("対応が取れていません");
     }
   }
+
+  @Nested
+  @DslPath("struct")
+  class Struct {
+
+    @Test
+    @DslPath("複雑な構造")
+    void complexStructure(String dslPath) {
+      assertThat(testDslAndGetResults(dslPath))
+          .hasSize(1)
+          .allMatch(TestResult::isSucceeded);
+    }
+  }
 }

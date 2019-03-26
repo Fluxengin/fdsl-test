@@ -19,6 +19,14 @@ public class State {
     assertThat(testDslAndGetResults(dslPath))
         .hasSize(1)
         .allMatch(TestResult::isSucceeded);
+  }
 
+  @Test
+  @DslPath("persisterによる遷移")
+  void transitionByPersister(String dslPath) {
+    // TODO 1.0.4では、なぜかNullPointerExceptionになる
+    assertThat(testDslAndGetResults(dslPath))
+        .hasSize(1)
+        .allMatch(TestResult::isSucceeded);
   }
 }

@@ -87,5 +87,11 @@ public class Method {
     void startsWith(String dslPath) {
       assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
     }
+
+    @Test
+    @DslPath("endsWith")
+    void endsWith(String dslPath) {
+      assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
+    }
   }
 }
