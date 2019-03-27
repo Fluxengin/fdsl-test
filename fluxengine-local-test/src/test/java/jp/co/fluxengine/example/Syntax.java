@@ -40,6 +40,15 @@ public class Syntax {
         .hasMessageContaining("\":\" を付けてください");
   }
 
+  @Test
+  @DslPath("クオート有り無し")
+  void quote(String dslPath) {
+    // TODO 1.0.4では、シングルクオートが無視される
+    assertThat(testDslAndGetResults(dslPath))
+        .hasSize(1)
+        .allMatch(TestResult::isSucceeded);
+  }
+
   @Nested
   class ExportImport {
 

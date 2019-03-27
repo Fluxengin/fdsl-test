@@ -35,6 +35,7 @@ public class Effector {
   @Test
   @DslPath("複雑な属性")
   void complexAttributes(String dslPath) {
+    // TODO 1.0.4ではパースが通らない
     assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
   }
 }

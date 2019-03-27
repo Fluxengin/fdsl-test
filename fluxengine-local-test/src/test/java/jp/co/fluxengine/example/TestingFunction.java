@@ -33,4 +33,10 @@ public class TestingFunction {
     // TODO 1.0.4ではruleが未確定になってしまう
     assertThat(testDslAndGetResults(dslPath)).hasSize(5).allMatch(TestResult::isSucceeded);
   }
+
+  @Test
+  @DslPath("例外の記録")
+  void recordException(String dslPath) {
+    assertThat(testDslAndGetResults(dslPath)).hasSize(3).allMatch(TestResult::isSucceeded);
+  }
 }

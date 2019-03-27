@@ -7,7 +7,7 @@ effector ff:
         a22:
             a221: string
             a222: string
-    a3: [string]
+    a3: list
     a4:
         -
             a41: string
@@ -18,6 +18,8 @@ event e1:
     code: string
     value: number
 
+string svalue: "value "
+
 effect ff:
     a1:
         a11: e1.value + 1
@@ -26,7 +28,7 @@ effect ff:
         a21: today()
         a22:
             a221: "constant"
-            a222: "value " + e1.value
+            a222: svalue + e1.value
     a3:
         - "list"
         - "of"
