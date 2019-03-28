@@ -327,4 +327,36 @@ public class Syntax {
       }).isInstanceOf(DslParserException.class).hasMessageContaining("watch対象が存在しない");
     }
   }
+
+  @Nested
+  @DslPath("パラメタ")
+  class Parameter {
+
+    @Test
+    @DslPath("日付型のパラメタ")
+    void dateParameter(String dslPath) {
+      // TODO 1.0.4では、日付型のリテラルを渡したはずなのに、doubleが渡っている
+      assertThat(testDslAndGetResults(dslPath))
+          .hasSize(2)
+          .allMatch(TestResult::isSucceeded);
+    }
+
+    @Test
+    @DslPath("日時型のパラメタ")
+    void datetimeParameter(String dslPath) {
+      // TODO 1.0.4ではテストDSLのコンパイルエラーになる
+      assertThat(testDslAndGetResults(dslPath))
+          .hasSize(2)
+          .allMatch(TestResult::isSucceeded);
+    }
+
+    @Test
+    @DslPath("マップ型のパラメタ")
+    void mapParameter(String dslPath) {
+      // TODO 1.0.4ではテストで定義したmap dataが認識されてない
+      assertThat(testDslAndGetResults(dslPath))
+          .hasSize(1)
+          .allMatch(TestResult::isSucceeded);
+    }
+  }
 }

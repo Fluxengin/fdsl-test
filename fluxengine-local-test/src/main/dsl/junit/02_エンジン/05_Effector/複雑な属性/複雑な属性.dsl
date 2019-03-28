@@ -7,7 +7,7 @@ effector ff:
         a22:
             a221: string
             a222: string
-    a3: list
+    a3: [string]
     a4:
         -
             a41: string
