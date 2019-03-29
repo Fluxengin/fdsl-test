@@ -91,7 +91,17 @@ public class Method {
     @Test
     @DslPath("endsWith")
     void endsWith(String dslPath) {
+      // TODO 1.0.4ではパースエラーになってしまう
       assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
     }
+  }
+
+  @Test
+  @DslPath("メソッドチェーン")
+  void methodChain(String dslPath) {
+    // TODO 1.0.4ではパースエラーになってしまう
+    assertThat(testDslAndGetResults(dslPath))
+        .hasSize(2)
+        .allMatch(TestResult::isSucceeded);
   }
 }
