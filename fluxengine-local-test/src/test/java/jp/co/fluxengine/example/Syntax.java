@@ -43,13 +43,13 @@ public class Syntax {
   @Test
   @DslPath("クオート有り無し")
   void quote(String dslPath) {
-    // TODO 1.0.4では、シングルクオートが無視される
     assertThat(testDslAndGetResults(dslPath))
         .hasSize(1)
         .allMatch(TestResult::isSucceeded);
   }
 
   @Nested
+  @DslPath("export_import")
   class ExportImport {
 
     @Test
@@ -68,12 +68,12 @@ public class Syntax {
     }
 
     @Test
-    void importDuplication() {
-      // TODO 1.0.3ではエラーではなかったものが、1.0.4ではデグレードによりエラーになっていた
-      // さらに、1.0.5ではimportが重複しているとエラーにするとのこと
-      assertThat(testDslAndGetResults("dsl/junit/01_パーサ/04_構文/export_import/同じものを重複してimport"))
-          .hasSize(1)
-          .allMatch(TestResult::isSucceeded);
+    @DslPath("同じものを重複してimport")
+    void importDuplication(String dslPath) {
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasMessageContaining("import s: export")
+          .hasMessageContaining("duplicate");
     }
 
     @Test
@@ -100,7 +100,7 @@ public class Syntax {
     void missingState(String dslPath) {
       assertThatThrownBy(() -> {
         testDsl(dslPath);
-      }).isInstanceOf(DslParserException.class).hasMessageContaining("s1").hasMessageContaining("状態").hasMessageContaining("ない");
+      }).isInstanceOf(DslParserException.class).hasMessageContaining("「state s1」に状態が定義されていません。");
     }
   }
 
@@ -134,20 +134,19 @@ public class Syntax {
     @Test
     @DslPath("引数なしのメソッドに引数を入れる")
     void paramInNoArgMethod(String dslPath) {
-      // TODO 1.0.4ではエラーにならない
+      // TODO 1.0.5では「countメソッド」となっていて、違和感がある
       assertThatThrownBy(() -> {
         testDsl(dslPath);
-      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("dummy");
+      }).isInstanceOf(DslParserException.class)
+          .hasStackTraceContaining("countメソッドのパラメタが設定されています。「l.count(\"dummy\")」");
     }
 
     @Test
     @DslPath("引数の数が少ない")
     void missingParameter(String dslPath) {
-      // TODO 1.0.4ではエラーにならない
       assertThatThrownBy(() -> {
         testDsl(dslPath);
-      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("引数")
-          .hasStackTraceContaining("足りない");
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("「filter」関数のパラメータ未設定です。");
     }
 
     @Test
@@ -176,8 +175,7 @@ public class Syntax {
       // TODO 1.0.4では、「list l1: "fluxengineabcde_1,2,3f ...」というメッセージで分かりづらい
       assertThatThrownBy(() -> {
         testDsl(dslPath);
-      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("split")
-          .hasStackTraceContaining("リテラル");
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("\"1,2,3\".split(\",\")");
     }
   }
 
@@ -270,8 +268,8 @@ public class Syntax {
       // TODO 1.0.4ではDslParserExceptionではなくStateEngineExceptionであったが問題ないか？
       assertThatThrownBy(() -> {
         testDsl(dslPath);
-      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("round")
-          .hasStackTraceContaining("wrong number of arguments");
+      }).isInstanceOf(DslParserException.class).hasMessageContaining("round()")
+          .hasStackTraceContaining("「round」関数のパラメータ未設定です。");
     }
 
     @Test
@@ -300,18 +298,17 @@ public class Syntax {
       // TODO 1.0.4では"roud"という関数が存在しないことが分かりづらい
       assertThatThrownBy(() -> {
         testDsl(dslPath);
-      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("roud")
-          .hasStackTraceContaining("doesn't exist");
+      }).isInstanceOf(DslParserException.class).hasMessageContaining("「関数名タイプミス#n1」 詳細:「roud(1.4)」")
+          .hasStackTraceContaining("「roud」存在しない関数です。");
     }
 
     @Test
     @DslPath("書けない場所")
     void forbidden(String dslPath) {
-      // TODO 1.0.4ではエラーにならず、テストが実行できてしまった。単純に無視されているのか？
       assertThatThrownBy(() -> {
         testDsl(dslPath);
-      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("now()")
-          .hasStackTraceContaining("識別子");
+      }).isInstanceOf(DslParserException.class)
+          .hasMessageContaining("状態名「書けない場所#ss」に使用できない文字「()」が入っています。");
     }
   }
 

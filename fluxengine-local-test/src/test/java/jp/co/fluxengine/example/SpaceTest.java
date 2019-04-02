@@ -6,245 +6,262 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
+import jp.co.fluxengine.apptest.TestResult;
+import jp.co.fluxengine.stateengine.exceptions.DslParserException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import jp.co.fluxengine.apptest.TestResult;
-import jp.co.fluxengine.stateengine.exceptions.DslParserException;
-
 public class SpaceTest {
 
-	@Test
-	void oldTests() {
-		assertThat(testDslAndGetResults("dsl/junit/01_パーサ/01_スペースの使用/旧方法のテストの移植")).hasSize(124)
-				.allMatch(testResult -> testResult.isSucceeded());
-	}
+  @Test
+  void oldTests() {
+    assertThat(testDslAndGetResults("dsl/junit/01_パーサ/01_スペースの使用/旧方法のテストの移植")).hasSize(124)
+        .allMatch(testResult -> testResult.isSucceeded());
+  }
 
-	@Nested
-	class Export {
-		@Test
-		void beforeParethesis() {
-			assertThatThrownBy(() -> {
-				testDsl("dsl/junit/01_パーサ/01_スペースの使用/exportのテンプレート引数間/括弧の前にスペース");
-			}).isInstanceOf(DslParserException.class).hasMessageContaining("解析失敗");
-		}
-	}
+  @Nested
+  class Export {
 
-	@Nested
-	class Import {
-		@Test
-		void beforeParethesis() {
-			assertThatThrownBy(() -> {
-				testDsl("dsl/junit/01_パーサ/01_スペースの使用/importのテンプレート引数間/括弧の前にスペース");
-			}).isInstanceOf(DslParserException.class).hasMessageContaining("「オウム返し 」がexportされていません。");
-		}
-	}
+    @Test
+    void beforeParethesis() {
+      assertThatThrownBy(() -> {
+        testDsl("dsl/junit/01_パーサ/01_スペースの使用/exportのテンプレート引数間/括弧の前にスペース");
+      }).isInstanceOf(DslParserException.class).hasMessageContaining("解析失敗");
+    }
+  }
 
-	@Nested
-	class Function {
-		@Nested
-		class RoundFunction {
-			@Test
-			void afterSecond() {
-				assertDoesNotThrow(() -> {
-					testDsl("dsl/junit/01_パーサ/01_スペースの使用/関数の引数間/round第二引数の後");
-				});
-			}
+  @Nested
+  class Import {
 
-			@Test
-			void beforeSecond() {
-				assertDoesNotThrow(() -> {
-					testDsl("dsl/junit/01_パーサ/01_スペースの使用/関数の引数間/round第二引数の前");
-				});
-			}
-		}
+    @Test
+    void beforeParethesis() {
+      assertThatThrownBy(() -> {
+        testDsl("dsl/junit/01_パーサ/01_スペースの使用/importのテンプレート引数間/括弧の前にスペース");
+      }).isInstanceOf(DslParserException.class).hasMessageContaining("「オウム返し 」がexportされていません。");
+    }
+  }
 
-		@Nested
-		class TodayFunction {
-			@Test
-			void before() {
-				assertDoesNotThrow(() -> {
-					testDsl("dsl/junit/01_パーサ/01_スペースの使用/関数の引数間/today引数の前");
-				});
-			}
-		}
-	}
+  @Nested
+  class Function {
 
-	@Nested
-	class Method {
-		@Test
-		void exists() {
-			assertThat(testDslAndGetResults("dsl/junit/01_パーサ/01_スペースの使用/メソッドの引数間/existsの括弧の中")).hasSize(1)
-					.allMatch(TestResult::isSucceeded);
-		}
-	}
+    @Nested
+    class RoundFunction {
 
-	@Nested
-	class Arithmetic {
-		@Test
-		void negativeWithoutParenthesis() {
-			assertThatThrownBy(() -> {
-				testDsl("dsl/junit/01_パーサ/01_スペースの使用/四則演算の演算子間/括弧をつけない負数");
-			}).isInstanceOf(DslParserException.class).hasMessageContaining("1+-1");
-		}
-	}
+      @Test
+      void afterSecond() {
+        assertDoesNotThrow(() -> {
+          testDsl("dsl/junit/01_パーサ/01_スペースの使用/関数の引数間/round第二引数の後");
+        });
+      }
 
-	@Nested
-	class Persist {
-		@Test
-		void before() {
-			assertDoesNotThrow(() -> {
-				testDsl("dsl/junit/01_パーサ/01_スペースの使用/persistの引数/引数前");
-			});
-		}
+      @Test
+      void beforeSecond() {
+        assertDoesNotThrow(() -> {
+          testDsl("dsl/junit/01_パーサ/01_スペースの使用/関数の引数間/round第二引数の前");
+        });
+      }
+    }
 
-		@Test
-		void after() {
-			assertDoesNotThrow(() -> {
-				testDsl("dsl/junit/01_パーサ/01_スペースの使用/persistの引数/引数後");
-			});
-		}
+    @Nested
+    class TodayFunction {
 
-		@Test
-		void beforeAndAfter() {
-			assertDoesNotThrow(() -> {
-				testDsl("dsl/junit/01_パーサ/01_スペースの使用/persistの引数/引数前後");
-			});
-		}
-	}
+      @Test
+      void before() {
+        assertDoesNotThrow(() -> {
+          testDsl("dsl/junit/01_パーサ/01_スペースの使用/関数の引数間/today引数の前");
+        });
+      }
+    }
+  }
 
-	@Nested
-	class ComparisonOperator {
-		@Test
-		void equal() {
-			assertDoesNotThrow(() -> {
-				testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/イコール");
-			});
-		}
+  @Nested
+  class Method {
 
-		@Nested
-		class LessThan {
-			@Test
-			void noSpace() {
-				assertDoesNotThrow(() -> {
-					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なり/スペースなし");
-				});
-			}
+    @Test
+    void exists() {
+      // TODO 1.0.4では正しく実行できたが、1.0.5でNullPointerExceptionを起こす
+      assertThat(testDslAndGetResults("dsl/junit/01_パーサ/01_スペースの使用/メソッドの引数間/existsの括弧の中"))
+          .hasSize(1)
+          .allMatch(TestResult::isSucceeded);
+    }
+  }
 
-			@Test
-			void before() {
-				assertDoesNotThrow(() -> {
-					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なり/演算子の前");
-				});
-			}
+  @Nested
+  class Arithmetic {
 
-			@Test
-			void after() {
-				assertDoesNotThrow(() -> {
-					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なり/演算子の後");
-				});
-			}
+    @Test
+    void negativeWithoutParenthesis() {
+      assertThatThrownBy(() -> {
+        testDsl("dsl/junit/01_パーサ/01_スペースの使用/四則演算の演算子間/括弧をつけない負数");
+      }).isInstanceOf(DslParserException.class).hasMessageContaining("1+-1");
+    }
+  }
 
-			@Test
-			void beforeAndAfter() {
-				assertDoesNotThrow(() -> {
-					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なり/演算子の前後");
-				});
-			}
-		}
+  @Nested
+  class Persist {
 
-		@Nested
-		class GraterThan {
-			@Test
-			void noSpace() {
-				assertDoesNotThrow(() -> {
-					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なり/スペースなし");
-				});
-			}
+    @Test
+    void before() {
+      // TODO 1.0.4で正しく実行できていたが、1.0.5でNullPointerExceptionになってしまった。
+      assertDoesNotThrow(() -> {
+        testDsl("dsl/junit/01_パーサ/01_スペースの使用/persistの引数/引数前");
+      });
+    }
 
-			@Test
-			void before() {
-				assertDoesNotThrow(() -> {
-					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なり/演算子の前");
-				});
-			}
+    @Test
+    void after() {
+      // TODO 1.0.4で正しく実行できていたが、1.0.5でNullPointerExceptionになってしまった。
+      assertDoesNotThrow(() -> {
+        testDsl("dsl/junit/01_パーサ/01_スペースの使用/persistの引数/引数後");
+      });
+    }
 
-			@Test
-			void after() {
-				assertDoesNotThrow(() -> {
-					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なり/演算子の後");
-				});
-			}
+    @Test
+    void beforeAndAfter() {
+      // TODO 1.0.4で正しく実行できていたが、1.0.5でNullPointerExceptionになってしまった。
+      assertDoesNotThrow(() -> {
+        testDsl("dsl/junit/01_パーサ/01_スペースの使用/persistの引数/引数前後");
+      });
+    }
+  }
 
-			@Test
-			void beforeAndAfter() {
-				assertDoesNotThrow(() -> {
-					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なり/演算子の前後");
-				});
-			}
-		}
+  @Nested
+  class ComparisonOperator {
 
-		@Nested
-		class LessThanOrEqualTo {
-			@Test
-			void noSpace() {
-				assertDoesNotThrow(() -> {
-					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なりイコール/スペースなし");
-				});
-			}
+    @Test
+    void equal() {
+      assertDoesNotThrow(() -> {
+        testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/イコール");
+      });
+    }
 
-			@Test
-			void before() {
-				assertDoesNotThrow(() -> {
-					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なりイコール/演算子の前");
-				});
-			}
+    @Nested
+    class LessThan {
 
-			@Test
-			void after() {
-				assertDoesNotThrow(() -> {
-					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なりイコール/演算子の後");
-				});
-			}
+      @Test
+      void noSpace() {
+        assertDoesNotThrow(() -> {
+          testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なり/スペースなし");
+        });
+      }
 
-			@Test
-			void beforeAndAfter() {
-				assertDoesNotThrow(() -> {
-					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なりイコール/演算子の前後");
-				});
-			}
-		}
+      @Test
+      void before() {
+        assertDoesNotThrow(() -> {
+          testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なり/演算子の前");
+        });
+      }
 
-		@Nested
-		class GraterThanOrEqualTo {
-			@Test
-			void noSpace() {
-				assertDoesNotThrow(() -> {
-					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なりイコール/スペースなし");
-				});
-			}
+      @Test
+      void after() {
+        assertDoesNotThrow(() -> {
+          testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なり/演算子の後");
+        });
+      }
 
-			@Test
-			void before() {
-				assertDoesNotThrow(() -> {
-					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なりイコール/演算子の前");
-				});
-			}
+      @Test
+      void beforeAndAfter() {
+        assertDoesNotThrow(() -> {
+          testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なり/演算子の前後");
+        });
+      }
+    }
 
-			@Test
-			void after() {
-				assertDoesNotThrow(() -> {
-					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なりイコール/演算子の後");
-				});
-			}
+    @Nested
+    class GraterThan {
 
-			@Test
-			void beforeAndAfter() {
-				assertDoesNotThrow(() -> {
-					testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なりイコール/演算子の前後");
-				});
-			}
-		}
-	}
+      @Test
+      void noSpace() {
+        assertDoesNotThrow(() -> {
+          testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なり/スペースなし");
+        });
+      }
+
+      @Test
+      void before() {
+        assertDoesNotThrow(() -> {
+          testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なり/演算子の前");
+        });
+      }
+
+      @Test
+      void after() {
+        assertDoesNotThrow(() -> {
+          testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なり/演算子の後");
+        });
+      }
+
+      @Test
+      void beforeAndAfter() {
+        assertDoesNotThrow(() -> {
+          testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なり/演算子の前後");
+        });
+      }
+    }
+
+    @Nested
+    class LessThanOrEqualTo {
+
+      @Test
+      void noSpace() {
+        assertDoesNotThrow(() -> {
+          testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なりイコール/スペースなし");
+        });
+      }
+
+      @Test
+      void before() {
+        assertDoesNotThrow(() -> {
+          testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なりイコール/演算子の前");
+        });
+      }
+
+      @Test
+      void after() {
+        assertDoesNotThrow(() -> {
+          testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なりイコール/演算子の後");
+        });
+      }
+
+      @Test
+      void beforeAndAfter() {
+        assertDoesNotThrow(() -> {
+          testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/小なりイコール/演算子の前後");
+        });
+      }
+    }
+
+    @Nested
+    class GraterThanOrEqualTo {
+
+      @Test
+      void noSpace() {
+        assertDoesNotThrow(() -> {
+          testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なりイコール/スペースなし");
+        });
+      }
+
+      @Test
+      void before() {
+        assertDoesNotThrow(() -> {
+          testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なりイコール/演算子の前");
+        });
+      }
+
+      @Test
+      void after() {
+        assertDoesNotThrow(() -> {
+          testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なりイコール/演算子の後");
+        });
+      }
+
+      @Test
+      void beforeAndAfter() {
+        assertDoesNotThrow(() -> {
+          testDsl("dsl/junit/01_パーサ/01_スペースの使用/比較演算子/大なりイコール/演算子の前後");
+        });
+      }
+    }
+  }
 
 }

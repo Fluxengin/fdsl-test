@@ -24,8 +24,6 @@ public class Method {
     @Test
     @DslPath("sort")
     void sort(String dslPath) {
-      // TODO 1.0.4では、整数と小数が混ざったリストはソートできない？
-      // TODO 1.0.4では、リストに日時のリテラルは含められない？
       assertThat(testDslAndGetResults(dslPath)).hasSize(3).allMatch(TestResult::isSucceeded);
     }
 
@@ -53,7 +51,6 @@ public class Method {
     @Test
     @DslPath("contains")
     void contains(String dslPath) {
-      // TODO 1.0.4では、containsの引数に日付のリテラルを使うとエラーが起こる
       assertThat(testDslAndGetResults(dslPath)).hasSize(3).allMatch(TestResult::isSucceeded);
     }
   }
@@ -78,7 +75,8 @@ public class Method {
     @Test
     @DslPath("contains")
     void contains(String dslPath) {
-      // TODO 1.0.4では、正しいDSLなのにパースエラーになってしまう。
+      // TODO 1.0.5で不具合
+      // https://trello.com/c/s5V6aQBB
       assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
     }
 
@@ -91,7 +89,6 @@ public class Method {
     @Test
     @DslPath("endsWith")
     void endsWith(String dslPath) {
-      // TODO 1.0.4ではパースエラーになってしまう
       assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
     }
   }
@@ -99,7 +96,6 @@ public class Method {
   @Test
   @DslPath("メソッドチェーン")
   void methodChain(String dslPath) {
-    // TODO 1.0.4ではパースエラーになってしまう
     assertThat(testDslAndGetResults(dslPath))
         .hasSize(2)
         .allMatch(TestResult::isSucceeded);

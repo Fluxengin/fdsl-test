@@ -27,14 +27,12 @@ public class Operator {
 		@Test
 		@DslPath("巨大な整数")
 		void bigNumber(String dslPath) {
-			// TODO 1.0.4では巨大な整数がパースできない
 			assertThat(testDslAndGetResults(dslPath)).hasSize(2).allMatch(TestResult::isSucceeded);
 		}
 
 		@Test
 		@DslPath("関数との四則演算")
 		void calcAfterFunction(String dslPath) {
-			// TODO 1.0.4ではroundの後に足し算するとパースエラー
 			assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
 		}
 	}

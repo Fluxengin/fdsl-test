@@ -16,21 +16,20 @@ public class Event {
   @Test
   @DslPath("属性無し")
   void noAttribute(String dslPath) {
-    // TODO 1.0.4では、属性がないイベントを投げたはずだが、入力イベントなしと判定された
     assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
   }
 
   @Test
   @DslPath("複雑な属性")
   void complexAttributeStructure(String dslPath) {
-    // TODO 1.0.4では、test 1でname, birthday, registration_datetimeがnullになっていた
+    // TODO 1.0.5
+    // https://trello.com/c/OMnjMgVx
     assertThat(testDslAndGetResults(dslPath)).hasSize(2).allMatch(TestResult::isSucceeded);
   }
 
   @Test
   @DslPath("mapにenum")
   void enumInMap(String dslPath) {
-    // TODO 1.0.4ではイベントの一部に値が入らずテスト結果がfalseになる
     // 恐らくcomplexAttributeStructureと同じ自称
     assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
   }

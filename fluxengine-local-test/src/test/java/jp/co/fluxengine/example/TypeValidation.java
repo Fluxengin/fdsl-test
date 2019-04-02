@@ -56,10 +56,9 @@ public class TypeValidation {
     @Test
     @DslPath("型の省略")
     void typeOmitted(String dslPath) {
-      // TODO 1.0.4ではエラーメッセージが分かりづらい
       assertThatThrownBy(() -> {
         testDsl(dslPath);
-      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("型が不明");
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("「export n1」の型が不明です。");
     }
   }
 
@@ -82,7 +81,6 @@ public class TypeValidation {
 
     @Test
     void complexConditionInBranch() {
-      // TODO 1.0.4では失敗する
       assertThat(testDslAndGetResults("dsl/junit/01_パーサ/03_型の検証/bool/条件に複雑な条件式")).hasSize(1)
           .allMatch(TestResult::isSucceeded);
     }
@@ -115,7 +113,6 @@ public class TypeValidation {
     @Test
     @DslPath("persisterなし")
     void missingPersister(String dslPath) {
-      // TODO 1.0.4ではNullPointerExceptionになり、何を直せばよいのかわからない。
       assertThatThrownBy(() -> {
         testDsl(dslPath);
       }).isInstanceOf(DslParserException.class).hasMessageContaining("persister")
@@ -141,8 +138,8 @@ public class TypeValidation {
       // TODO 1.0.4ではパースエラーにならず、f1が無視される
       assertThatThrownBy(() -> {
         testDsl(dslPath);
-      }).isInstanceOf(DslParserException.class).hasMessageContaining("f1")
-          .hasMessageContaining("f2").hasMessageContaining("通知");
+      }).isInstanceOf(DslParserException.class)
+          .hasStackTraceContaining("同じ名前のeffectが既に存在しています。「違うeffectorが同じ別名#通知」");
     }
   }
 
@@ -183,11 +180,10 @@ public class TypeValidation {
     @Test
     @DslPath("状態なしで現在の状態を参照")
     void noState(String dslPath) {
-      // TODO 1.0.4ではNoSuchElementExceptionになる
       assertThatThrownBy(() -> {
         testDsl(dslPath);
-      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
-          .hasStackTraceContaining("状態");
+      }).isInstanceOf(DslParserException.class)
+          .hasMessageContaining("「状態なしで現在の状態を参照.dsl」において、「state s1」に状態が定義されていません。");
     }
   }
 
@@ -208,11 +204,11 @@ public class TypeValidation {
     @Test
     @DslPath("ダブルクオート非対応")
     void missingEndDoubleQuote(String dslPath) {
-      // TODO 1.0.4ではエラー箇所が string s1: "fluxengineabcde_abcdef と表示されるため分かりづらい
       assertThatThrownBy(() -> {
         testDsl(dslPath);
-      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
-          .hasStackTraceContaining("\"abcdef").hasStackTraceContaining("対応が取れていません");
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("string s1")
+          .hasStackTraceContaining("\"abcdef")
+          .hasStackTraceContaining("while scanning a quoted scalar");
     }
   }
 

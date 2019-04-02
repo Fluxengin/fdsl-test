@@ -12,7 +12,7 @@
 		<log4j2.version>2.6.2</log4j2.version>
 
 		<!-- Fluxengineバージョン -->
-		<fluxengine.version>1.0.4</fluxengine.version>
+		<fluxengine.version>1.0.5</fluxengine.version>
 	</properties>
 
 	<build>
@@ -30,7 +30,6 @@
 						<configuration>
 							<type>jar</type>
 							<includeTypes>jar</includeTypes>
-							<useUniqueVersions>false</useUniqueVersions>
 							<outputDirectory>
 								${project.build.directory}/lib
 							</outputDirectory>

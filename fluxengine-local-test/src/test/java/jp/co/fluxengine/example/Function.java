@@ -16,7 +16,6 @@ public class Function {
   @Test
   @DslPath("リスト型の引数")
   void listArgument(String dslPath) {
-    // TODO 1.0.4では日付が数値になってしまっている
     assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
   }
 

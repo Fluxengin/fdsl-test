@@ -4,9 +4,9 @@ test 1 mapの中でもenumが使える:
             userId: 1001
             userName: "ユーザ1"
             availableFunctions:
-                機能1: FLAG_ON
-                機能2: FLAG_OFF
-                機能3: FLAG_ON
-            状態: FLAG_ON
+                機能1: ON
+                機能2: OFF
+                機能3: ON
+            状態: ON
         inspect:
             s1 == "機能1ON":

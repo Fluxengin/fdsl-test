@@ -1,6 +1,7 @@
 package jp.co.fluxengine.example.plugin.effector;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import jp.co.fluxengine.stateengine.annotation.DslName;
 import jp.co.fluxengine.stateengine.annotation.Effector;
 import jp.co.fluxengine.stateengine.annotation.Post;
@@ -18,8 +19,10 @@ public class PipelineMessageEffector {
   @DslName("currentDatetime")
   private LocalDateTime currentDatetime;
 
+  private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+
   @Post
   public void post() {
-    log.info(currentDatetime + " " + msg);
+    log.info(currentDatetime.format(formatter) + " " + msg);
   }
 }
