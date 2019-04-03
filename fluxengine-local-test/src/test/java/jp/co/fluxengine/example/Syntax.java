@@ -135,6 +135,7 @@ public class Syntax {
     @DslPath("引数なしのメソッドに引数を入れる")
     void paramInNoArgMethod(String dslPath) {
       // TODO 1.0.5では「countメソッド」となっていて、違和感がある
+      // https://trello.com/c/ffbsUBNG
       assertThatThrownBy(() -> {
         testDsl(dslPath);
       }).isInstanceOf(DslParserException.class)
@@ -153,6 +154,7 @@ public class Syntax {
     @DslPath("引数の型が異なる")
     void wrongArgumentType(String dslPath) {
       // TODO 1.0.4では、パースエラーではなく実行時エラーになる
+      // https://trello.com/c/Rgjr3gFm
       assertThatThrownBy(() -> {
         testDsl(dslPath);
       }).isInstanceOf(DslParserException.class).hasStackTraceContaining("endsWith")
@@ -163,6 +165,7 @@ public class Syntax {
     @DslPath("存在しないメソッドの呼び出し")
     void wrongMethod(String dslPath) {
       // TODO 1.0.4では、パースエラーではなく実行時エラーになる
+      // https://trello.com/c/2nUlW0ka
       assertThatThrownBy(() -> {
         testDsl(dslPath);
       }).isInstanceOf(DslParserException.class).hasStackTraceContaining("contains")
@@ -172,7 +175,6 @@ public class Syntax {
     @Test
     @DslPath("書けない場所")
     void forbidden(String dslPath) {
-      // TODO 1.0.4では、「list l1: "fluxengineabcde_1,2,3f ...」というメッセージで分かりづらい
       assertThatThrownBy(() -> {
         testDsl(dslPath);
       }).isInstanceOf(DslParserException.class).hasStackTraceContaining("\"1,2,3\".split(\",\")");
@@ -196,6 +198,7 @@ public class Syntax {
     @DslPath("不明な演算子")
     void unidentifiedOperator(String dslPath) {
       // TODO 1.0.4では"%"が不明な識別子であることを特定しづらい
+      // https://trello.com/c/QmcuZonn
       assertThatThrownBy(() -> {
         testDsl(dslPath);
       }).isInstanceOf(DslParserException.class).hasStackTraceContaining("%")
@@ -206,6 +209,7 @@ public class Syntax {
     @DslPath("書けない場所")
     void forbidden(String dslPath) {
       // TODO 1.0.4ではエラーメッセージが分かりづらい
+      // https://trello.com/c/DHVKKCPT
       assertThatThrownBy(() -> {
         testDsl(dslPath);
       }).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
@@ -251,6 +255,8 @@ public class Syntax {
     @Test
     @DslPath("予約語を識別子に使う")
     void reservedWord(String dslPath) {
+      // TODO 1.0.4
+      // https://trello.com/c/HeYuPeSk
       assertThatThrownBy(() -> {
         testDsl(dslPath);
       }).isInstanceOf(DslParserException.class).hasStackTraceContaining("number")
@@ -265,7 +271,6 @@ public class Syntax {
     @Test
     @DslPath("引数が少ない")
     void missingArguments(String dslPath) {
-      // TODO 1.0.4ではDslParserExceptionではなくStateEngineExceptionであったが問題ないか？
       assertThatThrownBy(() -> {
         testDsl(dslPath);
       }).isInstanceOf(DslParserException.class).hasMessageContaining("round()")
@@ -276,6 +281,7 @@ public class Syntax {
     @DslPath("引数の数が多い")
     void tooMuchArguments(String dslPath) {
       // TODO 1.0.4ではエラーメッセージが分かりづらい
+      // https://trello.com/c/Z8cD928O
       assertThatThrownBy(() -> {
         testDsl(dslPath);
       }).isInstanceOf(DslParserException.class).hasStackTraceContaining("round")
@@ -286,6 +292,7 @@ public class Syntax {
     @DslPath("引数の型が異なる")
     void wrongArgumentType(String dslPath) {
       // TODO 1.0.4ではエラーが起きず実行できてしまったが問題ないか？
+      // https://trello.com/c/S7D1RA44
       assertThatThrownBy(() -> {
         testDsl(dslPath);
       }).isInstanceOf(DslParserException.class).hasStackTraceContaining("round")
@@ -295,7 +302,6 @@ public class Syntax {
     @Test
     @DslPath("関数名タイプミス")
     void typoInName(String dslPath) {
-      // TODO 1.0.4では"roud"という関数が存在しないことが分かりづらい
       assertThatThrownBy(() -> {
         testDsl(dslPath);
       }).isInstanceOf(DslParserException.class).hasMessageContaining("「関数名タイプミス#n1」 詳細:「roud(1.4)」")
@@ -332,7 +338,6 @@ public class Syntax {
     @Test
     @DslPath("日付型のパラメタ")
     void dateParameter(String dslPath) {
-      // TODO 1.0.4では、日付型のリテラルを渡したはずなのに、doubleが渡っている
       assertThat(testDslAndGetResults(dslPath))
           .hasSize(2)
           .allMatch(TestResult::isSucceeded);
@@ -341,7 +346,6 @@ public class Syntax {
     @Test
     @DslPath("日時型のパラメタ")
     void datetimeParameter(String dslPath) {
-      // TODO 1.0.4ではテストDSLのコンパイルエラーになる
       assertThat(testDslAndGetResults(dslPath))
           .hasSize(2)
           .allMatch(TestResult::isSucceeded);
@@ -350,7 +354,9 @@ public class Syntax {
     @Test
     @DslPath("マップ型のパラメタ")
     void mapParameter(String dslPath) {
-      // TODO 1.0.4ではテストで定義したmap dataが認識されてない
+      // TODO 1.0.5
+      // https://trello.com/c/KQINzIRI
+      // https://trello.com/c/Pz156ytD
       assertThat(testDslAndGetResults(dslPath))
           .hasSize(1)
           .allMatch(TestResult::isSucceeded);

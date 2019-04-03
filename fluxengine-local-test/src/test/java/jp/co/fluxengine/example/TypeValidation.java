@@ -135,7 +135,6 @@ public class TypeValidation {
     @Test
     @DslPath("違うeffectorが同じ別名")
     void sameAlias(String dslPath) {
-      // TODO 1.0.4ではパースエラーにならず、f1が無視される
       assertThatThrownBy(() -> {
         testDsl(dslPath);
       }).isInstanceOf(DslParserException.class)
@@ -151,6 +150,7 @@ public class TypeValidation {
     @DslPath("宣言無しで使用")
     void missingDeclaration(String dslPath) {
       // TODO 1.0.4ではエラーメッセージに"s1"が登場しないため、直すべき箇所が分かりづらい。
+      // https://trello.com/c/VusoKCX4
       assertThatThrownBy(() -> {
         testDsl(dslPath);
       }).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
@@ -166,6 +166,7 @@ public class TypeValidation {
     @DslPath("宣言無しで使用")
     void missingDeclaration(String dslPath) {
       // TODO 1.0.4ではエラーメッセージが分かりづらい。"evt"が登場せず、何を直すべきか分かりづらい。
+      // https://trello.com/c/EtcI8Gmy
       assertThatThrownBy(() -> {
         testDsl(dslPath);
       }).isInstanceOf(DslParserException.class);
@@ -195,6 +196,7 @@ public class TypeValidation {
     @DslPath("ダブルクオート忘れ")
     void missingDoubleQuote(String dslPath) {
       // TODO 1.0.4ではエラーが起こらず実行できてしまう
+      // https://trello.com/c/G948JpeJ
       assertThatThrownBy(() -> {
         testDsl(dslPath);
       }).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")

@@ -15,6 +15,8 @@ public class SpaceTest {
 
   @Test
   void oldTests() {
+    // TODO 1.0.5
+    // https://trello.com/c/QPI38U1t
     assertThat(testDslAndGetResults("dsl/junit/01_パーサ/01_スペースの使用/旧方法のテストの移植")).hasSize(124)
         .allMatch(testResult -> testResult.isSucceeded());
   }
@@ -80,6 +82,7 @@ public class SpaceTest {
     @Test
     void exists() {
       // TODO 1.0.4では正しく実行できたが、1.0.5でNullPointerExceptionを起こす
+      // https://trello.com/c/5Zk9F086
       assertThat(testDslAndGetResults("dsl/junit/01_パーサ/01_スペースの使用/メソッドの引数間/existsの括弧の中"))
           .hasSize(1)
           .allMatch(TestResult::isSucceeded);
@@ -103,6 +106,7 @@ public class SpaceTest {
     @Test
     void before() {
       // TODO 1.0.4で正しく実行できていたが、1.0.5でNullPointerExceptionになってしまった。
+      // https://trello.com/c/LLwRp3Bk
       assertDoesNotThrow(() -> {
         testDsl("dsl/junit/01_パーサ/01_スペースの使用/persistの引数/引数前");
       });
@@ -111,6 +115,7 @@ public class SpaceTest {
     @Test
     void after() {
       // TODO 1.0.4で正しく実行できていたが、1.0.5でNullPointerExceptionになってしまった。
+      // https://trello.com/c/LDbPSidy
       assertDoesNotThrow(() -> {
         testDsl("dsl/junit/01_パーサ/01_スペースの使用/persistの引数/引数後");
       });
@@ -119,6 +124,7 @@ public class SpaceTest {
     @Test
     void beforeAndAfter() {
       // TODO 1.0.4で正しく実行できていたが、1.0.5でNullPointerExceptionになってしまった。
+      // https://trello.com/c/lFQcRFx0
       assertDoesNotThrow(() -> {
         testDsl("dsl/junit/01_パーサ/01_スペースの使用/persistの引数/引数前後");
       });

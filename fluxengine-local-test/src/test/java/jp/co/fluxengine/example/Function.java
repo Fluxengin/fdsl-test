@@ -23,6 +23,7 @@ public class Function {
   @DslPath("リスト型の返り値")
   void listResult(String dslPath) {
     // TODO 1.0.4ではパースエラーになる
+    // https://trello.com/c/U2cWGek3
     assertThat(testDslAndGetResults(dslPath)).hasSize(2).allMatch(TestResult::isSucceeded);
   }
 
@@ -30,6 +31,7 @@ public class Function {
   @DslPath("関数の返り値に関数適用")
   void multipleApply(String dslPath) {
     // TODO 1.0.4ではパースエラーになる
+    // https://trello.com/c/v1KCGocl
     assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
   }
 }

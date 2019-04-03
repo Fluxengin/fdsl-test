@@ -46,6 +46,8 @@ public class LoadingTest {
 
 		@Test
 		void persisterWithoutEvent() {
+			// TODO 1.0.5でデグレ
+			// https://trello.com/c/nlKPqhiQ
 			assertThat(testDslAndGetResults("dsl/junit/01_パーサ/02_ローディング順/ファイル内/イベントを作成しないときのpersister")).hasSize(1)
 					.allMatch(TestResult::isSucceeded);
 		}

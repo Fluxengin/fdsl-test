@@ -37,6 +37,7 @@ public class Method {
     @DslPath("sum")
     void sum(String dslPath) {
       // TODO 1.0.4では「java.lang.ClassCastException: class java.lang.String cannot be cast to class java.lang.Number (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')」であり、どこを直せばよいかわからない
+      // https://trello.com/c/zrMrl0na
       assertThatThrownBy(() -> {
         testDsl(dslPath);
       }).isInstanceOf(DslParserException.class).hasStackTraceContaining("l1.sum()");
@@ -62,7 +63,6 @@ public class Method {
     @Test
     @DslPath("split")
     void split(String dslPath) {
-      // TODO 1.0.4では、splitで正規表現が使えてしまう
       assertThat(testDslAndGetResults(dslPath)).hasSize(2).allMatch(TestResult::isSucceeded);
     }
 

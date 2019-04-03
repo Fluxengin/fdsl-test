@@ -23,6 +23,7 @@ public class TestingFunction {
   @DslPath("関数のモック化2")
   void mockFunction2(String dslPath) {
     // TODO 1.0.4では"runner"がパースエラーになる
+    // https://trello.com/c/Lmb3lAN0
     assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
   }
 
@@ -31,6 +32,8 @@ public class TestingFunction {
   void testPipeline(String dslPath) {
     // TODO 1.0.5では、logが出力されているのに log == で検出できないうえに、
     // 2018/11/11 00:00:00にpersister pがリセットされなかった
+    // https://trello.com/c/VpIjoXip
+    // https://trello.com/c/CkrKZ2pC
     assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
   }
 
