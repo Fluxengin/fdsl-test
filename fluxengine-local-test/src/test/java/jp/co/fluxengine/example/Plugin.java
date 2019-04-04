@@ -47,8 +47,6 @@ public class Plugin {
   @Test
   @DslPath("メソッドにアノテーション忘れ")
   void methodWithoutAnnotation(String dslPath) {
-    // TODO 1.0.5ではなぜか「メソッドにメソッドに」と同じ言葉が繰り返されている
-    // https://trello.com/c/7lfSZnZp
     assertThatThrownBy(() -> {
       testDsl(dslPath);
     }).isInstanceOf(DslParserException.class).hasMessageContaining("メソッドにアノテーション忘れ#createDate")

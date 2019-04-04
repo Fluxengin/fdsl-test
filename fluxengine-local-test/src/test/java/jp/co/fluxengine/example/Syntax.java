@@ -134,8 +134,6 @@ public class Syntax {
     @Test
     @DslPath("引数なしのメソッドに引数を入れる")
     void paramInNoArgMethod(String dslPath) {
-      // TODO 1.0.5では「countメソッド」となっていて、違和感がある
-      // https://trello.com/c/ffbsUBNG
       assertThatThrownBy(() -> {
         testDsl(dslPath);
       }).isInstanceOf(DslParserException.class)
@@ -356,7 +354,6 @@ public class Syntax {
     void mapParameter(String dslPath) {
       // TODO 1.0.5
       // https://trello.com/c/KQINzIRI
-      // https://trello.com/c/Pz156ytD
       assertThat(testDslAndGetResults(dslPath))
           .hasSize(1)
           .allMatch(TestResult::isSucceeded);

@@ -22,8 +22,6 @@ public class Event {
   @Test
   @DslPath("複雑な属性")
   void complexAttributeStructure(String dslPath) {
-    // TODO 1.0.5
-    // https://trello.com/c/OMnjMgVx
     assertThat(testDslAndGetResults(dslPath)).hasSize(2).allMatch(TestResult::isSucceeded);
   }
 

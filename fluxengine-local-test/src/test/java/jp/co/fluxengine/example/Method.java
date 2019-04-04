@@ -75,8 +75,6 @@ public class Method {
     @Test
     @DslPath("contains")
     void contains(String dslPath) {
-      // TODO 1.0.5で不具合
-      // https://trello.com/c/s5V6aQBB
       assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
     }
 

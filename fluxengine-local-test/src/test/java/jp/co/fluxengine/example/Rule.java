@@ -16,8 +16,6 @@ public class Rule {
   @Test
   @DslPath("条件なし")
   void noCondition(String dslPath) {
-    // TODO 1.0.5
-    // https://trello.com/c/VpIjoXip
     assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
   }
 }

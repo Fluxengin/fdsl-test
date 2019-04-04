@@ -30,10 +30,6 @@ public class TestingFunction {
   @Test
   @DslPath("パイプライン全体のテスト")
   void testPipeline(String dslPath) {
-    // TODO 1.0.5では、logが出力されているのに log == で検出できないうえに、
-    // 2018/11/11 00:00:00にpersister pがリセットされなかった
-    // https://trello.com/c/VpIjoXip
-    // https://trello.com/c/CkrKZ2pC
     assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
   }
 
