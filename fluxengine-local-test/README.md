@@ -11,48 +11,52 @@ Fluxengine 1.0.1
 # SetUp
 
 1. 当プロジェクトをチェックアウト
-2. プロジェクトディレクトリにて次のコマンドを実行する
+2. プロジェクトディレクトリにて次のコマンドを実行し、ビルドを行う
 ```
-mvn install
+gradlew build -x test
 ```
 
 # Usage
 テストDSLの実行
-  以下eclipseで動作させる前提での内容です
 
-  1. /fluxengine-local-test/src/main/java/jp/co/fluxengine/apptest/DslTestExecutor.java の実行構成を開く (メニュー＞実行＞実行構成）
+1. 環境変数"CONF"に、confフォルダの絶対パスを設定する
 
-  2. 引数タブのVM引数にSetUpで取得したresourcesフォルダのlog4j2.xmlパスを設定する
-```
-    例）-Dlog4j.configurationFile="file:\\\C:\Users\xxx\git\fluxengine-local-test\conf\log4j2.xml"
-```
-  3. 環境タブの環境変数に以下を設定する
 ```
     <キー> / <値>
     CONF / C:\Users\xxx\git\fluxengine-local-test\conf\
 ```
-  4. DslTestExecutor.java を実行する
 
-  5. /fluxengine-local-test/out/test-result.json の中に、各ケースが"結果":"true"になることを確認する
+2. IDEからテストを実行する場合は、テストの実行構成のVM引数にlog4j2.xmlのパスを指定する
+
+```
+    例）-Dlog4j.configurationFile="file:\\\C:\Users\xxx\git\fluxengine-local-test\conf\log4j2.xml"
+```
+
+3. src/test/java以下のテストクラスに対して、テストを実行する
+コマンドラインからテストを行うには、 `gradlew test` を実行する
+
+4. 各テストケースの結果を確認する
 
 # Creating tests
-テストを作成する場合、src/main/dslとsrc/test/dsl配下を同じフォルダ構成、フォルダ名にして、以下の規則でフォルダ、ファイルを作成する
+テストを作成する場合、src/main/dsl と src/test/dsl 配下を同じフォルダ構成、フォルダ名にして、以下の規則でフォルダ、ファイルを作成する
 * main or test
 	* dsl
 		* 01_パーサ (ID_テスト観点大分類)
 			* 01_スペースの使用 (ID_テスト観点中分類)
-				* 01_関数の引数間.dsl (ID_テスト観点小分類.dsl)
+				* 関数の引数間 (ID_テスト観点小分類)
+				  * 関数の引数間.dsl (ID_テスト観点小分類.dsl)
 
-各*.dslファイル内は、その観点に沿ったテストケースを任意の数記述数する。
+フォルダ階層の数は任意とする。
 
-テストケースの名前は、「ID_テストケースを端的に示す名前」とする。
+テストケースの名前は、「test テストID(連番) テストケースを端的に示す名前」とする。
+
 ```
-01_スペースなし:
+test 1 スペースなし:
     2019/01/30 00:00:01:
         get n1:
         inspect:
             n1 == 123.5:
-02_1つめの引数前にスペース:
+test 2 1つめの引数前にスペース:
     2019/01/30 00:00:01:
         get n2:
         inspect:
