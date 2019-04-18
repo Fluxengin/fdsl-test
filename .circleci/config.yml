@@ -11,7 +11,6 @@ jobs:
             - v1-dependencies-{{ .Branch }}-{{ checksum "fluxengine-local-test/build.gradle" }}
             - v1-dependencies-{{ .Branch }}-
             - v1-dependencies-
-      - run: cd ~/repo/fluxengine-local-test && gradle dependencies
       - run: cd ~/repo/fluxengine-local-test && gradle build -x test
       - save_cache:
           paths:
@@ -20,3 +19,5 @@ jobs:
       - run:
           name: テストの実施
           command: cd ~/repo/fluxengine-local-test && gradle test
+      - store_artifacts:
+          path: ~/repo/fluxengine-local-test/build/reports/tests/test
