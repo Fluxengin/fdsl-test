@@ -18,6 +18,6 @@ jobs:
           key: v1-dependencies-{{ .Branch }}-{{ checksum "fluxengine-local-test/build.gradle" }}
       - run:
           name: テストの実施
-          command: cd ~/repo/fluxengine-local-test && gradle test
+          command: cd ~/repo/fluxengine-local-test/conf && export CONF=`pwd` && cd .. && gradle test
       - store_artifacts:
           path: ~/repo/fluxengine-local-test/build/reports/tests/test
