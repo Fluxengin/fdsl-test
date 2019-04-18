@@ -8,15 +8,15 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v1-dependencies-{{ .Branch }}-{{ checksum "build.gradle" }}
+            - v1-dependencies-{{ .Branch }}-{{ checksum "fluxengine-local-test/build.gradle" }}
             - v1-dependencies-{{ .Branch }}-
             - v1-dependencies-
-      - run: gradle dependencies
-      - run: gradle build -x test
+      - run: cd ~/repo/fluxengine-local-test && gradle dependencies
+      - run: cd ~/repo/fluxengine-local-test && gradle build -x test
       - save_cache:
           paths:
             - ~/.gradle
-          key: v1-dependencies-{{ .Branch }}-{{ checksum "build.gradle" }}
+          key: v1-dependencies-{{ .Branch }}-{{ checksum "fluxengine-local-test/build.gradle" }}
       - run:
           name: テストの実施
-          command: gradle test
+          command: cd ~/repo/fluxengine-local-test && gradle test
