@@ -34,7 +34,7 @@ test {
     useJUnitPlatform {
         includeEngines 'junit-jupiter'
     }
-    jvmArgs = ["-Dlog4j.configurationFile=\"${file('conf/log4j2.xml').absolutePath}\""]
+    jvmArgs = ["-Dlog4j.configuration=\"${file('conf/log4j2.xml').toURI().toString()}\""]
 }
 
 group   = "jp.co.fluxengine"

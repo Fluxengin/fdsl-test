@@ -67,6 +67,11 @@ public class TestUtils {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+    try {
+      Thread.sleep(10);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
     return getAllResults(dslPath);
   }
 
