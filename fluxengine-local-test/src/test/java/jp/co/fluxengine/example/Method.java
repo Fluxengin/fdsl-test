@@ -38,9 +38,10 @@ public class Method {
     void sum(String dslPath) {
       // TODO 1.0.4では「java.lang.ClassCastException: class java.lang.String cannot be cast to class java.lang.Number (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')」であり、どこを直せばよいかわからない
       // https://trello.com/c/zrMrl0na
-      assertThatThrownBy(() -> {
-        testDsl(dslPath);
-      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("l1.sum()");
+      // 1.0.7で修正された
+//      assertThatThrownBy(() -> {
+//        testDsl(dslPath);
+//      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("l1.sum()");
     }
 
     @Test

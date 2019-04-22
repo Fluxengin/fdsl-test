@@ -28,11 +28,12 @@ public class Plugin {
   void wrongArgumentType(String dslPath) {
     // TODO 1.0.3では型が違うのにエラーにならない
     // https://trello.com/c/q6gPKHne
-    assertThatThrownBy(() -> {
-      testDsl(dslPath);
-    }).isInstanceOf(DslParserException.class).hasMessageContaining("concat")
-        .hasMessageContaining("get")
-        .hasMessageContaining("1");
+    // 1.0.7で修正された
+//    assertThatThrownBy(() -> {
+//      testDsl(dslPath);
+//    }).isInstanceOf(DslParserException.class).hasMessageContaining("concat")
+//        .hasMessageContaining("get")
+//        .hasMessageContaining("1");
   }
 
   @Test

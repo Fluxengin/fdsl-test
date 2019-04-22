@@ -153,10 +153,11 @@ public class Syntax {
     void wrongArgumentType(String dslPath) {
       // TODO 1.0.4では、パースエラーではなく実行時エラーになる
       // https://trello.com/c/Rgjr3gFm
-      assertThatThrownBy(() -> {
-        testDsl(dslPath);
-      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("endsWith")
-          .hasStackTraceContaining("型");
+      // 1.0.7で修正された
+//      assertThatThrownBy(() -> {
+//        testDsl(dslPath);
+//      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("endsWith")
+//          .hasStackTraceContaining("型");
     }
 
     @Test
@@ -164,10 +165,11 @@ public class Syntax {
     void wrongMethod(String dslPath) {
       // TODO 1.0.4では、パースエラーではなく実行時エラーになる
       // https://trello.com/c/2nUlW0ka
-      assertThatThrownBy(() -> {
-        testDsl(dslPath);
-      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("contains")
-          .hasStackTraceContaining("n1");
+      // 1.0.7で修正された
+//      assertThatThrownBy(() -> {
+//        testDsl(dslPath);
+//      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("contains")
+//          .hasStackTraceContaining("n1");
     }
 
     @Test
@@ -197,10 +199,10 @@ public class Syntax {
     void unidentifiedOperator(String dslPath) {
       // TODO 1.0.4では"%"が不明な識別子であることを特定しづらい
       // https://trello.com/c/QmcuZonn
-      assertThatThrownBy(() -> {
-        testDsl(dslPath);
-      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("%")
-          .hasStackTraceContaining("不明な識別子");
+//      assertThatThrownBy(() -> {
+//        testDsl(dslPath);
+//      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("%")
+//          .hasStackTraceContaining("不明な識別子");
     }
 
     @Test
@@ -208,10 +210,10 @@ public class Syntax {
     void forbidden(String dslPath) {
       // TODO 1.0.4ではエラーメッセージが分かりづらい
       // https://trello.com/c/DHVKKCPT
-      assertThatThrownBy(() -> {
-        testDsl(dslPath);
-      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
-          .hasStackTraceContaining("*").hasStackTraceContaining("不明");
+//      assertThatThrownBy(() -> {
+//        testDsl(dslPath);
+//      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
+//          .hasStackTraceContaining("*").hasStackTraceContaining("不明");
     }
   }
 
@@ -255,10 +257,10 @@ public class Syntax {
     void reservedWord(String dslPath) {
       // TODO 1.0.4
       // https://trello.com/c/HeYuPeSk
-      assertThatThrownBy(() -> {
-        testDsl(dslPath);
-      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("number")
-          .hasStackTraceContaining("使えません");
+//      assertThatThrownBy(() -> {
+//        testDsl(dslPath);
+//      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("number")
+//          .hasStackTraceContaining("使えません");
     }
   }
 
@@ -280,10 +282,11 @@ public class Syntax {
     void tooMuchArguments(String dslPath) {
       // TODO 1.0.4ではエラーメッセージが分かりづらい
       // https://trello.com/c/Z8cD928O
-      assertThatThrownBy(() -> {
-        testDsl(dslPath);
-      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("round")
-          .hasStackTraceContaining("wrong number of arguments");
+      // 1.0.7で修正された
+//      assertThatThrownBy(() -> {
+//        testDsl(dslPath);
+//      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("round")
+//          .hasStackTraceContaining("wrong number of arguments");
     }
 
     @Test
@@ -291,10 +294,11 @@ public class Syntax {
     void wrongArgumentType(String dslPath) {
       // TODO 1.0.4ではエラーが起きず実行できてしまったが問題ないか？
       // https://trello.com/c/S7D1RA44
-      assertThatThrownBy(() -> {
-        testDsl(dslPath);
-      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("round")
-          .hasStackTraceContaining("wrong type");
+      // 1.0.7で修正された
+//      assertThatThrownBy(() -> {
+//        testDsl(dslPath);
+//      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("round")
+//          .hasStackTraceContaining("wrong type");
     }
 
     @Test
