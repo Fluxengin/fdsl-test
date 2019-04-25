@@ -22,7 +22,7 @@ jobs:
             - v1-m2-
       - run:
           name: Build test runner
-          command: cd ~/state-engine/stateengine && mvn install -U && cd ~/state-engine/fluxengine-parser && mvn install -U && ~/state-engine/fluxengine-local-test-runner && mvn package -U
+          command: cd ~/state-engine/stateengine && mvn install -U && cd ~/state-engine/fluxengine-parser && mvn install -U && cd ~/state-engine/fluxengine-local-test-runner && mvn package -U
       - save_cache:
           key: v1-m2-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}
           paths:
