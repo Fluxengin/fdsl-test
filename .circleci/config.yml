@@ -3,52 +3,26 @@ jobs:
   build:
     docker:
       - image: circleci/openjdk:8-jdk
-    branches:
-      only:
-        - master
-    working_directory: ~/fdsl-test
+    working_directory: ~/repo
     steps:
-      - run:
-          name: Delete state-engine directory if exists
-          command: |
-            if [ -d ~/state-engine ]
-            then
-            rm -rf ~/state-engine
-            fi
-      - run:
-          name: Checkout state-engine
-          command: cd ~/ && git clone https://github.com/Fluxengin/state-engine.git
-      - restore_cache:
-          keys:
-            - v1-m2-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}
-            - v1-m2-
-      - run:
-          name: Build test runner
-          command: cd ~/state-engine/stateengine && mvn install -U && cd ~/state-engine/fluxengine-parser && mvn install -U && ~/state-engine/fluxengine-local-test-runner && mvn package -U
-      - save_cache:
-          key: v1-m2-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}
-          paths:
-            - ~/.m2
       - checkout
-      - run:
-          name: Replace test runner
-          command: |
-            rm -f ~/fdsl-test/fluxengine-local-test/lib/fluxengine-local-test-runner-*.jar
-            cp -f ~/state-engine/fluxengine-local-test-runner/target/fluxengine-local-test-runner-*.jar ~/fdsl-test/fluxengine-local-test/lib/
+      - run: rm -f ~/repo/fluxengine-local-test/lib/fluxengine-local-test-runner-*.jar
+      - run: if [ -d ~/engine ]; then rm -rf ~/engine; fi; mkdir ~/engine
+      - run: cd ~/engine && git clone https://github.com/Fluxengin/state-engine.git
+      - run: cd ~/engine/state-engine/stateengine && mvn install && cd ~/engine/state-engine/fluxengine-parser && mvn install
+      - run: cd ~/engine/state-engine/fluxengine-local-test-runner && mvn package && cp -f ~/engine/state-engine/fluxengine-local-test-runner/target/fluxengine-local-test-runner-*.jar ~/repo/fluxengine-local-test/lib/
       - restore_cache:
           keys:
-            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}
-            - v1-gradle-{{ .Branch }}-
-            - v1-gradle-
-      - run:
-          name: Build test
-          command: cd ~/fdsl-test/fluxengine-local-test && gradle build -x test
+            - v1-dependencies-{{ .Branch }}-{{ checksum "fluxengine-local-test/build.gradle" }}
+            - v1-dependencies-{{ .Branch }}-
+            - v1-dependencies-
+      - run: cd ~/repo/fluxengine-local-test && gradle build -x test
       - save_cache:
-          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}
           paths:
             - ~/.gradle
+          key: v1-dependencies-{{ .Branch }}-{{ checksum "fluxengine-local-test/build.gradle" }}
       - run:
           name: テストの実施
-          command: cd ~/fdsl-test/fluxengine-local-test && export CONF=`pwd`/conf/ && gradle test
+          command: cd ~/repo/fluxengine-local-test/conf && export CONF=`pwd` && cd .. && gradle test
       - store_artifacts:
-          path: ~/fdsl-test/fluxengine-local-test/build/reports/tests/test
+          path: ~/repo/fluxengine-local-test/build/reports/tests/test
