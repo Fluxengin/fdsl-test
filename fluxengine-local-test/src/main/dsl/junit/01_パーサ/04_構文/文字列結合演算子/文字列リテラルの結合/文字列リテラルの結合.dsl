@@ -1,1 +1,1 @@
-string s1: "abc" + "def"
+string s1: "abc" + "def" 
