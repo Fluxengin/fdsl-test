@@ -370,6 +370,7 @@ public class Syntax {
 	    @Test
 	    @DslPath("文字列リテラルの結合")
 	    void 	stringLiteral(String dslPath) {
+//
 //	      assertThat(testDslAndGetResults(dslPath))
 //	          .hasSize(1)
 //	          .allMatch(TestResult::isSucceeded);
