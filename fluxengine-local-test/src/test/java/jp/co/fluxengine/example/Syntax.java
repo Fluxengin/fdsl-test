@@ -1,17 +1,16 @@
 package jp.co.fluxengine.example;
 
-import static jp.co.fluxengine.apptest.TestUtils.testDsl;
-import static jp.co.fluxengine.apptest.TestUtils.testDslAndGetResults;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static jp.co.fluxengine.apptest.TestUtils.*;
+import static org.assertj.core.api.Assertions.*;
+
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import jp.co.fluxengine.apptest.DslPath;
 import jp.co.fluxengine.apptest.DslPathResolver;
 import jp.co.fluxengine.apptest.TestResult;
 import jp.co.fluxengine.stateengine.exceptions.DslParserException;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(DslPathResolver.class)
 @DslPath("dsl/junit/01_パーサ/04_構文")
@@ -362,5 +361,27 @@ public class Syntax {
           .hasSize(1)
           .allMatch(TestResult::isSucceeded);
     }
+  }
+
+  @Nested
+  @DslPath("文字列結合演算子")
+  class Concatenation {
+
+	    @Test
+	    @DslPath("文字列リテラルの結合")
+	    void 	stringLiteral(String dslPath) {
+//	      assertThat(testDslAndGetResults(dslPath))
+//	          .hasSize(1)
+//	          .allMatch(TestResult::isSucceeded);
+	    }
+
+
+	    @Test
+	    @DslPath("文字列変数の結合")
+	    void 	stringVariable(String dslPath) {
+	      assertThat(testDslAndGetResults(dslPath))
+	          .hasSize(1)
+	          .allMatch(TestResult::isSucceeded);
+	    }
   }
 }
