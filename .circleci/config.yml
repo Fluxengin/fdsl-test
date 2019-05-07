@@ -12,6 +12,10 @@ jobs:
       - run:
           name: Checkout state-engine
           command: |
+            if [ -d ~/state-engine ]
+            then
+            rm -rf ~/state-engine
+            fi
             pushd ~/
             git clone https://github.com/Fluxengin/state-engine.git
             popd
