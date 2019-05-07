@@ -40,6 +40,7 @@ jobs:
           command: |
             rm -f fluxengine-local-test/lib/fluxengine-local-test-runner-*.jar
             cp -f ~/state-engine/fluxengine-local-test-runner/target/fluxengine-local-test-runner-*.jar fluxengine-local-test/lib/
+            diff -q ~/state-engine/fluxengine-local-test-runner/target/fluxengine-local-test-runner-*.jar fluxengine-local-test/lib/fluxengine-local-test-runner-*.jar
       - restore_cache:
           keys:
             - v1-gradle-{{ .Branch }}-{{ checksum "fluxengine-local-test/build.gradle" }}
