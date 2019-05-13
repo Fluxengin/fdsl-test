@@ -216,18 +216,80 @@ public class Syntax {
 		}
 
 		@Nested
+		@DslPath("括弧を含む複雑な式")
+		class ComplexParentheses {
+			@Test
+			@DslPath("括弧の中に括弧")
+			void parenthesesInParentheses(String dslPath) {
+
+				assertThat(testDslAndGetResults(dslPath))
+						.hasSize(1)
+						.allMatch(TestResult::isSucceeded);
+			}
+
+			@Test
+			@DslPath("冗長な括弧")
+			void redundantInParentheses(String dslPath) {
+
+				assertThat(testDslAndGetResults(dslPath))
+						.hasSize(1)
+						.allMatch(TestResult::isSucceeded);
+			}
+
+			@Test
+			@DslPath("数字を括弧で囲む")
+			void numberInParentheses(String dslPath) {
+
+				assertThat(testDslAndGetResults(dslPath))
+						.hasSize(1)
+						.allMatch(TestResult::isSucceeded);
+			}
+		}
+
+		@Nested
 		@DslPath("単項演算子")
 		class UnaryOperator {
 			@Test
 			@DslPath("後置インクリメント")
 			void postpositionIncrement(String dslPath) {
-			// TODO 1.0.6ではパースエラーになる
-			// https://trello.com/c/XTl3lWwS
-			//	assertThat(testDslAndGetResults(dslPath))
-			//			.hasSize(1)
-			//			.allMatch(TestResult::isSucceeded);
+				// TODO 1.0.6ではパースエラーになる
+				// https://trello.com/c/XTl3lWwS
+				//				assertThat(testDslAndGetResults(dslPath))
+				//						.hasSize(1)
+				//						.allMatch(TestResult::isSucceeded);
+			}
+
+			@Test
+			@DslPath("前置インクリメント")
+			void prepositionIncrement(String dslPath) {
+				// TODO 1.0.6ではパースエラーになる
+				// https://trello.com/c/XTl3lWwS
+				//				assertThat(testDslAndGetResults(dslPath))
+				//						.hasSize(1)
+				//						.allMatch(TestResult::isSucceeded);
+			}
+
+			@Test
+			@DslPath("後置デクリメント")
+			void postpositionDecrement(String dslPath) {
+				// TODO 1.0.6ではパースエラーになる
+				// https://trello.com/c/XTl3lWwS
+				//				assertThat(testDslAndGetResults(dslPath))
+				//						.hasSize(1)
+				//						.allMatch(TestResult::isSucceeded);
+			}
+
+			@Test
+			@DslPath("前置デクリメント")
+			void prepositionDecrement(String dslPath) {
+				// TODO 1.0.6ではパースエラーになる
+				// https://trello.com/c/XTl3lWwS
+				//				assertThat(testDslAndGetResults(dslPath))
+				//						.hasSize(1)
+				//						.allMatch(TestResult::isSucceeded);
 			}
 		}
+
 	}
 
 	@Nested
@@ -384,8 +446,8 @@ public class Syntax {
 		@Test
 		@DslPath("文字列リテラルの結合")
 		void stringLiteral(String dslPath) {
-		    // TODO 1.0.6ではパースエラーになる
-		    // https://trello.com/c/k3AFHLVx
+			// TODO 1.0.6ではパースエラーになる
+			// https://trello.com/c/k3AFHLVx
 			//	      assertThat(testDslAndGetResults(dslPath))
 			//	          .hasSize(1)
 			//	          .allMatch(TestResult::isSucceeded);
