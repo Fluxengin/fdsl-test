@@ -288,6 +288,24 @@ public class Syntax {
 				//						.hasSize(1)
 				//						.allMatch(TestResult::isSucceeded);
 			}
+
+			@Test
+			@DslPath("符号反転")
+			void signInversion(String dslPath) {
+				// TODO 1.0.6ではパースエラーになる
+				// https://trello.com/c/i3qPx3ov
+				//				assertThat(testDslAndGetResults(dslPath))
+				//						.hasSize(1)
+				//						.allMatch(TestResult::isSucceeded);
+			}
+		}
+
+		@Test
+		@DslPath("小数による割り算")
+		void divisionByDecimals(String dslPath) {
+							assertThat(testDslAndGetResults(dslPath))
+									.hasSize(1)
+									.allMatch(TestResult::isSucceeded);
 		}
 
 	}
@@ -472,6 +490,14 @@ public class Syntax {
 		@Test
 		@DslPath("文字列に数字を結合")
 		void stringNumber(String dslPath) {
+			assertThat(testDslAndGetResults(dslPath))
+					.hasSize(1)
+					.allMatch(TestResult::isSucceeded);
+		}
+
+		@Test
+		@DslPath("括弧を使用")
+		void useParentheses(String dslPath) {
 			assertThat(testDslAndGetResults(dslPath))
 					.hasSize(1)
 					.allMatch(TestResult::isSucceeded);
