@@ -244,6 +244,28 @@ public class Syntax {
 						.hasSize(1)
 						.allMatch(TestResult::isSucceeded);
 			}
+
+			@Test
+			@DslPath("関数を使用１")
+			void useFunction1(String dslPath) {
+				// TODO 1.0.6ではパースエラーになる
+				// https://trello.com/c/GupVuYJf/
+//				assertThat(testDslAndGetResults(dslPath))
+//						.hasSize(1)
+//						.allMatch(TestResult::isSucceeded);
+			}
+
+			@Test
+			@DslPath("関数を使用２")
+			void useFunction2(String dslPath) {
+				// TODO 1.0.6ではパースエラーになる
+				// https://trello.com/c/GOMv8gpz/
+				//				assertThat(testDslAndGetResults(dslPath))
+				//						.hasSize(1)
+				//						.allMatch(TestResult::isSucceeded);
+			}
+
+
 		}
 
 		@Nested
@@ -252,7 +274,7 @@ public class Syntax {
 			@Test
 			@DslPath("後置インクリメント")
 			void postpositionIncrement(String dslPath) {
-				// TODO 1.0.6ではパースエラーになる
+				// 単項演算子には対応していない。対応予定なし。
 				// https://trello.com/c/XTl3lWwS
 				//				assertThat(testDslAndGetResults(dslPath))
 				//						.hasSize(1)
@@ -262,7 +284,7 @@ public class Syntax {
 			@Test
 			@DslPath("前置インクリメント")
 			void prepositionIncrement(String dslPath) {
-				// TODO 1.0.6ではパースエラーになる
+				// 単項演算子には対応していない。対応予定なし。
 				// https://trello.com/c/XTl3lWwS
 				//				assertThat(testDslAndGetResults(dslPath))
 				//						.hasSize(1)
@@ -272,7 +294,7 @@ public class Syntax {
 			@Test
 			@DslPath("後置デクリメント")
 			void postpositionDecrement(String dslPath) {
-				// TODO 1.0.6ではパースエラーになる
+				// 単項演算子には対応していない。対応予定なし。
 				// https://trello.com/c/XTl3lWwS
 				//				assertThat(testDslAndGetResults(dslPath))
 				//						.hasSize(1)
@@ -282,7 +304,7 @@ public class Syntax {
 			@Test
 			@DslPath("前置デクリメント")
 			void prepositionDecrement(String dslPath) {
-				// TODO 1.0.6ではパースエラーになる
+				// 単項演算子には対応していない。対応予定なし。
 				// https://trello.com/c/XTl3lWwS
 				//				assertThat(testDslAndGetResults(dslPath))
 				//						.hasSize(1)
@@ -292,7 +314,7 @@ public class Syntax {
 			@Test
 			@DslPath("符号反転")
 			void signInversion(String dslPath) {
-				// TODO 1.0.6ではパースエラーになる
+				// 符号反転には対応していない。対応予定なし。
 				// https://trello.com/c/i3qPx3ov
 				//				assertThat(testDslAndGetResults(dslPath))
 				//						.hasSize(1)
