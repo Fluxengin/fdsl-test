@@ -15,8 +15,6 @@ commands:
           fi
 jobs:
   build_engine:
-    # Required environmental variables
-    # GIT_USER: username to clone state-engine from github
     docker:
       - image: circleci/openjdk:8-jdk
     steps:
@@ -24,7 +22,7 @@ jobs:
           name: Checkout state-engine
           command: |
             pushd ~/
-            git clone https://${GIT_USER}@github.com/Fluxengin/state-engine.git
+            git clone https://github.com/Fluxengin/state-engine.git
             popd
       - restore_cache:
           keys:
