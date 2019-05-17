@@ -110,6 +110,8 @@ jobs:
     # PROJECT: GCP project name to deploy
     docker:
       - image: google/cloud-sdk:alpine
+        environment:
+          GOOGLE_APPLICATION_CREDENTIALS: ~/google_application_credentials.json
     working_directory: ~/fdsl-test
     steps:
       - checkout
@@ -120,7 +122,6 @@ jobs:
           command: |
             # Create Google application credentials file and auth SDK
             echo $GCLOUD_SERVICE_KEY > ~/google_application_credentials.json
-            export GOOGLE_APPLICATION_CREDENTIALS=~/google_application_credentials.json
             # Install
             apk --update add openjdk8
             gcloud components install app-engine-java
@@ -176,8 +177,6 @@ jobs:
             pushd fluxengine-integration-test
             cp -f ~/state-engine/fluxengine-dsl-register/tools/gcp/regisdsl.sh ./
             diff -q ~/state-engine/fluxengine-dsl-register/tools/gcp/regisdsl.sh regisdsl.sh
-            sed -i -e '46i echo "$GOOGLE_APPLICATION_CREDENTIALS == $$GOOGLE_APPLICATION_CREDENTIALS"' regisdsl.sh
-            sed -i -e '47i printenv GOOGLE_APPLICATION_CREDENTIALS' regisdsl.sh
             chmod +x regisdsl.sh
             mkdir out
             mkdir log
