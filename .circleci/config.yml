@@ -22,7 +22,7 @@ jobs:
           name: Checkout state-engine
           command: |
             pushd ~/
-            git clone https://github.com/Fluxengin/state-engine.git
+            git clone git@github.com:Fluxengin/state-engine.git
             popd
       - restore_cache:
           keys:
