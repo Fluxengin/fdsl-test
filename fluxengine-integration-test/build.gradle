@@ -21,9 +21,9 @@ tasks.withType(AbstractCompile)*.options*.encoding = 'UTF-8'
 
 dependencies {
     compile fileTree(dir: 'lib', include: '*.jar')
-    testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.3.2'
-    testRuntime group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.3.2'
-    testCompile 'org.assertj:assertj-core:3.11.1'
+    testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.4.2'
+    testRuntime group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.4.2'
+    testCompile 'org.assertj:assertj-core:3.12.2'
 }
 
 test {
