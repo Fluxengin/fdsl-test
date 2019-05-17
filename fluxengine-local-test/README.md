@@ -3,7 +3,7 @@ FluxengineのエンジンやDSLのテストをすることができます。
 
 # Dependency
 使用言語：java
-ビルドツール：gradle & maven
+ビルドツール：gradle
 
 # Version
 Fluxengine 1.0.1

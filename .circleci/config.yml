@@ -11,7 +11,7 @@ commands:
           if [ $DIFF_FILES -eq 0 ]
           then
           echo "There is no update under << parameters.dir >>"
-          exit 0
+          exit 1
           fi
 jobs:
   build_engine:
@@ -22,6 +22,7 @@ jobs:
           name: Checkout state-engine
           command: |
             pushd ~/
+            git config --global user.name fe-machine
             git clone https://github.com/Fluxengin/state-engine.git
             popd
       - restore_cache:
