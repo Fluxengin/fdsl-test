@@ -79,7 +79,8 @@ jobs:
           name: Build test
           command: |
             pushd fluxengine-local-test
-            gradle build -x test
+            chmod +x gradlew
+            ./gradlew build -x test
             popd
       - save_cache:
           key: v1-gradle-{{ .Branch }}-{{ checksum "fluxengine-local-test/build.gradle" }}-{{ checksum "fluxengine-integration-test/build.gradle" }}
@@ -90,7 +91,7 @@ jobs:
           command: |
             pushd fluxengine-local-test
             export CONF=`pwd`/conf/
-            gradle test
+            ./gradlew test
             popd
       - store_artifacts:
           path: fluxengine-local-test/build/reports/tests/test
@@ -138,7 +139,8 @@ jobs:
           name: Build integration test
           command: |
             pushd fluxengine-integration-test
-            gradle build -x test # TODO remove "-x test" when fixed https://trello.com/c/yZcav5AD
+            chmod +x gradlew
+            ./gradlew build -x test # TODO remove "-x test" when fixed https://trello.com/c/yZcav5AD
             popd
       - run:
           name: Edit conf
