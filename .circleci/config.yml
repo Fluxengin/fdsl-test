@@ -1,44 +1,67 @@
-version: 2
+version: 2.1
+commands:
+  check_update:
+    description: "Check whether there is update under designated directory"
+    parameters:
+      dir:
+        type: string
+    steps:
+      - run: |
+          DIFF_FILES=`git diff HEAD^ HEAD --name-only --relative=<< parameters.dir >> | wc -l`
+          if [ $DIFF_FILES -eq 0 ]
+          then
+          echo "There is no update under << parameters.dir >>"
+          exit 0
+          fi
 jobs:
-  build:
+  build_engine:
     docker:
       - image: circleci/openjdk:8-jdk
-    branches:
-      only:
-        - master
-    working_directory: ~/fdsl-test
     steps:
-      - checkout
       - run:
           name: Checkout state-engine
           command: |
-            if [ -d ~/state-engine ]
-            then
-            rm -rf ~/state-engine
-            fi
             pushd ~/
             git clone https://github.com/Fluxengin/state-engine.git
             popd
       - restore_cache:
           keys:
-            - v1-m2-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}
+            - v1-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-web-service/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
+            - v1-m2-{{ .Branch }}-
             - v1-m2-
       - run:
-          name: Build test runner
+          name: Build state-engine
           command: |
-            for projectDir in stateengine fluxengine-parser
+            for projectDir in stateengine fluxengine-dsl-register fluxengine-event-publisher fluxengine-parser fluxengine-local-test-runner fluxengine-dsl-loader fluxengine-persist-manager fluxengine-remote-test-runner fluxengine-dataflow fluxengine-web-service fluxengine-dataflow-housekeep fluxengine-dataflow-housekeep-servlet fluxengine-dataflow-batch-servlet
             do
             pushd ~/state-engine/$projectDir
-            mvn install -U
+            mvn clean install -U
             popd
             done
-            pushd ~/state-engine/fluxengine-local-test-runner
-            mvn package -U
-            popd
       - save_cache:
-          key: v1-m2-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}
+          keys: v1-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-web-service/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
           paths:
             - ~/.m2
+      - persist_to_workspace:
+          root: ~/state-engine
+          paths:
+            - .
+  check_test_fdsl:
+    docker:
+      - image: circleci/openjdk:8-jdk
+    working_directory: ~/fdsl-test
+    steps:
+      - checkout
+      - check_update:
+          dir: "fluxengine-local-test"
+  test_fdsl:
+    docker:
+      - image: circleci/openjdk:8-jdk
+    working_directory: ~/fdsl-test
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/state-engine
       - run:
           name: Replace test runner
           command: |
@@ -47,7 +70,7 @@ jobs:
             diff -q ~/state-engine/fluxengine-local-test-runner/target/fluxengine-local-test-runner-*.jar fluxengine-local-test/lib/fluxengine-local-test-runner-*.jar
       - restore_cache:
           keys:
-            - v1-gradle-{{ .Branch }}-{{ checksum "fluxengine-local-test/build.gradle" }}
+            - v1-gradle-{{ .Branch }}-{{ checksum "fluxengine-local-test/build.gradle" }}-{{ checksum "fluxengine-integration-test/build.gradle" }}
             - v1-gradle-{{ .Branch }}-
             - v1-gradle-
       - run:
@@ -57,11 +80,11 @@ jobs:
             gradle build -x test
             popd
       - save_cache:
-          key: v1-gradle-{{ .Branch }}-{{ checksum "fluxengine-local-test/build.gradle" }}
+          key: v1-gradle-{{ .Branch }}-{{ checksum "fluxengine-local-test/build.gradle" }}-{{ checksum "fluxengine-integration-test/build.gradle" }}
           paths:
             - ~/.gradle
       - run:
-          name: テストの実施
+          name: Run test
           command: |
             pushd fluxengine-local-test
             export CONF=`pwd`/conf/
@@ -69,3 +92,135 @@ jobs:
             popd
       - store_artifacts:
           path: fluxengine-local-test/build/reports/tests/test
+  check_deploy_dsl:
+    docker:
+      - image: circleci/openjdk:8-jdk
+    working_directory: ~/fdsl-test
+    steps:
+      - checkout
+      - check_update:
+          dir: "fluxengine-integration-test"
+  deploy_dsl:
+    # Required environmental variables
+    # GCLOUD_SERVICE_KEY: contents of JSON key file of service account
+    # FLUXENGINE_LICENSE_ENCODED: base64-encoded Fluxengine license file
+    # PROJECT: GCP project name to deploy
+    docker:
+      - image: google/cloud-sdk:alpine
+    working_directory: ~/fdsl-test
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/state-engine
+      - run:
+          name: Install required softwares
+          command: |
+            # Create Google application credentials file and auth SDK
+            echo $GCLOUD_SERVICE_KEY > ~/google_application_credentials.json
+            export GOOGLE_APPLICATION_CREDENTIALS=~/google_application_credentials.json
+            # Install
+            apk --update add openjdk8
+            gcloud components install app-engine-java
+            gcloud --quiet components update
+            gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
+            gcloud --quiet config set project $PROJECT
+      - run:
+          name: Replace test runner
+          command: |
+            pushd fluxengine-integration-test/lib
+            rm -f fluxengine-*.jar
+            cp -f ~/state-engine/fluxengine-local-test-runner/target/fluxengine-local-test-runner-*.jar ./
+            diff -q ~/state-engine/fluxengine-local-test-runner/target/fluxengine-local-test-runner-*.jar fluxengine-local-test-runner-*.jar
+            popd
+      - run:
+          name: Build integration test
+          command: |
+            pushd fluxengine-integration-test
+            gradle build -x test # TODO remove "-x test" when fixed https://trello.com/c/yZcav5AD
+            popd
+      - run:
+          name: Edit conf
+          command: |
+            pushd fluxengine-integration-test/conf
+            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" dslDataStore.properties
+            echo $FLUXENGINE_LICENSE_ENCODED | base64 -d > license.lic
+            popd
+      - run:
+          name: Move DSL
+          command: |
+            mv -f fluxengine-integration-test/src/main/dsl fluxengine-integration-test/
+      - run:
+          name: Copy jar
+          command: |
+            pushd fluxengine-integration-test/lib
+            # Copy integration test jar
+            cp -f ../build/libs/fluxengine-integration-test-*.jar ./
+            diff -q ../build/libs/fluxengine-integration-test-*.jar fluxengine-integration-test-*.jar
+            # Copy core jar
+            cp -f ~/state-engine/stateengine/target/fluxengine-core-*.jar ./
+            rm -f fluxengine-core-*-tests.jar
+            # Copy other jars
+            for libname in dsl-register parser persist-manager
+            do
+            cp -f ~/state-engine/fluxengine-${libname}/target/fluxengine-${libname}-*.jar ./
+            diff -q ~/state-engine/fluxengine-${libname}/target/fluxengine-${libname}-*.jar fluxengine-${libname}-*.jar
+            done
+            popd
+      - run:
+          name: Register DSL
+          command: |
+            pushd fluxengine-integration-test
+            cp -f ~/state-engine/fluxengine-dsl-register/tools/gcp/regisdsl.sh ./
+            diff -q ~/state-engine/fluxengine-dsl-register/tools/gcp/regisdsl.sh regisdsl.sh
+            chmod +x regisdsl.sh
+            mkdir out
+            mkdir log
+            VERSION=`ls lib/fluxengine-core-*.jar | sed -e 's/^.*fluxengine-core-\([0-9]\+\).*\.jar/\1/'`
+            EFFECTIVE_DATE=`date +"%Y%m%d"`
+            # Run regisdsl with classpath of fluxengine-dsl-register because fluxengine-dsl-register requires GCP related jars but it's not a fat jar
+            env CLASSPATH=~/state-engine/fluxengine-dsl-register/target/lib/* ./regisdsl.sh ${VERSION} ${EFFECTIVE_DATE}
+            popd
+workflows:
+  version: 2
+  test_fdsl:
+    jobs:
+      - check_test_fdsl:
+          filters:
+            branches:
+              only:
+                - feature/integration_test # TODO will replace it with "master"
+      - build_engine:
+          requires:
+            - check_test_fdsl
+          filters:
+            branches:
+              only:
+                - feature/integration_test # TODO will replace it with "master"
+      - test_fdsl:
+          requires:
+            - build_engine
+          filters:
+            branches:
+              only:
+                - feature/integration_test # TODO will replace it with "master"
+  deploy_dsl:
+    jobs:
+      - check_deploy_dsl:
+          filters:
+            branches:
+              only:
+                - feature/integration_test # TODO will replace it with "master"
+      - build_engine:
+          requires:
+            - check_deploy_dsl
+          filters:
+            branches:
+              only:
+                - feature/integration_test # TODO will replace it with "master"
+      - deploy_dsl:
+          requires:
+            - build_engine
+          filters:
+            branches:
+              only:
+                - feature/integration_test # TODO will replace it with "master"
