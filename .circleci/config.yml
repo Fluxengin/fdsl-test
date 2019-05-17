@@ -136,6 +136,11 @@ jobs:
             cp -f ~/state-engine/fluxengine-local-test-runner/target/fluxengine-local-test-runner-*.jar ./
             diff -q ~/state-engine/fluxengine-local-test-runner/target/fluxengine-local-test-runner-*.jar fluxengine-local-test-runner-*.jar
             popd
+      - restore_cache:
+          keys:
+            - v1-gradle-{{ .Branch }}-{{ checksum "fluxengine-local-test/build.gradle" }}-{{ checksum "fluxengine-integration-test/build.gradle" }}
+            - v1-gradle-{{ .Branch }}-
+            - v1-gradle-
       - run:
           name: Build integration test
           command: |
@@ -143,6 +148,10 @@ jobs:
             chmod +x gradlew
             ./gradlew build -x test # TODO remove "-x test" when fixed https://trello.com/c/yZcav5AD
             popd
+      - save_cache:
+          key: v1-gradle-{{ .Branch }}-{{ checksum "fluxengine-local-test/build.gradle" }}-{{ checksum "fluxengine-integration-test/build.gradle" }}
+          paths:
+            - ~/.gradle
       - run:
           name: Edit conf
           command: |
