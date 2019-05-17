@@ -7,3 +7,8 @@
 
 # Version
 Fluxengine 1.0.6
+
+# Authors
+Fluxengine株式会社
+
+https://www.fluxengine.co.jp/

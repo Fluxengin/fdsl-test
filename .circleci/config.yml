@@ -110,8 +110,6 @@ jobs:
     # PROJECT: GCP project name to deploy
     docker:
       - image: google/cloud-sdk:alpine
-        environment:
-          GOOGLE_APPLICATION_CREDENTIALS: ~/google_application_credentials.json
     working_directory: ~/fdsl-test
     steps:
       - checkout
@@ -121,7 +119,9 @@ jobs:
           name: Install required softwares
           command: |
             # Create Google application credentials file and auth SDK
-            echo $GCLOUD_SERVICE_KEY > ~/google_application_credentials.json
+            echo 'export GOOGLE_APPLICATION_CREDENTIALS=~/google_application_credentials.json' >> $BASH_ENV
+            source $BASH_ENV
+            echo $GCLOUD_SERVICE_KEY > $GOOGLE_APPLICATION_CREDENTIALS
             # Install
             apk --update add openjdk8
             gcloud components install app-engine-java
