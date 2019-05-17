@@ -126,8 +126,9 @@ jobs:
             gcloud components install app-engine-java
             gcloud --quiet components update
             gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
-            gcloud auth application-default login
             gcloud --quiet config set project $PROJECT
+            ls ~/
+            echo $GOOGLE_APPLICATION_CREDENTIALS
       - run:
           name: Replace test runner
           command: |
