@@ -207,12 +207,10 @@ public class Syntax {
 		@Test
 		@DslPath("書けない場所")
 		void forbidden(String dslPath) {
-			// TODO 1.0.4ではエラーメッセージが分かりづらい
-			// https://trello.com/c/DHVKKCPT
-			//      assertThatThrownBy(() -> {
-			//        testDsl(dslPath);
-			//      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
-			//          .hasStackTraceContaining("*").hasStackTraceContaining("不明");
+			assertThatThrownBy(() -> {
+				testDsl(dslPath);
+			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
+					.hasStackTraceContaining("*");//.hasStackTraceContaining("不明");
 		}
 
 		@Nested
@@ -250,9 +248,9 @@ public class Syntax {
 			void useFunction1(String dslPath) {
 				// TODO 1.0.6ではパースエラーになる
 				// https://trello.com/c/GupVuYJf/
-//				assertThat(testDslAndGetResults(dslPath))
-//						.hasSize(1)
-//						.allMatch(TestResult::isSucceeded);
+				//				assertThat(testDslAndGetResults(dslPath))
+				//						.hasSize(1)
+				//						.allMatch(TestResult::isSucceeded);
 			}
 
 			@Test
@@ -264,7 +262,6 @@ public class Syntax {
 				//						.hasSize(1)
 				//						.allMatch(TestResult::isSucceeded);
 			}
-
 
 		}
 
@@ -325,9 +322,9 @@ public class Syntax {
 		@Test
 		@DslPath("小数による割り算")
 		void divisionByDecimals(String dslPath) {
-							assertThat(testDslAndGetResults(dslPath))
-									.hasSize(1)
-									.allMatch(TestResult::isSucceeded);
+			assertThat(testDslAndGetResults(dslPath))
+					.hasSize(1)
+					.allMatch(TestResult::isSucceeded);
 		}
 
 	}

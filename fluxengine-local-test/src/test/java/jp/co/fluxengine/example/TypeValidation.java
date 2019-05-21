@@ -201,12 +201,10 @@ public class TypeValidation {
 		@Test
 		@DslPath("宣言無しで使用")
 		void missingDeclaration(String dslPath) {
-			// TODO 1.0.4ではエラーメッセージが分かりづらい。"evt"が登場せず、何を直すべきか分かりづらい。
-			// https://trello.com/c/EtcI8Gmy
-			//      assertThatThrownBy(() -> {
-			//        testDsl(dslPath);
-			//      }).isInstanceOf(DslParserException.class);
-			//      assertThat(getLog(dslPath)).anyMatch(line -> line.contains("evt") && line.contains("宣言"));
+			assertThatThrownBy(() -> {
+				testDsl(dslPath);
+			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("evt").hasStackTraceContaining("宣言");
+			// assertThat(getLog(dslPath)).anyMatch(line -> line.contains("evt") && line.contains("宣言"));
 		}
 	}
 
