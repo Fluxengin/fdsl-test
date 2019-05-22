@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.Properties;
 import jp.co.fluxengine.remote.test.CloudStoreSelecter;
 import jp.co.fluxengine.remote.test.RemoteRunner;
@@ -20,6 +21,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
+// このクラスは、Dataflowのジョブにデータを投入するので、
+// 普段は実行されないようにし、
+// 環境変数"FLUXENGINE_INTEGRATION_TEST_MODE"が"DATAFLOW"のときだけ実行できるようにしている
+// CI/CDで実行されることを想定したテストクラス
 @EnabledIfEnvironmentVariable(named = "FLUXENGINE_INTEGRATION_TEST_MODE", matches = "DATAFLOW|dataflow")
 public class DataflowTest {
 
@@ -55,6 +60,12 @@ public class DataflowTest {
 
   @Test
   void testDataflow() throws IOException, InterruptedException {
+    // persisterの現在の値を取得する
+    double usageBefore = Arrays.stream(getResultJson()).filter(json ->
+        json.get("id") != null && json.get("id").asText()
+            .equals("[uid12345, persister/パケット積算データ#パケット積算データ]")).map(json ->
+        json.get("value").get("使用量").asDouble()).findFirst().orElse(0.0);
+
     // テストデータをDataflowのジョブに流す
     URL resourceURL = getClass().getResource("/dataflow_test_data.json");
     String inputJsonString = IOUtils.toString(resourceURL, "UTF-8");
@@ -63,25 +74,33 @@ public class DataflowTest {
     RemoteRunner.publishOneTime(inputJsonString, topic);
 
     // 処理完了を待つ
-    Thread.sleep(5000);
+    Thread.sleep(10000);
 
-    // 結果をファイルに取得する
+    // 結果のassertionを行う
+    assertThat(getResultJson()).anySatisfy(json -> {
+      assertThat(json.get("id").asText()).isEqualTo("[uid12345, persister/パケット積算データ#パケット積算データ]");
+      assertThat(json.get("value").get("使用量").asDouble()).isEqualTo(usageBefore + 500);
+    }).anySatisfy(json -> {
+      assertThat(json.get("id").asText()).isEqualTo("[uid12345, rule/パケット積算#状態遷移]");
+      assertThat(json.get("value").get("currentState").asText()).isEqualTo("s2");
+    });
+  }
+
+  private JsonNode[] getResultJson() throws IOException {
+    File resultFile = File.createTempFile("persister", ".txt");
+
     CloudStoreSelecter persister = new CloudStoreSelecter(persisterNamespace, persisterKind);
-    persister.exportEntityDataToFile("dataflow_test_result.txt");
+    persister.exportEntityDataToFile(resultFile.getAbsolutePath());
 
-    // ファイルから結果をJSONとして取得する
     String resultJsonString =
         "[" + FileUtils
-            .readFileToString(new File("dataflow_test_result.txt"), Charset.defaultCharset()).trim()
+            .readFileToString(new File(resultFile.getAbsolutePath()), Charset.defaultCharset())
+            .trim()
             .replace('\n', ',') + "]";
     LOG.debug("result = " + resultJsonString);
-    JsonNode[] resultArray = new ObjectMapper().readValue(resultJsonString, JsonNode[].class);
 
-    // JSONのassertionを行う
-    assertThat(resultArray).anyMatch(json ->
-        json.get("id").asText().equals("[uid12345, persister/パケット積算データ#パケット積算データ]")
-            && json.get("value").get("使用量").asDouble() == 500).anyMatch(json ->
-        json.get("id").asText().equals("[uid12345, rule/パケット積算#状態遷移]")
-            && json.get("value").get("currentState").asText().equals("s2"));
+    resultFile.delete();
+
+    return new ObjectMapper().readValue(resultJsonString, JsonNode[].class);
   }
 }
