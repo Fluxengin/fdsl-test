@@ -193,12 +193,9 @@ public class Syntax {
 		@Test
 		@DslPath("不明な演算子")
 		void unidentifiedOperator(String dslPath) {
-			// TODO 1.0.4では"%"が不明な識別子であることを特定しづらい
-			// https://trello.com/c/QmcuZonn
-			//      assertThatThrownBy(() -> {
-			//        testDsl(dslPath);
-			//      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("%")
-			//          .hasStackTraceContaining("不明な識別子");
+			assertThatThrownBy(() -> {
+				testDsl(dslPath);
+			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("%");
 		}
 
 		@Test
