@@ -162,13 +162,10 @@ public class Syntax {
 		@Test
 		@DslPath("存在しないメソッドの呼び出し")
 		void wrongMethod(String dslPath) {
-			// TODO 1.0.4では、パースエラーではなく実行時エラーになる
-			// https://trello.com/c/2nUlW0ka
-			// 1.0.7で修正された
-			//      assertThatThrownBy(() -> {
-			//        testDsl(dslPath);
-			//      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("contains")
-			//          .hasStackTraceContaining("n1");
+			assertThatThrownBy(() -> {
+				testDsl(dslPath);
+			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("contains")
+					.hasStackTraceContaining("n1");
 		}
 
 		@Test

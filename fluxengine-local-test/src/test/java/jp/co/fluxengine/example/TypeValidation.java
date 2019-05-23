@@ -229,13 +229,10 @@ public class TypeValidation {
 		@Test
 		@DslPath("ダブルクオート忘れ")
 		void missingDoubleQuote(String dslPath) {
-			// TODO 1.0.4ではエラーが起こらず実行できてしまう
-			// https://trello.com/c/G948JpeJ
-			// 1.0.7で修正された
-			//      assertThatThrownBy(() -> {
-			//        testDsl(dslPath);
-			//      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
-			//          .hasStackTraceContaining("abcdef").hasStackTraceContaining("定義されていません");
+			      assertThatThrownBy(() -> {
+			        testDsl(dslPath);
+			      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
+			          .hasStackTraceContaining("abcdef");//.hasStackTraceContaining("定義されていません");
 		}
 
 		@Test
