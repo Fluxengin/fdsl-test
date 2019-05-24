@@ -198,13 +198,26 @@ public class Syntax {
 			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("%");
 		}
 
-		@Test
+		@Nested
 		@DslPath("書けない場所")
-		void forbidden(String dslPath) {
-			assertThatThrownBy(() -> {
-				testDsl(dslPath);
-			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
-					.hasStackTraceContaining("*");//.hasStackTraceContaining("不明");
+		class forbidden {
+			@Test
+			@DslPath("数値と文字列の乗算")
+			void NumberStringMultiplication(String dslPath) {
+				assertThatThrownBy(() -> {
+					testDsl(dslPath);
+				}).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
+						.hasStackTraceContaining("*");
+			}
+
+			@Test
+			@DslPath("文字列と数値の乗算")
+			void StringNumberMultiplication(String dslPath) {
+				assertThatThrownBy(() -> {
+					testDsl(dslPath);
+				}).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
+						.hasStackTraceContaining("*");
+			}
 		}
 
 		@Nested
