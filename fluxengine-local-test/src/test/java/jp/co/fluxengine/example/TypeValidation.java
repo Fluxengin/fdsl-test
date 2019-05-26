@@ -232,7 +232,7 @@ public class TypeValidation {
 			      assertThatThrownBy(() -> {
 			        testDsl(dslPath);
 			      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
-			          .hasStackTraceContaining("abcdef");//.hasStackTraceContaining("定義されていません");
+			          .hasStackTraceContaining("abcdef");
 		}
 
 		@Test
@@ -243,6 +243,17 @@ public class TypeValidation {
 			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("string s1")
 					.hasStackTraceContaining("\"abcdef")
 					.hasStackTraceContaining("while scanning a quoted scalar");
+		}
+
+		@Test
+		@DslPath("ダブルクオート非対応（開始なし）")
+		void missingStartDoubleQuote(String dslPath) {
+			//TODO:1.0.7のデグレードがないか確認する
+//			assertThatThrownBy(() -> {
+//				testDsl(dslPath);
+//			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("string s1")
+//					.hasStackTraceContaining("abcdef\"")
+//					.hasStackTraceContaining("while scanning a quoted scalar");
 		}
 	}
 

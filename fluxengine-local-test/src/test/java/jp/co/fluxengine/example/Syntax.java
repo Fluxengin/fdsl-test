@@ -218,6 +218,24 @@ public class Syntax {
 				}).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
 						.hasStackTraceContaining("*");
 			}
+
+			@Test
+			@DslPath("文字列の減算")
+			void StringSubtraction(String dslPath) {
+				assertThatThrownBy(() -> {
+					testDsl(dslPath);
+				}).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
+						.hasStackTraceContaining("-");
+			}
+
+			@Test
+			@DslPath("文字列の除算")
+			void Stringdivision(String dslPath) {
+				assertThatThrownBy(() -> {
+					testDsl(dslPath);
+				}).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
+						.hasStackTraceContaining("/");
+			}
 		}
 
 		@Nested
