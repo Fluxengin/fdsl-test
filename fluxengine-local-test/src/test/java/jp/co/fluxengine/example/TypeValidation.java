@@ -125,11 +125,21 @@ public class TypeValidation {
 	}
 
 	@Nested
+	@DslPath("date")
 	class Date {
 
 		@Test
 		void fromPlugin() {
 			assertThat(testDslAndGetResults("dsl/junit/01_パーサ/03_型の検証/date/プラグインからの値の受け取り")).hasSize(1)
+					.allMatch(TestResult::isSucceeded);
+		}
+
+		@Test
+		@DslPath("日付リテラル")
+		void dateLiteral(String dslPath) {
+
+			assertThat(testDslAndGetResults(dslPath))
+					.hasSize(1)
 					.allMatch(TestResult::isSucceeded);
 		}
 	}
@@ -267,6 +277,20 @@ public class TypeValidation {
 			assertThat(testDslAndGetResults(dslPath))
 					.hasSize(1)
 					.allMatch(TestResult::isSucceeded);
+		}
+	}
+
+	@Nested
+	@DslPath("number")
+	class Number {
+
+		@Test
+		@DslPath("日付を設定")
+		void dateLiteral(String dslPath) {
+		      assertThatThrownBy(() -> {
+			        testDsl(dslPath);
+			      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("n1")
+			          .hasStackTraceContaining("2018/10/10");
 		}
 	}
 }
