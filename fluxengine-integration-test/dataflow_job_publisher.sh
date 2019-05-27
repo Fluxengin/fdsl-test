@@ -29,7 +29,7 @@ if [ -z ${GOOGLE_APPLICATION_CREDENTIALS} -o  -z ${PROJECT} ]; then
     exit 1
 fi
 
-OPTIONS=" --runner=DataflowRunner --project=${PROJECT}"
+OPTIONS=" --runner=DataflowRunner --project=${PROJECT} --region=asia-northeast1"
 
 if [ $1 = "batch" ]; then
     if [ -z $BATCH_JOB_STAGING_LOCATION -o  -z ${TEMPLATE_LOCATION} ]; then
