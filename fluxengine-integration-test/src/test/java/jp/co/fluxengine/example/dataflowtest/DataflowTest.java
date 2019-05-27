@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Properties;
 import jp.co.fluxengine.remote.test.CloudStoreSelecter;
@@ -61,10 +63,13 @@ public class DataflowTest {
   @Test
   void testDataflow() throws IOException, InterruptedException {
     // persisterの現在の値を取得する
-    double usageBefore = Arrays.stream(getResultJson()).filter(json ->
-        json.get("id") != null && json.get("id").asText()
-            .equals("[uid12345, persister/パケット積算データ#パケット積算データ]")).map(json ->
-        json.get("value").get("使用量").asDouble()).findFirst().orElse(0.0);
+    String todayString = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDate.now());
+    double usageBefore = Arrays.stream(getResultJson()).filter(json -> {
+      JsonNode id = json.get("id");
+      JsonNode lifetime = json.get("lifetime");
+      return id != null && id.asText().equals("[uid12345, persister/パケット積算データ#パケット積算データ]")
+          && lifetime != null && lifetime.asText().equals(todayString);
+    }).map(json -> json.get("value").get("使用量").asDouble()).findFirst().orElse(0.0);
 
     // テストデータをDataflowのジョブに流す
     URL resourceURL = getClass().getResource("/dataflow_test_data.json");
