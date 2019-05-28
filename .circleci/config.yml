@@ -331,6 +331,7 @@ jobs:
           name: Test Dataflow job
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test
+            chmod +x gradlew
             env FLUXENGINE_INTEGRATION_TEST_MODE=DATAFLOW ./gradlew test --tests jp.co.fluxengine.example.dataflowtest.DataflowTest
             popd
       - save_cache:
