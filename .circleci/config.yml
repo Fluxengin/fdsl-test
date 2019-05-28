@@ -13,6 +13,22 @@ commands:
           echo "There is no update under << parameters.dir >>"
           exit 1
           fi
+  install_java_auth_gcp:
+    description: "Install Java and prepare GCP"
+    steps:
+      - run:
+          name: Install Java and prepare GCP
+          command: |
+            # Create Google application credentials file and auth SDK
+            echo 'export GOOGLE_APPLICATION_CREDENTIALS=~/google_application_credentials.json' >> $BASH_ENV
+            source $BASH_ENV
+            echo $GCLOUD_SERVICE_KEY > $GOOGLE_APPLICATION_CREDENTIALS
+            # Install
+            apk --update add openjdk8
+            gcloud components install app-engine-java
+            gcloud --quiet components update
+            gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
+            gcloud --quiet config set project $PROJECT
 jobs:
   build_engine:
     docker:
@@ -72,7 +88,7 @@ jobs:
             diff -q ~/state-engine/fluxengine-local-test-runner/target/fluxengine-local-test-runner-*.jar fluxengine-local-test/lib/fluxengine-local-test-runner-*.jar
       - restore_cache:
           keys:
-            - v1-gradle-{{ .Branch }}-{{ checksum "fluxengine-local-test/build.gradle" }}-{{ checksum "fluxengine-integration-test/build.gradle" }}
+            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
             - v1-gradle-{{ .Branch }}-
             - v1-gradle-
       - run:
@@ -83,7 +99,7 @@ jobs:
             ./gradlew build -x test
             popd
       - save_cache:
-          key: v1-gradle-{{ .Branch }}-{{ checksum "fluxengine-local-test/build.gradle" }}-{{ checksum "fluxengine-integration-test/build.gradle" }}
+          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
           paths:
             - ~/.gradle
       - run:
@@ -106,28 +122,16 @@ jobs:
   deploy_dsl:
     # Required environmental variables
     # GCLOUD_SERVICE_KEY: contents of JSON key file of service account
-    # FLUXENGINE_LICENSE_ENCODED: base64-encoded Fluxengine license file
     # PROJECT: GCP project name to deploy
+    # FLUXENGINE_LICENSE_ENCODED: base64-encoded Fluxengine license file
     docker:
       - image: google/cloud-sdk:alpine
     working_directory: ~/fdsl-test
     steps:
+      - install_java_auth_gcp
       - checkout
       - attach_workspace:
           at: ~/state-engine
-      - run:
-          name: Install required softwares
-          command: |
-            # Create Google application credentials file and auth SDK
-            echo 'export GOOGLE_APPLICATION_CREDENTIALS=~/google_application_credentials.json' >> $BASH_ENV
-            source $BASH_ENV
-            echo $GCLOUD_SERVICE_KEY > $GOOGLE_APPLICATION_CREDENTIALS
-            # Install
-            apk --update add openjdk8
-            gcloud components install app-engine-java
-            gcloud --quiet components update
-            gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
-            gcloud --quiet config set project $PROJECT
       - run:
           name: Replace test runner
           command: |
@@ -138,7 +142,7 @@ jobs:
             popd
       - restore_cache:
           keys:
-            - v1-gradle-{{ .Branch }}-{{ checksum "fluxengine-local-test/build.gradle" }}-{{ checksum "fluxengine-integration-test/build.gradle" }}
+            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
             - v1-gradle-{{ .Branch }}-
             - v1-gradle-
       - run:
@@ -149,7 +153,7 @@ jobs:
             ./gradlew build -x test # TODO remove "-x test" when fixed https://trello.com/c/yZcav5AD
             popd
       - save_cache:
-          key: v1-gradle-{{ .Branch }}-{{ checksum "fluxengine-local-test/build.gradle" }}-{{ checksum "fluxengine-integration-test/build.gradle" }}
+          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
           paths:
             - ~/.gradle
       - run:
@@ -194,6 +198,151 @@ jobs:
             # Run regisdsl with classpath of fluxengine-dsl-register because fluxengine-dsl-register requires GCP related jars but it's not a fat jar
             env CLASSPATH=~/state-engine/fluxengine-dsl-register/target/lib/* ./regisdsl.sh ${VERSION} ${EFFECTIVE_DATE}
             popd
+  deploy_dataflow_job:
+    # Required environmental variables
+    # GCLOUD_SERVICE_KEY: contents of JSON key file of service account
+    # PROJECT: GCP project name to deploy
+    # BUCKET: Storage bucket name to use for deployment
+    # TOPIC: Pub/Sub topic name to use for deployment
+    docker:
+      - image: google/cloud-sdk:alpine
+    working_directory: ~/fdsl-test
+    steps:
+      - install_java_auth_gcp
+      - run:
+          name: Check existing Dataflow job
+          command: |
+            gcloud dataflow jobs list --status=active | while read id name type creationDate creationTime state region
+            do
+            if [ $(echo $name | grep -e 'fluxenginedataflowprocessor-root-') ]
+            then
+            echo "Detected $id $name $type $creationDate $creationTime $state $region"
+            circleci step halt
+            exit 0
+            fi
+            done
+      - checkout
+      - attach_workspace:
+          at: ~/state-engine
+      - run:
+          name: Edit env file
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test/conf
+            sed -i -e "s/\[YOUR_BUCKET_NAME\]/${BUCKET}/g" dataflow_job_publisher_sample.env
+            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" dataflow_job_publisher_sample.env
+            sed -i -e "s/\[YOUR_TOPIC_NAME\]/${TOPIC}/g" dataflow_job_publisher_sample.env
+            for confFile in dslDataStore.properties effectorDataStore.properties illegalEventDataStore.properties persisterDataStore.properties
+            do
+            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" $confFile
+            done
+            popd
+      - run:
+          name: Replace jar
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test/lib
+            rm -f fluxengine-*.jar
+            cp -f ~/state-engine/fluxengine-dataflow/target/fluxengine-dataflow-*.jar ./
+            diff -q ~/state-engine/fluxengine-dataflow/target/fluxengine-dataflow-*.jar fluxengine-dataflow-*.jar
+            popd
+      - restore_cache:
+          keys:
+            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
+            - v1-gradle-{{ .Branch }}-
+            - v1-gradle-
+      - run:
+          name: Build integration test
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test
+            chmod +x gradlew
+            ./gradlew build -x test
+            cp -f build/libs/fluxengine-integration-test-*.jar lib/
+            diff -q build/libs/fluxengine-integration-test-*.jar lib/fluxengine-integration-test-*.jar
+            popd
+      - save_cache:
+          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
+          paths:
+            - ~/.gradle
+      - run:
+          name: Stop previous jobs
+          command: |
+            gcloud dataflow jobs list --status=active | while read id name type creationTime state region
+            do
+            if [ $(echo $name | grep -e 'fluxenginedataflowprocessor-root-') ]
+            then
+            echo "Stopping $id $name $type $creationTime $state $region"
+            gcloud dataflow jobs cancel $id
+            fi
+            done
+      - run:
+          name: Register job
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test
+            chmod +x dataflow_job_publisher.sh
+            ./dataflow_job_publisher.sh stream conf/dataflow_job_publisher_sample.env debug
+            popd
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - state-engine
+            - fdsl-test
+  test_dataflow:
+    # Required environmental variables
+    # GCLOUD_SERVICE_KEY: contents of JSON key file of service account
+    # PROJECT: GCP project name to deploy
+    # BUCKET: Storage bucket name to use for deployment
+    # TOPIC: Pub/Sub topic name to use for deployment
+    docker:
+      - image: google/cloud-sdk:alpine
+    working_directory: ~/fdsl-test
+    steps:
+      - install_java_auth_gcp
+      - checkout
+      - attach_workspace:
+          at: ~/state-engine
+      - run:
+          name: Edit env file
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test/conf
+            sed -i -e "s/\[YOUR_BUCKET_NAME\]/${BUCKET}/g" dataflow_job_publisher_sample.env
+            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" dataflow_job_publisher_sample.env
+            sed -i -e "s/\[YOUR_TOPIC_NAME\]/${TOPIC}/g" dataflow_job_publisher_sample.env
+            for confFile in dslDataStore.properties effectorDataStore.properties illegalEventDataStore.properties persisterDataStore.properties
+            do
+            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" $confFile
+            done
+            popd
+      - run:
+          name: Replace test runner
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test/lib
+            rm -f fluxengine-*.jar
+            for projectDir in fluxengine-local-test-runner fluxengine-remote-test-runner
+            do
+            cp -f ~/state-engine/${projectDir}/target/${projectDir}-*.jar ./
+            diff -q ~/state-engine/${projectDir}/target/${projectDir}-*.jar ${projectDir}-*.jar
+            done
+            popd
+      - restore_cache:
+          keys:
+            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
+            - v1-gradle-{{ .Branch }}-
+            - v1-gradle-
+      - run:
+          name: Test Dataflow job
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test
+            env FLUXENGINE_INTEGRATION_TEST_MODE=DATAFLOW ./gradlew test --tests jp.co.fluxengine.example.dataflowtest.DataflowTest
+            popd
+      - save_cache:
+          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
+          paths:
+            - ~/.gradle
+      - run:
+          name: Copy log file
+          command: cp -f ~/fdsl-test/fluxengine-integration-test/debug.log ~/fdsl-test/fluxengine-integration-test/build/reports/tests/test/
+          when: always
+      - store_artifacts:
+          path: ~/fdsl-test/fluxengine-integration-test/build/reports/tests/test
 workflows:
   version: 2
   test_fdsl:
@@ -217,7 +366,7 @@ workflows:
             branches:
               only:
                 - feature/integration_test # TODO will replace it with "master"
-  deploy_dsl:
+  deploy_dsl_test:
     jobs:
       - check_deploy_dsl:
           filters:
@@ -234,6 +383,20 @@ workflows:
       - deploy_dsl:
           requires:
             - build_engine
+          filters:
+            branches:
+              only:
+                - feature/integration_test # TODO will replace it with "master"
+      - deploy_dataflow_job:
+          requires:
+            - deploy_dsl
+          filters:
+            branches:
+              only:
+                - feature/integration_test # TODO will replace it with "master"
+      - test_dataflow:
+          requires:
+            - deploy_dataflow_job
           filters:
             branches:
               only:
