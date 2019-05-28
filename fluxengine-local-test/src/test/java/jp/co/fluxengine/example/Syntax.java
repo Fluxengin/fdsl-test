@@ -159,13 +159,46 @@ public class Syntax {
 			//          .hasStackTraceContaining("型");
 		}
 
-		@Test
+		@Nested
 		@DslPath("存在しないメソッドの呼び出し")
-		void wrongMethod(String dslPath) {
-			assertThatThrownBy(() -> {
-				testDsl(dslPath);
-			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("contains")
-					.hasStackTraceContaining("n1");
+		class wrongMethod {
+
+			@Test
+			@DslPath("number#contains")
+			void numberContains(String dslPath) {
+				assertThatThrownBy(() -> {
+					testDsl(dslPath);
+				}).isInstanceOf(DslParserException.class).hasStackTraceContaining("contains")
+						.hasStackTraceContaining("n1");
+			}
+
+			@Test
+			@DslPath("number#startsWith")
+			void numberStartsWith(String dslPath) {
+				assertThatThrownBy(() -> {
+					testDsl(dslPath);
+				}).isInstanceOf(DslParserException.class).hasStackTraceContaining("startsWith")
+						.hasStackTraceContaining("n1");
+			}
+
+			@Test
+			@DslPath("string#append")
+			void stringAppend(String dslPath) {
+				assertThatThrownBy(() -> {
+					testDsl(dslPath);
+				}).isInstanceOf(DslParserException.class).hasStackTraceContaining("append")
+						.hasStackTraceContaining("s1");
+			}
+
+			@Test
+			@DslPath("list#endsWith")
+			void listEndsWith(String dslPath) {
+				assertThatThrownBy(() -> {
+					testDsl(dslPath);
+				}).isInstanceOf(DslParserException.class).hasStackTraceContaining("list")
+						.hasStackTraceContaining("l1");
+			}
+
 		}
 
 		@Test
