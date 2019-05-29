@@ -6,13 +6,16 @@ commands:
       dir:
         type: string
     steps:
-      - run: |
-          DIFF_FILES=`git diff HEAD^ HEAD --name-only --relative=<< parameters.dir >> | wc -l`
-          if [ $DIFF_FILES -eq 0 ]
-          then
-          echo "There is no update under << parameters.dir >>"
-          exit 1
-          fi
+      - checkout
+      - run:
+          name: aaa
+          command: |
+            DIFF_FILES=`git diff HEAD^ HEAD --name-only --relative=<< parameters.dir >> | wc -l`
+            if [ $DIFF_FILES -eq 0 ]
+            then
+            echo "There is no update under << parameters.dir >>"
+            circleci step halt
+            fi
   install_java_auth_gcp:
     description: "Install Java and prepare GCP"
     steps:
@@ -64,20 +67,13 @@ jobs:
           root: ~/state-engine
           paths:
             - .
-  check_test_fdsl:
-    docker:
-      - image: circleci/openjdk:8-jdk
-    working_directory: ~/fdsl-test
-    steps:
-      - checkout
-      - check_update:
-          dir: "fluxengine-local-test"
   test_fdsl:
     docker:
       - image: circleci/openjdk:8-jdk
     working_directory: ~/fdsl-test
     steps:
-      - checkout
+      - check_update:
+          dir: "fluxengine-local-test"
       - attach_workspace:
           at: ~/state-engine
       - run:
@@ -111,14 +107,6 @@ jobs:
             popd
       - store_artifacts:
           path: fluxengine-local-test/build/reports/tests/test
-  check_deploy_dsl:
-    docker:
-      - image: circleci/openjdk:8-jdk
-    working_directory: ~/fdsl-test
-    steps:
-      - checkout
-      - check_update:
-          dir: "fluxengine-integration-test"
   deploy_dsl:
     # Required environmental variables
     # GCLOUD_SERVICE_KEY: contents of JSON key file of service account
@@ -128,8 +116,9 @@ jobs:
       - image: google/cloud-sdk:alpine
     working_directory: ~/fdsl-test
     steps:
+      - check_update:
+          dir: "fluxengine-integration-test"
       - install_java_auth_gcp
-      - checkout
       - attach_workspace:
           at: ~/state-engine
       - run:
@@ -208,6 +197,8 @@ jobs:
       - image: google/cloud-sdk:alpine
     working_directory: ~/fdsl-test
     steps:
+      - check_update:
+          dir: "fluxengine-integration-test"
       - install_java_auth_gcp
       - run:
           name: Check existing Dataflow job
@@ -221,7 +212,6 @@ jobs:
             exit 0
             fi
             done
-      - checkout
       - attach_workspace:
           at: ~/state-engine
       - run:
@@ -295,8 +285,9 @@ jobs:
       - image: google/cloud-sdk:alpine
     working_directory: ~/fdsl-test
     steps:
+      - check_update:
+          dir: "fluxengine-integration-test"
       - install_java_auth_gcp
-      - checkout
       - attach_workspace:
           at: ~/state-engine
       - run:
@@ -348,14 +339,7 @@ workflows:
   version: 2
   test_fdsl:
     jobs:
-      - check_test_fdsl:
-          filters:
-            branches:
-              only:
-                - feature/integration_test # TODO will replace it with "master"
       - build_engine:
-          requires:
-            - check_test_fdsl
           filters:
             branches:
               only:
@@ -369,14 +353,7 @@ workflows:
                 - feature/integration_test # TODO will replace it with "master"
   deploy_dsl_test:
     jobs:
-      - check_deploy_dsl:
-          filters:
-            branches:
-              only:
-                - feature/integration_test # TODO will replace it with "master"
       - build_engine:
-          requires:
-            - check_deploy_dsl
           filters:
             branches:
               only:
