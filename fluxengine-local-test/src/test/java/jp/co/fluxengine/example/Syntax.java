@@ -450,25 +450,19 @@ public class Syntax {
 		@Test
 		@DslPath("引数の数が多い")
 		void tooMuchArguments(String dslPath) {
-			// TODO 1.0.4ではエラーメッセージが分かりづらい
-			// https://trello.com/c/Z8cD928O
-			// 1.0.7で修正された
-			//      assertThatThrownBy(() -> {
-			//        testDsl(dslPath);
-			//      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("round")
-			//          .hasStackTraceContaining("wrong number of arguments");
+			assertThatThrownBy(() -> {
+				testDsl(dslPath);
+			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("round")
+					.hasStackTraceContaining("合う関数が存在しない");
 		}
 
 		@Test
 		@DslPath("引数の型が異なる")
 		void wrongArgumentType(String dslPath) {
-			// TODO 1.0.4ではエラーが起きず実行できてしまったが問題ないか？
-			// https://trello.com/c/S7D1RA44
-			// 1.0.7で修正された
-			//      assertThatThrownBy(() -> {
-			//        testDsl(dslPath);
-			//      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("round")
-			//          .hasStackTraceContaining("wrong type");
+			assertThatThrownBy(() -> {
+				testDsl(dslPath);
+			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("round")
+					.hasStackTraceContaining("合う関数が存在しない");
 		}
 
 		@Test
