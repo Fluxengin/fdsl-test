@@ -150,13 +150,10 @@ public class Syntax {
 		@Test
 		@DslPath("引数の型が異なる")
 		void wrongArgumentType(String dslPath) {
-			// TODO 1.0.4では、パースエラーではなく実行時エラーになる
-			// https://trello.com/c/Rgjr3gFm
-			// 1.0.7で修正された
-			//      assertThatThrownBy(() -> {
-			//        testDsl(dslPath);
-			//      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("endsWith")
-			//          .hasStackTraceContaining("型");
+			assertThatThrownBy(() -> {
+				testDsl(dslPath);
+			}).isInstanceOf(DslParserException.class).hasStackTraceContaining("endsWith")
+					.hasStackTraceContaining("型");
 		}
 
 		@Nested
