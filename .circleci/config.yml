@@ -200,18 +200,6 @@ jobs:
       - check_update:
           dir: "fluxengine-integration-test"
       - install_java_auth_gcp
-      - run:
-          name: Check existing Dataflow job
-          command: |
-            gcloud dataflow jobs list --status=active | while read id name type creationDate creationTime state region
-            do
-            if [ $(echo $name | grep -e 'fluxenginedataflowprocessor-root-') ]
-            then
-            echo "Detected $id $name $type $creationDate $creationTime $state $region"
-            circleci step halt
-            exit 0
-            fi
-            done
       - attach_workspace:
           at: ~/state-engine
       - run:
@@ -255,12 +243,12 @@ jobs:
       - run:
           name: Stop previous jobs
           command: |
-            gcloud dataflow jobs list --status=active | while read id name type creationTime state region
+            gcloud dataflow jobs list --status=active | while read id name type creationDate creationTime state region
             do
             if [ $(echo $name | grep -e 'fluxenginedataflowprocessor-root-') ]
             then
-            echo "Stopping $id $name $type $creationTime $state $region"
-            gcloud dataflow jobs cancel $id
+            echo "Stopping $id $name $type $creationDate $creationTime $state $region"
+            gcloud dataflow jobs cancel $id --region=$region
             fi
             done
       - run:
@@ -270,11 +258,6 @@ jobs:
             chmod +x dataflow_job_publisher.sh
             ./dataflow_job_publisher.sh stream conf/dataflow_job_publisher_sample.env debug
             popd
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - state-engine
-            - fdsl-test
   test_dataflow:
     # Required environmental variables
     # GCLOUD_SERVICE_KEY: contents of JSON key file of service account
