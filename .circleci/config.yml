@@ -329,39 +329,39 @@ workflows:
           filters:
             branches:
               only:
-                - feature/integration_test # TODO will replace it with "master"
+                - master
       - test_fdsl:
           requires:
             - build_engine
           filters:
             branches:
               only:
-                - feature/integration_test # TODO will replace it with "master"
+                - master
   deploy_dsl_test:
     jobs:
       - build_engine:
           filters:
             branches:
               only:
-                - feature/integration_test # TODO will replace it with "master"
+                - master
       - deploy_dsl:
           requires:
             - build_engine
           filters:
             branches:
               only:
-                - feature/integration_test # TODO will replace it with "master"
+                - master
       - deploy_dataflow_job:
           requires:
             - deploy_dsl
           filters:
             branches:
               only:
-                - feature/integration_test # TODO will replace it with "master"
+                - master
       - test_dataflow:
           requires:
             - deploy_dataflow_job
           filters:
             branches:
               only:
-                - feature/integration_test # TODO will replace it with "master"
+                - master
