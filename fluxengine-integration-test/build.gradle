@@ -1,0 +1,36 @@
+plugins {
+    id 'java'
+}
+
+group 'jp.co.fluxengine'
+version '1.0.6'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+sourceSets {
+    main.resources {
+        srcDirs file('conf')
+    }
+}
+
+tasks.withType(AbstractCompile)*.options*.encoding = 'UTF-8'
+
+dependencies {
+    compile fileTree(dir: 'lib', include: '*.jar')
+    testCompile group: 'commons-io', name: 'commons-io', version: '2.6'
+    testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.4.2'
+    testRuntime group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.4.2'
+    testCompile 'org.assertj:assertj-core:3.12.2'
+    testCompile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.11.2'
+    testCompile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.11.2'
+}
+
+test {
+    useJUnitPlatform()
+    environment 'CONF', file('conf').absolutePath
+    jvmArgs = ["-Dlog4j.configuration=\"${file('conf/log4j2.xml').toURI().toString()}\""]
+}
