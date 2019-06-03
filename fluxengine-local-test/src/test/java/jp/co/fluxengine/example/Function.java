@@ -30,9 +30,6 @@ public class Function {
   @Test
   @DslPath("関数の返り値に関数適用")
   void multipleApply(String dslPath) {
-    // TODO 1.0.4ではパースエラーになる
-    // https://trello.com/c/v1KCGocl
-    // 1.0.7で修正された
-//    assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
+    assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
   }
 }
