@@ -18,22 +18,19 @@ public class Plugin {
   void wrongArgumentCount(String dslPath) {
     assertThatThrownBy(() -> {
       testDsl(dslPath);
-    }).isInstanceOf(DslParserException.class).hasMessageContaining("sum")
-        .hasMessageContaining("get")
-        .hasMessageContaining("数").hasMessageContaining("合わない");
+    }).isInstanceOf(DslParserException.class).hasMessageContaining("プラグイン")
+        .hasMessageContaining("パラメタ")
+        .hasMessageContaining("DSL定義").hasMessageContaining("個数").hasMessageContaining("合わない")
+        .hasMessageContaining("引数の数が異なる#sum").hasMessageContaining("定まりません");
   }
 
   @Test
   @DslPath("引数の型が異なる")
   void wrongArgumentType(String dslPath) {
-    // TODO 1.0.3では型が違うのにエラーにならない
-    // https://trello.com/c/q6gPKHne
-    // 1.0.7で修正された
-//    assertThatThrownBy(() -> {
-//      testDsl(dslPath);
-//    }).isInstanceOf(DslParserException.class).hasMessageContaining("concat")
-//        .hasMessageContaining("get")
-//        .hasMessageContaining("1");
+    assertThatThrownBy(() -> {
+      testDsl(dslPath);
+    }).isInstanceOf(DslParserException.class).hasMessageContaining("concat")
+        .hasMessageContaining("型");
   }
 
   @Test

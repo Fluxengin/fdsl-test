@@ -106,7 +106,9 @@ public class TypeValidation {
     void complexCondition() {
       assertThatThrownBy(() -> {
         testDsl("dsl/junit/01_パーサ/03_型の検証/bool/複雑な条件式");
-      }).isInstanceOf(DslParserException.class).hasMessageContaining("解析失敗");
+      }).isInstanceOf(DslParserException.class).hasMessageContaining("1 == 1 || 2 == 2 && 3 == 0")
+          .hasMessageContaining("解析できない").hasMessageContaining("複雑な条件式#b")
+          .hasMessageContaining("定まりません");
     }
 
     @Test
