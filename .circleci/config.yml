@@ -244,23 +244,18 @@ jobs:
           paths:
             - ~/.gradle
       - run:
-          name: Stop previous jobs
-          command: |
-            gcloud dataflow jobs list --status=active | while read id name type creationDate creationTime state region
-            do
-            if [ $(echo $name | grep -e 'fluxenginedataflowprocessor-root-') ]
-            then
-            echo "Stopping $id $name $type $creationDate $creationTime $state $region"
-            gcloud dataflow jobs cancel $id --region=$region
-            fi
-            done
-      - run:
           name: Register job
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test
             chmod +x dataflow_job_publisher.sh
-            ./dataflow_job_publisher.sh stream conf/dataflow_job_publisher_sample.env debug
+            ./dataflow_job_publisher.sh stream conf/dataflow_job_publisher_sample.env debug | tee temp_dataflow_job_register_output.txt
+            # Obtain deployed job ID in order to stop it later
+            grep 'Submitted job:' temp_dataflow_job_register_output.txt | awk '{print $3}' > ~/state-engine/dataflow_job_id.txt
             popd
+      - persist_to_workspace:
+          root: ~/state-engine
+          paths:
+            - .
   test_dataflow:
     # Required environmental variables
     # GCLOUD_SERVICE_KEY: contents of JSON key file of service account
@@ -321,6 +316,16 @@ jobs:
           when: always
       - store_artifacts:
           path: ~/fdsl-test/fluxengine-integration-test/build/reports/tests/test
+      - run:
+          name: Stop Dataflow job
+          command: |
+            while read dataflowJobId
+            do
+            dataflowJobLocation=`gcloud dataflow jobs show $dataflowJobId | grep 'location:' | awk '{print $2}'`
+            echo "Stopping $dataflowJobId"
+            gcloud dataflow jobs drain $dataflowJobId --region=$dataflowJobLocation
+            done < ~/state-engine/dataflow_job_id.txt
+          when: always
 workflows:
   version: 2
   test_fdsl:
@@ -329,39 +334,39 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - feature/integration_test
       - test_fdsl:
           requires:
             - build_engine
           filters:
             branches:
               only:
-                - master
+                - feature/integration_test
   deploy_dsl_test:
     jobs:
       - build_engine:
           filters:
             branches:
               only:
-                - master
+                - feature/integration_test
       - deploy_dsl:
           requires:
             - build_engine
           filters:
             branches:
               only:
-                - master
+                - feature/integration_test
       - deploy_dataflow_job:
           requires:
             - deploy_dsl
           filters:
             branches:
               only:
-                - master
+                - feature/integration_test
       - test_dataflow:
           requires:
             - deploy_dataflow_job
           filters:
             branches:
               only:
-                - master
+                - feature/integration_test
