@@ -321,9 +321,8 @@ jobs:
           command: |
             while read dataflowJobId
             do
-            dataflowJobLocation=`gcloud dataflow jobs show $dataflowJobId | grep 'location:' | awk '{print $2}'`
             echo "Stopping $dataflowJobId"
-            gcloud dataflow jobs drain $dataflowJobId --region=$dataflowJobLocation
+            gcloud dataflow jobs drain $dataflowJobId --region=asia-northeast1
             done < ~/state-engine/dataflow_job_id.txt
           when: always
 workflows:
