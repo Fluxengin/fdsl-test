@@ -1,16 +1,17 @@
 package jp.co.fluxengine.example;
 
-import static jp.co.fluxengine.apptest.TestUtils.*;
-import static org.assertj.core.api.Assertions.*;
-
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import static jp.co.fluxengine.apptest.TestUtils.testDsl;
+import static jp.co.fluxengine.apptest.TestUtils.testDslAndGetResults;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import jp.co.fluxengine.apptest.DslPath;
 import jp.co.fluxengine.apptest.DslPathResolver;
 import jp.co.fluxengine.apptest.TestResult;
 import jp.co.fluxengine.stateengine.exceptions.DslParserException;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(DslPathResolver.class)
 @DslPath("dsl/junit/01_パーサ/04_構文")
@@ -156,16 +157,36 @@ public class Syntax {
           .hasStackTraceContaining("型");
     }
 
-    @Test
+    @Nested
     @DslPath("存在しないメソッドの呼び出し")
-    void wrongMethod(String dslPath) {
-      // TODO 1.0.4では、パースエラーではなく実行時エラーになる
-      // https://trello.com/c/2nUlW0ka
-      // 1.0.7で修正された
-      //      assertThatThrownBy(() -> {
-      //        testDsl(dslPath);
-      //      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("contains")
-      //          .hasStackTraceContaining("n1");
+    class wrongMethod {
+
+      @Test
+      @DslPath("number#contains")
+      void numberContains(String dslPath) {
+        assertThatThrownBy(() -> {
+          testDsl(dslPath);
+        }).isInstanceOf(DslParserException.class).hasStackTraceContaining("contains")
+            .hasStackTraceContaining("n1");
+      }
+
+      @Test
+      @DslPath("number#startsWith")
+      void numberStartsWith(String dslPath) {
+        assertThatThrownBy(() -> {
+          testDsl(dslPath);
+        }).isInstanceOf(DslParserException.class).hasStackTraceContaining("startsWith")
+            .hasStackTraceContaining("n1");
+      }
+
+      @Test
+      @DslPath("string#append")
+      void stringAppend(String dslPath) {
+        assertThatThrownBy(() -> {
+          testDsl(dslPath);
+        }).isInstanceOf(DslParserException.class).hasStackTraceContaining("append")
+            .hasStackTraceContaining("s1");
+      }
     }
 
     @Test
@@ -194,23 +215,50 @@ public class Syntax {
     @Test
     @DslPath("不明な演算子")
     void unidentifiedOperator(String dslPath) {
-      // TODO 1.0.4では"%"が不明な識別子であることを特定しづらい
-      // https://trello.com/c/QmcuZonn
-      //      assertThatThrownBy(() -> {
-      //        testDsl(dslPath);
-      //      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("%")
-      //          .hasStackTraceContaining("不明な識別子");
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("%");
     }
 
-    @Test
+    @Nested
     @DslPath("書けない場所")
-    void forbidden(String dslPath) {
-      // TODO 1.0.4ではエラーメッセージが分かりづらい
-      // https://trello.com/c/DHVKKCPT
-      //      assertThatThrownBy(() -> {
-      //        testDsl(dslPath);
-      //      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
-      //          .hasStackTraceContaining("*").hasStackTraceContaining("不明");
+    class forbidden {
+
+      @Test
+      @DslPath("数値と文字列の乗算")
+      void NumberStringMultiplication(String dslPath) {
+        assertThatThrownBy(() -> {
+          testDsl(dslPath);
+        }).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
+            .hasStackTraceContaining("*");
+      }
+
+      @Test
+      @DslPath("文字列と数値の乗算")
+      void StringNumberMultiplication(String dslPath) {
+        assertThatThrownBy(() -> {
+          testDsl(dslPath);
+        }).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
+            .hasStackTraceContaining("*");
+      }
+
+      @Test
+      @DslPath("文字列の減算")
+      void StringSubtraction(String dslPath) {
+        assertThatThrownBy(() -> {
+          testDsl(dslPath);
+        }).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
+            .hasStackTraceContaining("-");
+      }
+
+      @Test
+      @DslPath("文字列の除算")
+      void Stringdivision(String dslPath) {
+        assertThatThrownBy(() -> {
+          testDsl(dslPath);
+        }).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
+            .hasStackTraceContaining("/");
+      }
     }
 
     @Nested
@@ -396,25 +444,19 @@ public class Syntax {
     @Test
     @DslPath("引数の数が多い")
     void tooMuchArguments(String dslPath) {
-      // TODO 1.0.4ではエラーメッセージが分かりづらい
-      // https://trello.com/c/Z8cD928O
-      // 1.0.7で修正された
-      //      assertThatThrownBy(() -> {
-      //        testDsl(dslPath);
-      //      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("round")
-      //          .hasStackTraceContaining("wrong number of arguments");
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("round")
+          .hasStackTraceContaining("合う関数が存在しない");
     }
 
     @Test
     @DslPath("引数の型が異なる")
     void wrongArgumentType(String dslPath) {
-      // TODO 1.0.4ではエラーが起きず実行できてしまったが問題ないか？
-      // https://trello.com/c/S7D1RA44
-      // 1.0.7で修正された
-      //      assertThatThrownBy(() -> {
-      //        testDsl(dslPath);
-      //      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("round")
-      //          .hasStackTraceContaining("wrong type");
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("round")
+          .hasStackTraceContaining("合う関数が存在しない");
     }
 
     @Test

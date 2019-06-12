@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import jp.co.fluxengine.apptest.DslPath;
 import jp.co.fluxengine.apptest.DslPathResolver;
 import jp.co.fluxengine.apptest.TestResult;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -27,9 +28,21 @@ public class Function {
 //    assertThat(testDslAndGetResults(dslPath)).hasSize(2).allMatch(TestResult::isSucceeded);
   }
 
-  @Test
+  @Nested
   @DslPath("関数の返り値に関数適用")
-  void multipleApply(String dslPath) {
-    assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
+  class multipleApply {
+
+    @Test
+    @DslPath("プラグイン")
+    void plugin(String dslPath) {
+      assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
+    }
+
+    @Test
+    @DslPath("組み込み関数")
+    void builtinFunction(String dslPath) {
+      assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
+    }
   }
+
 }

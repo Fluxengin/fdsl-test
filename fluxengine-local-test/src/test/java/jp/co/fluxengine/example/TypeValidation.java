@@ -131,11 +131,21 @@ public class TypeValidation {
   }
 
   @Nested
+  @DslPath("date")
   class Date {
 
     @Test
     void fromPlugin() {
       assertThat(testDslAndGetResults("dsl/junit/01_パーサ/03_型の検証/date/プラグインからの値の受け取り")).hasSize(1)
+          .allMatch(TestResult::isSucceeded);
+    }
+
+    @Test
+    @DslPath("日付リテラル")
+    void dateLiteral(String dslPath) {
+
+      assertThat(testDslAndGetResults(dslPath))
+          .hasSize(1)
           .allMatch(TestResult::isSucceeded);
     }
   }
@@ -183,12 +193,20 @@ public class TypeValidation {
     @Test
     @DslPath("宣言無しで使用")
     void missingDeclaration(String dslPath) {
-      // TODO 1.0.4ではエラーメッセージに"s1"が登場しないため、直すべき箇所が分かりづらい。
-      // https://trello.com/c/VusoKCX4
-//      assertThatThrownBy(() -> {
-//        testDsl(dslPath);
-//      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
-//          .hasStackTraceContaining("s2");
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
+          .hasStackTraceContaining("s2");
+    }
+
+    @Test
+    @DslPath("宣言無しで使用(複数)")
+    void missingDeclarationMultiple(String dslPath) {
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
+          .hasStackTraceContaining("t1")
+          .hasStackTraceContaining("s2");
     }
   }
 
@@ -199,12 +217,11 @@ public class TypeValidation {
     @Test
     @DslPath("宣言無しで使用")
     void missingDeclaration(String dslPath) {
-      // TODO 1.0.4ではエラーメッセージが分かりづらい。"evt"が登場せず、何を直すべきか分かりづらい。
-      // https://trello.com/c/EtcI8Gmy
-//      assertThatThrownBy(() -> {
-//        testDsl(dslPath);
-//      }).isInstanceOf(DslParserException.class);
-//      assertThat(getLog(dslPath)).anyMatch(line -> line.contains("evt") && line.contains("宣言"));
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("evt")
+          .hasStackTraceContaining("宣言");
+      // assertThat(getLog(dslPath)).anyMatch(line -> line.contains("evt") && line.contains("宣言"));
     }
   }
 
@@ -229,13 +246,10 @@ public class TypeValidation {
     @Test
     @DslPath("ダブルクオート忘れ")
     void missingDoubleQuote(String dslPath) {
-      // TODO 1.0.4ではエラーが起こらず実行できてしまう
-      // https://trello.com/c/G948JpeJ
-      // 1.0.7で修正された
-//      assertThatThrownBy(() -> {
-//        testDsl(dslPath);
-//      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
-//          .hasStackTraceContaining("abcdef").hasStackTraceContaining("定義されていません");
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("s1")
+          .hasStackTraceContaining("abcdef");
     }
 
     @Test
@@ -246,6 +260,16 @@ public class TypeValidation {
       }).isInstanceOf(DslParserException.class).hasStackTraceContaining("string s1")
           .hasStackTraceContaining("\"abcdef")
           .hasStackTraceContaining("while scanning a quoted scalar");
+    }
+
+    @Test
+    @DslPath("ダブルクオート非対応（開始なし）")
+    void missingStartDoubleQuote(String dslPath) {
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasMessageContaining("abcdef\"")
+          .hasMessageContaining("解析できないため")
+          .hasMessageContaining("「ダブルクオート非対応（開始なし）#s1」が定まりません");
     }
   }
 
@@ -259,6 +283,20 @@ public class TypeValidation {
       assertThat(testDslAndGetResults(dslPath))
           .hasSize(1)
           .allMatch(TestResult::isSucceeded);
+    }
+  }
+
+  @Nested
+  @DslPath("number")
+  class Number {
+
+    @Test
+    @DslPath("日付を設定")
+    void dateLiteral(String dslPath) {
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("n1")
+          .hasStackTraceContaining("2018/10/10");
     }
   }
 }
