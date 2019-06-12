@@ -1,6 +1,5 @@
 package jp.co.fluxengine.example;
 
-import static jp.co.fluxengine.apptest.TestUtils.getLog;
 import static jp.co.fluxengine.apptest.TestUtils.testDsl;
 import static jp.co.fluxengine.apptest.TestUtils.testDslAndGetResults;
 import static org.assertj.core.api.Assertions.anyOf;
@@ -29,7 +28,10 @@ public class TypeValidation {
     @Test
     @DslPath("数値と文字列")
     void numberAndString(String dslPath) {
-      assertThat(testDslAndGetResults(dslPath)).hasSize(2).allMatch(TestResult::isSucceeded);
+      assertThatThrownBy(() -> {
+        testDsl(dslPath);
+      }).isInstanceOf(DslParserException.class).hasMessageContaining("e1.ONE == \"1\"")
+          .hasStackTraceContaining("比較式に不同データ型を比較しています。");
     }
 
     @Test
