@@ -1,22 +1,13 @@
 apply plugin: 'java'
 apply plugin: 'eclipse'
-apply plugin: 'application'
 
 defaultTasks 'compileJava', 'cleanEclipse', 'eclipse'
 tasks.withType(AbstractCompile)*.options*.encoding = 'UTF-8'
 
-mainClassName = 'jp.co.fluxengine.stateengine.test.TestDsl'
-
 sourceSets {
   main.resources {
-    srcDirs files('conf')
+    srcDirs file('conf')
   }
-}
-
-run {
-    if (project.hasProperty('args')) {
-        args project.args.split('\\s+')
-    }
 }
 
 repositories {
@@ -31,9 +22,8 @@ dependencies {
 }
 
 test {
-    useJUnitPlatform {
-        includeEngines 'junit-jupiter'
-    }
+    useJUnitPlatform()
+    environment 'CONF', file('conf').absolutePath
     jvmArgs = ["-Dlog4j.configuration=\"${file('conf/log4j2.xml').toURI().toString()}\""]
 }
 

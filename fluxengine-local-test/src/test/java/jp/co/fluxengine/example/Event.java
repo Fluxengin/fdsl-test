@@ -28,7 +28,6 @@ public class Event {
   @Test
   @DslPath("mapにenum")
   void enumInMap(String dslPath) {
-    // 恐らくcomplexAttributeStructureと同じ自称
     assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
   }
 }
