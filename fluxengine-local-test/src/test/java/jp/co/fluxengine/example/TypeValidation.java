@@ -295,8 +295,7 @@ public class TypeValidation {
     void dateLiteral(String dslPath) {
       assertThatThrownBy(() -> {
         testDsl(dslPath);
-      }).isInstanceOf(DslParserException.class).hasStackTraceContaining("n1")
-          .hasStackTraceContaining("2018/10/10");
+      }).isInstanceOf(DslParserException.class).hasMessageContaining("「日付を設定#n1」に、date型の値は代入できません");
     }
   }
 }

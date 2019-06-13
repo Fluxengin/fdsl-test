@@ -295,21 +295,17 @@ public class Syntax {
       @Test
       @DslPath("関数を使用１")
       void useFunction1(String dslPath) {
-        // TODO 1.0.6ではパースエラーになる
-        // https://trello.com/c/GupVuYJf/
-//				assertThat(testDslAndGetResults(dslPath))
-//						.hasSize(1)
-//						.allMatch(TestResult::isSucceeded);
+        assertThat(testDslAndGetResults(dslPath))
+            .hasSize(1)
+            .allMatch(TestResult::isSucceeded);
       }
 
       @Test
       @DslPath("関数を使用２")
       void useFunction2(String dslPath) {
-        // TODO 1.0.6ではパースエラーになる
-        // https://trello.com/c/GOMv8gpz/
-        //				assertThat(testDslAndGetResults(dslPath))
-        //						.hasSize(1)
-        //						.allMatch(TestResult::isSucceeded);
+        assertThat(testDslAndGetResults(dslPath))
+            .hasSize(1)
+            .allMatch(TestResult::isSucceeded);
       }
 
 

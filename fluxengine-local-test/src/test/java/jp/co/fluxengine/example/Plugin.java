@@ -38,8 +38,8 @@ public class Plugin {
   void wrongResultType(String dslPath) {
     assertThatThrownBy(() -> {
       testDsl(dslPath);
-    }).isInstanceOf(DslParserException.class).hasMessageContaining("sum")
-        .hasMessageContaining("number").hasMessageContaining("String");
+    }).isInstanceOf(DslParserException.class)
+        .hasMessageContaining("「戻り値の型が異なる#sum」の型において、DSL「number」とJavaプラグイン「String」合わないです。");
   }
 
   @Test
