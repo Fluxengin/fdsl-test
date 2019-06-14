@@ -22,6 +22,8 @@ public class Persister {
   @Test
   @DslPath("複雑な属性")
   void complexAttributes(String dslPath) {
+    // TODO 1.0.7でエラー(デグレード)
+    // https://trello.com/c/qb4cmyri
     assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
   }
 

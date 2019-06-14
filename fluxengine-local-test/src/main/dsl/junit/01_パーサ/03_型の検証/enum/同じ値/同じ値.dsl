@@ -3,3 +3,7 @@ enum e:
     1: ONE
     2: TWO
     1: THREE
+
+map enumvalue:
+    two: e.TWO
+    three: e.three

@@ -6,7 +6,7 @@ FluxengineのエンジンやDSLのテストをすることができます。
 ビルドツール：gradle
 
 # Version
-Fluxengine 1.0.1
+Fluxengine 1.0.7
 
 # SetUp
 
@@ -19,7 +19,7 @@ gradlew build -x test
 # Usage
 テストDSLの実行
 
-1. 環境変数"CONF"に、confフォルダの絶対パスを設定する
+1. IDEからテストを実行する場合は、環境変数"CONF"に、confフォルダの絶対パスを設定する
 
 ```
     <キー> / <値>

@@ -26,7 +26,8 @@ public class SpaceTest {
     void beforeParethesis() {
       assertThatThrownBy(() -> {
         testDsl("dsl/junit/01_パーサ/01_スペースの使用/exportのテンプレート引数間/括弧の前にスペース");
-      }).isInstanceOf(DslParserException.class).hasMessageContaining("解析失敗");
+      }).isInstanceOf(DslParserException.class).hasMessageContaining("括弧の前にスペース#s ")
+          .hasMessageContaining("プラグイン").hasMessageContaining("見つかりませんでした");
     }
   }
 

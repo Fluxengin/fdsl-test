@@ -69,7 +69,8 @@ public class LoadingTest {
     void variantCrossImport() {
       assertThatThrownBy(() -> {
         testDsl("dsl/junit/01_パーサ/02_ローディング順/ファイル間/variant相互参照");
-      }).isInstanceOf(DslParserException.class).hasMessageContaining("無限ループ");
+      }).isInstanceOf(DslParserException.class).hasMessageContaining("n1")
+          .hasMessageContaining("n2").hasMessageContaining("定まりません");
     }
 
     @Test
