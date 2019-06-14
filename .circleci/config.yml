@@ -256,6 +256,10 @@ jobs:
             # Obtain deployed job ID in order to stop it later
             grep 'Submitted job:' temp_dataflow_job_register_output.txt | awk '{print $3}' > ~/state-engine/dataflow_job_id.txt
             popd
+      - persist_to_workspace:
+          root: ~/state-engine
+          paths:
+            - .
       - run:
           name: Deploy web service
           command: |
@@ -278,11 +282,6 @@ jobs:
             done
             mvn clean package appengine:deploy
             popd
-          background: true
-      - persist_to_workspace:
-          root: ~/state-engine
-          paths:
-            - .
   test_dataflow:
     # Required environmental variables
     # GCLOUD_SERVICE_KEY: contents of JSON key file of service account
