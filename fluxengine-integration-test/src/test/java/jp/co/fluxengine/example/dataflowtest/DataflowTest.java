@@ -48,8 +48,8 @@ public class DataflowTest {
         String projectId = System.getenv("PROJECT");
         RemoteRunner.setProjectId(projectId);
 
-        Properties envProps = loadProperties("/dataflow_job_publisher_sample.env");
-        topic = envProps.getProperty("FROM_TOPIC");
+        Properties envProps = loadProperties("/publisher.properties");
+        topic = envProps.getProperty("totopic");
 
         Properties persisterProps = loadProperties("/persisterDataStore.properties");
         persisterNamespace = persisterProps.getProperty("namespace");
@@ -79,7 +79,7 @@ public class DataflowTest {
         RemoteRunner.publishOneTime(inputJsonString, topic);
 
         // 処理完了を待つ
-        Thread.sleep(10000);
+        Thread.sleep(20000);
 
         // 結果のassertionを行う
         assertThat(getResultJson()).anySatisfy(json -> {
@@ -110,7 +110,7 @@ public class DataflowTest {
         readPublisher.publish();
 
         // 競合によるリトライが発生するので、長く待つ
-        Thread.sleep(30000);
+        Thread.sleep(50000);
 
         // パケット積算データが2600増えているはず
         assertThat(currentPacketUsage()).isEqualTo(usageBefore + 2600);
