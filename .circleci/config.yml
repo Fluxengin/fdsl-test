@@ -261,25 +261,46 @@ jobs:
           paths:
             - .
       - run:
-          name: Deploy web service
+          name: Install maven
           command: |
             mkdir ~/maven
             pushd ~/maven
             wget https://www-us.apache.org/dist/maven/maven-3/3.6.1/binaries/apache-maven-3.6.1-bin.tar.gz
             tar xzvf apache-maven-3.6.1-bin.tar.gz
-            export PATH=$PATH:`pwd`/apache-maven-3.6.1/bin
+            echo 'export PATH=$PATH:~/maven/apache-maven-3.6.1/bin' >> $BASH_ENV
             popd
+      - run:
+          name: Delete source files to deploy web service
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test/src
+            rm -rf test
+            rm -rf main/dsl
+            rm -rf main/java
+            popd
+      - run:
+          name: Copy jar
+          command: |
             pushd ~/fdsl-test/fluxengine-integration-test
             mkdir src/main/webapp/WEB-INF/lib
             cp -f build/libs/fluxengine-integration-test-*.jar ~/state-engine/fluxengine-web-service/target/fluxengine-web-service-*.jar src/main/webapp/WEB-INF/lib/
             diff -q build/libs/fluxengine-integration-test-*.jar src/main/webapp/WEB-INF/lib/fluxengine-integration-test-*.jar
             diff -q ~/state-engine/fluxengine-web-service/target/fluxengine-web-service-*.jar src/main/webapp/WEB-INF/lib/fluxengine-web-service-*.jar
+            popd
+      - run:
+          name: Copy conf files
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test
             mkdir src/main/resources
             for confFile in dslDataStore dslLoader effectorDataStore persisterDataStore variant_cache
             do
             cp -f conf/${confFile}.properties src/main/resources/
             diff -q conf/${confFile}.properties src/main/resources/${confFile}.properties
             done
+            popd
+      - run:
+          name: Deploy web service
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test
             mvn clean package appengine:deploy
             popd
   test_dataflow:
