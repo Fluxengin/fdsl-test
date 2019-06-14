@@ -201,7 +201,7 @@ jobs:
     # TOPIC: Pub/Sub topic name to use for deployment
     # SUBSCRIPTION: Pub/Sub subscription name for dataflow to use for deployment
     docker:
-      - image: google/cloud-sdk:latest
+      - image: google/cloud-sdk:alpine
     working_directory: ~/fdsl-test
     steps:
       - check_update:
@@ -259,6 +259,12 @@ jobs:
       - run:
           name: Deploy web service
           command: |
+            mkdir ~/maven
+            pushd ~/maven
+            wget https://www-us.apache.org/dist/maven/maven-3/3.6.1/binaries/apache-maven-3.6.1-bin.tar.gz
+            tar xzvf apache-maven-3.6.1-bin.tar.gz
+            export PATH=$PATH:`pwd`/apache-maven-3.6.1/bin
+            popd
             pushd ~/fdsl-test/fluxengine-integration-test
             mkdir src/main/webapp/WEB-INF/lib
             cp -f build/libs/fluxengine-integration-test-*.jar ~/state-engine/fluxengine-web-service/target/fluxengine-web-service-*.jar src/main/webapp/WEB-INF/lib/
