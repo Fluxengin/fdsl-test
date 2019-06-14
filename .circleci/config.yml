@@ -45,7 +45,7 @@ jobs:
             mkdir ~/.ssh
             echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
             pushd ~/
-            git clone git@github.com:Fluxengin/state-engine.git
+            git clone -b ver1.0.7-stateengine git@github.com:Fluxengin/state-engine.git
             popd
       - restore_cache:
           keys:
@@ -199,6 +199,7 @@ jobs:
     # PROJECT: GCP project name to deploy
     # BUCKET: Storage bucket name to use for deployment
     # TOPIC: Pub/Sub topic name to use for deployment
+    # SUBSCRIPTION: Pub/Sub subscription name for dataflow to use for deployment
     docker:
       - image: google/cloud-sdk:alpine
     working_directory: ~/fdsl-test
@@ -215,9 +216,9 @@ jobs:
             sed -i -e "s/\[YOUR_BUCKET_NAME\]/${BUCKET}/g" dataflow_job_publisher_sample.env
             sed -i -e "s/\[PROJECT\]/${PROJECT}/g" dataflow_job_publisher_sample.env
             sed -i -e "s/\[YOUR_SUBSCRIPTION_NAME\]/${SUBSCRIPTION}/g" dataflow_job_publisher_sample.env
-            for confFile in dslDataStore.properties effectorDataStore.properties illegalEventDataStore.properties persisterDataStore.properties
+            for confFile in dslDataStore effectorDataStore illegalEventDataStore persisterDataStore
             do
-            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" $confFile
+            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" ${confFile}.properties
             done
             popd
       - run:
@@ -258,6 +259,23 @@ jobs:
             # Obtain deployed job ID in order to stop it later
             grep 'Submitted job:' temp_dataflow_job_register_output.txt | awk '{print $3}' > ~/state-engine/dataflow_job_id.txt
             popd
+      - run:
+          name: Deploy web service
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test
+            mkdir src/main/webapp/WEB-INF/lib
+            cp -f build/libs/fluxengine-integration-test-*.jar ~/state-engine/fluxengine-web-service/target/fluxengine-web-service-*.jar src/main/webapp/WEB-INF/lib/
+            diff -q build/libs/fluxengine-integration-test-*.jar src/main/webapp/WEB-INF/lib/fluxengine-integration-test-*.jar
+            diff -q ~/state-engine/fluxengine-web-service/target/fluxengine-web-service-*.jar src/main/webapp/WEB-INF/lib/fluxengine-web-service-*.jar
+            mkdir src/main/resources
+            for confFile in dslDataStore dslLoader effectorDataStore persisterDataStore variant_cache
+            do
+            cp -f conf/${confFile}.properties src/main/resources/
+            diff -q conf/${confFile}.properties src/main/resources/${confFile}.properties
+            done
+            mvn clean package appengine:deploy
+            popd
+          background: true
       - persist_to_workspace:
           root: ~/state-engine
           paths:
@@ -268,6 +286,7 @@ jobs:
     # PROJECT: GCP project name to deploy
     # BUCKET: Storage bucket name to use for deployment
     # TOPIC: Pub/Sub topic name to use for deployment
+    # SUBSCRIPTION: Pub/Sub subscription name for dataflow to use for deployment
     docker:
       - image: google/cloud-sdk:alpine
     working_directory: ~/fdsl-test
@@ -332,6 +351,21 @@ jobs:
             gcloud dataflow jobs drain $dataflowJobId --region=asia-northeast1
             done < ~/state-engine/dataflow_job_id.txt
           when: always
+  test_web_service:
+    docker:
+      - image: google/cloud-sdk:alpine
+    working_directory: ~/fdsl-test
+    steps:
+      - check_update:
+          dir: "fluxengine-integration-test"
+      - run:
+          name: Post event
+          command: |
+            mkdir ~/curl
+            curl -H 'Content-Type:application/json' -d '[{"eventName":"パケットイベント","namespace":"event/パケットイベント","createTime":null,"property":{"端末ID":"C01","日時":"2018/11/10 00:00:01","使用量":500}}]' https://${PROJECT}.appspot.com/fluxengine-web/event | tee ~/curl/result.json
+            grep SUCCEED ~/curl/result.json
+      - store_artifacts:
+          path: ~/curl
 workflows:
   version: 2
   test_fdsl:
@@ -341,6 +375,7 @@ workflows:
             branches:
               only:
                 - master
+                - feature/1.0.7_sample_test
       - test_fdsl:
           requires:
             - build_engine
@@ -348,6 +383,7 @@ workflows:
             branches:
               only:
                 - master
+                - feature/1.0.7_sample_test
   deploy_dsl_test:
     jobs:
       - build_engine:
@@ -355,6 +391,7 @@ workflows:
             branches:
               only:
                 - master
+                - feature/1.0.7_sample_test
       - deploy_dsl:
           requires:
             - build_engine
@@ -362,6 +399,7 @@ workflows:
             branches:
               only:
                 - master
+                - feature/1.0.7_sample_test
       - deploy_dataflow_job:
           requires:
             - deploy_dsl
@@ -369,6 +407,7 @@ workflows:
             branches:
               only:
                 - master
+                - feature/1.0.7_sample_test
       - test_dataflow:
           requires:
             - deploy_dataflow_job
@@ -376,3 +415,12 @@ workflows:
             branches:
               only:
                 - master
+                - feature/1.0.7_sample_test
+      - test_web_service:
+          requires:
+            - test_dataflow
+          filters:
+            branches:
+              only:
+                - master
+                - feature/1.0.7_sample_test
