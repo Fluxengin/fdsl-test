@@ -201,7 +201,7 @@ jobs:
     # TOPIC: Pub/Sub topic name to use for deployment
     # SUBSCRIPTION: Pub/Sub subscription name for dataflow to use for deployment
     docker:
-      - image: google/cloud-sdk:alpine
+      - image: google/cloud-sdk:latest
     working_directory: ~/fdsl-test
     steps:
       - check_update:
@@ -226,11 +226,8 @@ jobs:
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test/lib
             rm -f fluxengine-*.jar
-            for projectDir in local-test-runner remote-test-runner event-publisher dataflow
-            do
-            cp -f ~/state-engine/fluxengine-${projectDir}/target/fluxengine-${projectDir}-*.jar ./
-            diff -q ~/state-engine/fluxengine-${projectDir}/target/fluxengine-${projectDir}-*.jar fluxengine-${projectDir}-*.jar
-            done
+            cp -f ~/state-engine/fluxengine-dataflow/target/fluxengine-dataflow-*.jar ./
+            diff -q ~/state-engine/fluxengine-dataflow/target/fluxengine-dataflow-*.jar fluxengine-dataflow-*.jar
             popd
       - restore_cache:
           keys:
