@@ -10,7 +10,13 @@ commands:
       - run:
           name: Skip job if no update under the directory
           command: |
-            DIFF_FILES=`git diff HEAD^ HEAD --name-only --relative=<< parameters.dir >> | wc -l`
+            if [ $CURRENT_BRANCH = "master" ]
+            then
+            DIFF_TARGET="HEAD^ HEAD"
+            else
+            DIFF_TARGET="origin/master"
+            fi
+            DIFF_FILES=`git diff ${DIFF_TARGET} --name-only --relative=<< parameters.dir >> | wc -l`
             if [ $DIFF_FILES -eq 0 ]
             then
             echo "There is no update under << parameters.dir >>"
