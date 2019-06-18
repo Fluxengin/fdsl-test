@@ -97,11 +97,9 @@ public class DataflowTest {
 
         // 結果のassertionを行う
         assertThat(getResultJson()).anySatisfy(json -> {
-            assertThat(json.get("id").asText()).isEqualTo("[uid12345, persister/パケット積算データ#パケット積算データ]");
-            assertThat(json.get("value").get("使用量").asDouble()).isEqualTo(usageBefore + 500);
-        }).anySatisfy(json -> {
-            assertThat(json.get("id").asText()).isEqualTo("[uid12345, rule/パケット積算#状態遷移]");
-            assertThat(json.get("value").get("currentState").asText()).isEqualTo("s2");
+            assertThat(json.get("id").asText()).isEqualTo("[uid12345]");
+            assertThat(json.get("value").get("persister/パケット積算データ#パケット積算データ").get("value").get("使用量").asDouble()).isEqualTo(usageBefore + 500);
+            assertThat(json.get("value").get("rule/パケット積算#状態遷移").get("value").get("currentState").asText()).isEqualTo("s2");
         });
     }
 
@@ -141,9 +139,10 @@ public class DataflowTest {
         return Arrays.stream(getResultJson()).filter(json -> {
             JsonNode id = json.get("id");
             JsonNode lifetime = json.get("lifetime");
-            return id != null && id.asText().equals("[uid12345, persister/パケット積算データ#パケット積算データ]")
+            return id != null && id.asText().equals("[uid12345]")
                     && lifetime != null && lifetime.asText().equals(todayString);
-        }).map(json -> json.get("value").get("使用量").asDouble()).findFirst().orElse(0.0);
+        }).map(json -> json.get("value").get("persister/パケット積算データ#パケット積算データ").get("value").get("使用量").asDouble())
+                .findFirst().orElse(0.0);
     }
 
     private static JsonNode[] getResultJson() throws Exception {
