@@ -88,8 +88,8 @@ jobs:
       - run:
           name: Replace test runner
           command: |
-            rm -f fluxengine-local-test/lib/fluxengine-local-test-runner-*.jar
-            cp -f ~/state-engine/fluxengine-local-test-runner/target/fluxengine-local-test-runner-*.jar fluxengine-local-test/lib/
+            rm -f ~/fdsl-test/fluxengine-local-test/lib/fluxengine-local-test-runner-*.jar
+            cp -f ~/state-engine/fluxengine-local-test-runner/target/fluxengine-local-test-runner-*.jar ~/fdsl-test/fluxengine-local-test/lib/
             diff -q ~/state-engine/fluxengine-local-test-runner/target/fluxengine-local-test-runner-*.jar fluxengine-local-test/lib/fluxengine-local-test-runner-*.jar
       - restore_cache:
           keys:
@@ -99,7 +99,7 @@ jobs:
       - run:
           name: Build test
           command: |
-            pushd fluxengine-local-test
+            pushd ~/fdsl-test/fluxengine-local-test
             chmod +x gradlew
             ./gradlew build -x test
             popd
@@ -110,12 +110,16 @@ jobs:
       - run:
           name: Run test
           command: |
-            pushd fluxengine-local-test
+            pushd ~/fdsl-test/fluxengine-local-test
             export CONF=`pwd`/conf/
             ./gradlew test
             popd
+      - run:
+          name: Copy log file
+          command: cp -f ~/fdsl-test/fluxengine-local-test/debug.log ~/fdsl-test/fluxengine-local-test/build/reports/tests/test/
+          when: always
       - store_artifacts:
-          path: fluxengine-local-test/build/reports/tests/test
+          path: ~/fdsl-test/fluxengine-local-test/build/reports/tests/test
   deploy_dsl:
     # Required environmental variables
     # GCLOUD_SERVICE_KEY: contents of JSON key file of service account
@@ -133,7 +137,7 @@ jobs:
       - run:
           name: Replace jar
           command: |
-            pushd fluxengine-integration-test/lib
+            pushd ~/fdsl-test/fluxengine-integration-test/lib
             rm -f fluxengine-*.jar
             for projectDir in local-test-runner remote-test-runner event-publisher
             do
@@ -149,9 +153,9 @@ jobs:
       - run:
           name: Build integration test
           command: |
-            pushd fluxengine-integration-test
+            pushd ~/fdsl-test/fluxengine-integration-test
             chmod +x gradlew
-            ./gradlew build -x test # TODO remove "-x test" when fixed https://trello.com/c/yZcav5AD
+            ./gradlew build
             popd
       - save_cache:
           key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
@@ -160,18 +164,18 @@ jobs:
       - run:
           name: Edit conf
           command: |
-            pushd fluxengine-integration-test/conf
+            pushd ~/fdsl-test/fluxengine-integration-test/conf
             sed -i -e "s/\[PROJECT\]/${PROJECT}/g" dslDataStore.properties
             echo $FLUXENGINE_LICENSE_ENCODED | base64 -d > license.lic
             popd
       - run:
           name: Move DSL
           command: |
-            mv -f fluxengine-integration-test/src/main/dsl fluxengine-integration-test/
+            mv -f ~/fdsl-test/fluxengine-integration-test/src/main/dsl ~/fdsl-test/fluxengine-integration-test/
       - run:
           name: Copy jar
           command: |
-            pushd fluxengine-integration-test/lib
+            pushd ~/fdsl-test/fluxengine-integration-test/lib
             # Copy integration test jar
             cp -f ../build/libs/fluxengine-integration-test-*.jar ./
             diff -q ../build/libs/fluxengine-integration-test-*.jar fluxengine-integration-test-*.jar
@@ -188,7 +192,7 @@ jobs:
       - run:
           name: Register DSL
           command: |
-            pushd fluxengine-integration-test
+            pushd ~/fdsl-test/fluxengine-integration-test
             cp -f ~/state-engine/fluxengine-dsl-register/tools/gcp/regisdsl.sh ./
             diff -q ~/state-engine/fluxengine-dsl-register/tools/gcp/regisdsl.sh regisdsl.sh
             chmod +x regisdsl.sh

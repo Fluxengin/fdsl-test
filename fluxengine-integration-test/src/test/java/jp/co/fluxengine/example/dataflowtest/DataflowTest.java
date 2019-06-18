@@ -3,9 +3,6 @@ package jp.co.fluxengine.example.dataflowtest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jp.co.fluxengine.example.plugin.read.DailyDataReader;
-import jp.co.fluxengine.publisher.CsvPublisher;
-import jp.co.fluxengine.publisher.JsonPublisher;
-import jp.co.fluxengine.publisher.ReadPublisher;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
@@ -53,6 +50,7 @@ public class DataflowTest {
                 .filter(file -> file.getName().matches("fluxengine-remote-test-runner-.+\\.jar"))
                 .findAny().orElseThrow(() -> new RuntimeException("lib/fluxengine-remote-test-runner-*.jar が見つかりませんでした"));
         URLClassLoader remoteTestRunnerLoader = new URLClassLoader(new URL[]{new File("lib/fluxengine-remote-test-runner-1.0.7.jar").toURI().toURL()});
+        Class.forName("com.google.api.gax.core.GaxProperties", true, remoteTestRunnerLoader);
         remoteRunnerClass = remoteTestRunnerLoader.loadClass("jp.co.fluxengine.remote.test.RemoteRunner");
         cloudStoreSelecterClass = remoteTestRunnerLoader.loadClass("jp.co.fluxengine.remote.test.CloudStoreSelecter");
 
@@ -106,18 +104,24 @@ public class DataflowTest {
         // persisterの現在の値を取得する
         double usageBefore = currentPacketUsage();
 
+        URLClassLoader eventPublisherLoader = new URLClassLoader(new URL[]{new File("lib/fluxengine-remote-test-runner-1.0.7.jar").toURI().toURL()});
+
         // EventPublisherを使ってテストデータをDataflowのジョブに流す
-        CsvPublisher csvPublisher = new CsvPublisher("input/event.csv");
-        csvPublisher.publish();
+        Class<?> csvPublisherClass = eventPublisherLoader.loadClass("jp.co.fluxengine.publisher.CsvPublisher");
+        Object csvPublisher = csvPublisherClass.getConstructor(String.class).newInstance("input/event.csv");
+        csvPublisherClass.getMethod("publish").invoke(csvPublisher);
 
         String eventJson = "[{\"eventName\":\"パケットイベント\", \"namespace\":\"event/パケットイベント\", \"createTime\":null, \"property\":{\"端末ID\":\"C01\",\"日時\":\"2018/11/10 00:00:01\",\"使用量\":500}}] ";
-        JsonPublisher jsonPublisher = new JsonPublisher(eventJson);
-        jsonPublisher.publish();
+        Class<?> jsonPublisherClass = eventPublisherLoader.loadClass("jp.co.fluxengine.publisher.JsonPublisher");
+        Object jsonPublisher = jsonPublisherClass.getConstructor(String.class).newInstance(eventJson);
+        jsonPublisherClass.getMethod("publish").invoke(jsonPublisher);
+
 
         Class<?> readClazz = DailyDataReader.class;
         Method method = readClazz.getMethod("getList", String.class);
-        ReadPublisher readPublisher = new ReadPublisher("event/パケットイベント", "パケットイベント", readClazz, method, new Object[]{"C01"});
-        readPublisher.publish();
+        Class<?> readPublisherClass = eventPublisherLoader.loadClass("jp.co.fluxengine.publisher.ReadPublisher");
+        Object readPublisher = readPublisherClass.getConstructor(String.class, String.class, Class.class, Method.class, Object[].class).newInstance("event/パケットイベント", "パケットイベント", readClazz, method, new Object[]{"C01"});
+        readPublisherClass.getMethod("publish").invoke(readPublisher);
 
         // 競合によるリトライが発生するので、長く待つ
         Thread.sleep(50000);
