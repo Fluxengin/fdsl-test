@@ -196,8 +196,8 @@ jobs:
             cp -f ~/state-engine/fluxengine-dsl-register/tools/gcp/regisdsl.sh ./
             diff -q ~/state-engine/fluxengine-dsl-register/tools/gcp/regisdsl.sh regisdsl.sh
             chmod +x regisdsl.sh
-            mkdir out
-            mkdir log
+            mkdir -p out
+            mkdir -p log
             VERSION=`ls lib/fluxengine-core-*.jar | sed -e 's/^.*fluxengine-core-\([0-9]\+\).*\.jar/\1/'`
             EFFECTIVE_DATE=`date +"%Y%m%d"`
             # Run regisdsl with classpath of fluxengine-dsl-register because fluxengine-dsl-register requires GCP related jars but it's not a fat jar
@@ -291,7 +291,7 @@ jobs:
           name: Copy jar
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test
-            mkdir src/main/webapp/WEB-INF/lib
+            mkdir -p src/main/webapp/WEB-INF/lib
             cp -f build/libs/fluxengine-integration-test-*.jar ~/state-engine/fluxengine-web-service/target/fluxengine-web-service-*.jar src/main/webapp/WEB-INF/lib/
             diff -q build/libs/fluxengine-integration-test-*.jar src/main/webapp/WEB-INF/lib/fluxengine-integration-test-*.jar
             diff -q ~/state-engine/fluxengine-web-service/target/fluxengine-web-service-*.jar src/main/webapp/WEB-INF/lib/fluxengine-web-service-*.jar
@@ -300,7 +300,7 @@ jobs:
           name: Copy conf files
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test
-            mkdir src/main/resources
+            mkdir -p src/main/resources
             for confFile in dslDataStore dslLoader effectorDataStore persisterDataStore variant_cache
             do
             cp -f conf/${confFile}.properties src/main/resources/
