@@ -236,8 +236,11 @@ jobs:
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test/lib
             rm -f fluxengine-*.jar
-            cp -f ~/state-engine/fluxengine-dataflow/target/fluxengine-dataflow-*.jar ./
-            diff -q ~/state-engine/fluxengine-dataflow/target/fluxengine-dataflow-*.jar fluxengine-dataflow-*.jar
+            for libname in local-test-runner dataflow
+            do
+            cp -f ~/state-engine/fluxengine-${libname}/target/fluxengine-${libname}-*.jar ./
+            diff -q ~/state-engine/fluxengine-${libname}/target/fluxengine-${libname}-*.jar fluxengine-${libname}-*.jar
+            done
             popd
       - restore_cache:
           keys:
