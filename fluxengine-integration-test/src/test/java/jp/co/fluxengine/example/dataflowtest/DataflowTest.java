@@ -90,7 +90,7 @@ public class DataflowTest {
         String inputJsonString = IOUtils.toString(resourceURL, "UTF-8");
         LOG.debug("input = " + inputJsonString);
 
-        remoteRunnerClass.getDeclaredMethod("publishOneTime", String.class, String.class).invoke(inputJsonString, topic);
+        remoteRunnerClass.getDeclaredMethod("publishOneTime", String.class, String.class).invoke(null, inputJsonString, topic);
 
         // 処理完了を待つ
         Thread.sleep(20000);
