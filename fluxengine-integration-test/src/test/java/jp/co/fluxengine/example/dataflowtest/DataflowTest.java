@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
@@ -46,11 +47,8 @@ public class DataflowTest {
     static void setup() throws Exception {
         String projectId = System.getenv("PROJECT");
 
-        Arrays.stream(new File("lib").listFiles())
-                .filter(file -> file.getName().matches("fluxengine-remote-test-runner-.+\\.jar"))
-                .findAny().orElseThrow(() -> new RuntimeException("lib/fluxengine-remote-test-runner-*.jar が見つかりませんでした"));
-        URLClassLoader remoteTestRunnerLoader = new URLClassLoader(new URL[]{new File("lib/fluxengine-remote-test-runner-1.0.7.jar").toURI().toURL()});
-        Class.forName("com.google.api.gax.core.GaxProperties", true, remoteTestRunnerLoader);
+        ClassLoader remoteTestRunnerLoader = getClassLoaderFromLib("fluxengine-remote-test-runner-.+\\.jar");
+
         remoteRunnerClass = remoteTestRunnerLoader.loadClass("jp.co.fluxengine.remote.test.RemoteRunner");
         cloudStoreSelecterClass = remoteTestRunnerLoader.loadClass("jp.co.fluxengine.remote.test.CloudStoreSelecter");
 
@@ -72,6 +70,14 @@ public class DataflowTest {
             props.load(in);
             return props;
         }
+    }
+
+    private static ClassLoader getClassLoaderFromLib(String jarNameRegex) throws MalformedURLException {
+        File jarFile = Arrays.stream(new File("lib").listFiles())
+                .filter(file -> file.getName().matches(jarNameRegex))
+                .findAny()
+                .orElseThrow(() -> new RuntimeException(jarNameRegex + " にマッチするjarが見つかりませんでした"));
+        return new URLClassLoader(new URL[]{jarFile.toURI().toURL()});
     }
 
     @Test
@@ -104,7 +110,7 @@ public class DataflowTest {
         // persisterの現在の値を取得する
         double usageBefore = currentPacketUsage();
 
-        URLClassLoader eventPublisherLoader = new URLClassLoader(new URL[]{new File("lib/fluxengine-remote-test-runner-1.0.7.jar").toURI().toURL()});
+        ClassLoader eventPublisherLoader = getClassLoaderFromLib("fluxengine-event-publisher-.+\\.jar");
 
         // EventPublisherを使ってテストデータをDataflowのジョブに流す
         Class<?> csvPublisherClass = eventPublisherLoader.loadClass("jp.co.fluxengine.publisher.CsvPublisher");
