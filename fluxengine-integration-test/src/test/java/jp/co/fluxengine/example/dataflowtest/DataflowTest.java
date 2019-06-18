@@ -6,8 +6,6 @@ import jp.co.fluxengine.example.plugin.read.DailyDataReader;
 import jp.co.fluxengine.publisher.CsvPublisher;
 import jp.co.fluxengine.publisher.JsonPublisher;
 import jp.co.fluxengine.publisher.ReadPublisher;
-import jp.co.fluxengine.remote.test.CloudStoreSelecter;
-import jp.co.fluxengine.remote.test.RemoteRunner;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
@@ -21,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -43,10 +42,21 @@ public class DataflowTest {
     private static String persisterNamespace;
     private static String persisterKind;
 
+    private static Class<?> remoteRunnerClass;
+    private static Class<?> cloudStoreSelecterClass;
+
     @BeforeAll
-    static void setup() throws IOException {
+    static void setup() throws Exception {
         String projectId = System.getenv("PROJECT");
-        RemoteRunner.setProjectId(projectId);
+
+        Arrays.stream(new File("lib").listFiles())
+                .filter(file -> file.getName().matches("fluxengine-remote-test-runner-.+\\.jar"))
+                .findAny().orElseThrow(() -> new RuntimeException("lib/fluxengine-remote-test-runner-*.jar が見つかりませんでした"));
+        URLClassLoader remoteTestRunnerLoader = new URLClassLoader(new URL[]{new File("lib/fluxengine-remote-test-runner-1.0.7.jar").toURI().toURL()});
+        remoteRunnerClass = remoteTestRunnerLoader.loadClass("jp.co.fluxengine.remote.test.RemoteRunner");
+        cloudStoreSelecterClass = remoteTestRunnerLoader.loadClass("jp.co.fluxengine.remote.test.CloudStoreSelecter");
+
+        remoteRunnerClass.getDeclaredMethod("setProjectId", String.class).invoke(null, projectId);
 
         Properties envProps = loadProperties("/publisher.properties");
         topic = envProps.getProperty("totopic");
@@ -67,7 +77,7 @@ public class DataflowTest {
     }
 
     @Test
-    void testDataflow() throws IOException, InterruptedException {
+    void testDataflow() throws Exception {
         // persisterの現在の値を取得する
         double usageBefore = currentPacketUsage();
 
@@ -76,7 +86,7 @@ public class DataflowTest {
         String inputJsonString = IOUtils.toString(resourceURL, "UTF-8");
         LOG.debug("input = " + inputJsonString);
 
-        RemoteRunner.publishOneTime(inputJsonString, topic);
+        remoteRunnerClass.getDeclaredMethod("publishOneTime", String.class, String.class).invoke(inputJsonString, topic);
 
         // 処理完了を待つ
         Thread.sleep(20000);
@@ -92,7 +102,7 @@ public class DataflowTest {
     }
 
     @Test
-    void testEventPublisherAndTransaction() throws IOException, NoSuchMethodException, InterruptedException {
+    void testEventPublisherAndTransaction() throws Exception {
         // persisterの現在の値を取得する
         double usageBefore = currentPacketUsage();
 
@@ -116,7 +126,7 @@ public class DataflowTest {
         assertThat(currentPacketUsage()).isEqualTo(usageBefore + 2600);
     }
 
-    private static double currentPacketUsage() throws IOException {
+    private static double currentPacketUsage() throws Exception {
         String todayString = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDate.now());
         return Arrays.stream(getResultJson()).filter(json -> {
             JsonNode id = json.get("id");
@@ -126,11 +136,14 @@ public class DataflowTest {
         }).map(json -> json.get("value").get("使用量").asDouble()).findFirst().orElse(0.0);
     }
 
-    private static JsonNode[] getResultJson() throws IOException {
+    private static JsonNode[] getResultJson() throws Exception {
         File resultFile = File.createTempFile("persister", ".txt");
 
-        CloudStoreSelecter persister = new CloudStoreSelecter(persisterNamespace, persisterKind);
-        persister.exportEntityDataToFile(resultFile.getAbsolutePath());
+        // CloudStoreSelecterはexportEntityDataToFileを呼ぶたびにインスタンス内に結果を蓄積する
+        // このテストでは毎回現在の状態のみが欲しいので
+        // 呼ばれるごとにインスタンスを作成する
+        Object cloudStoreSelecter = cloudStoreSelecterClass.getConstructor(String.class, String.class).newInstance(persisterNamespace, persisterKind);
+        cloudStoreSelecterClass.getDeclaredMethod("exportEntityDataToFile", String.class).invoke(cloudStoreSelecter, resultFile.getAbsolutePath());
 
         String resultJsonString =
                 "[" + FileUtils
