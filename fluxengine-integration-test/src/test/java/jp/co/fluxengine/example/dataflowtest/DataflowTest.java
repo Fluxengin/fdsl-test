@@ -3,8 +3,6 @@ package jp.co.fluxengine.example.dataflowtest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jp.co.fluxengine.example.plugin.read.DailyDataReader;
-import jp.co.fluxengine.remote.test.CloudStoreSelecter;
-import jp.co.fluxengine.remote.test.RemoteRunner;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
@@ -41,11 +39,22 @@ public class DataflowTest {
     private static String persisterNamespace;
     private static String persisterKind;
 
+    private static Class<?> remoteRunnerClass;
+    private static Class<?> cloudStoreSelecterClass;
+
     @BeforeAll
     static void setup() throws Exception {
         String projectId = System.getenv("PROJECT");
 
-        RemoteRunner.setProjectId(projectId);
+        Arrays.stream(new File("lib").listFiles())
+                .filter(file -> file.getName().matches("fluxengine-remote-test-runner-.+\\.jar"))
+                .findAny().orElseThrow(() -> new RuntimeException("lib/fluxengine-remote-test-runner-*.jar が見つかりませんでした"));
+        URLClassLoader remoteTestRunnerLoader = new URLClassLoader(new URL[]{new File("lib/fluxengine-remote-test-runner-1.0.7.jar").toURI().toURL()});
+        Class.forName("com.google.api.gax.core.GaxProperties", true, remoteTestRunnerLoader);
+        remoteRunnerClass = remoteTestRunnerLoader.loadClass("jp.co.fluxengine.remote.test.RemoteRunner");
+        cloudStoreSelecterClass = remoteTestRunnerLoader.loadClass("jp.co.fluxengine.remote.test.CloudStoreSelecter");
+
+        remoteRunnerClass.getDeclaredMethod("setProjectId", String.class).invoke(null, projectId);
 
         Properties envProps = loadProperties("/publisher.properties");
         topic = envProps.getProperty("totopic");
@@ -75,7 +84,7 @@ public class DataflowTest {
         String inputJsonString = IOUtils.toString(resourceURL, "UTF-8");
         LOG.debug("input = " + inputJsonString);
 
-        RemoteRunner.publishOneTime(inputJsonString, topic);
+        remoteRunnerClass.getDeclaredMethod("publishOneTime", String.class, String.class).invoke(inputJsonString, topic);
 
         // 処理完了を待つ
         Thread.sleep(20000);
@@ -137,8 +146,8 @@ public class DataflowTest {
         // CloudStoreSelecterはexportEntityDataToFileを呼ぶたびにインスタンス内に結果を蓄積する
         // このテストでは毎回現在の状態のみが欲しいので
         // 呼ばれるごとにインスタンスを作成する
-        CloudStoreSelecter cloudStoreSelecter = new CloudStoreSelecter(persisterNamespace, persisterKind);
-        cloudStoreSelecter.exportEntityDataToFile(resultFile.getAbsolutePath());
+        Object cloudStoreSelecter = cloudStoreSelecterClass.getConstructor(String.class, String.class).newInstance(persisterNamespace, persisterKind);
+        cloudStoreSelecterClass.getDeclaredMethod("exportEntityDataToFile", String.class).invoke(cloudStoreSelecter, resultFile.getAbsolutePath());
 
         String resultJsonString =
                 "[" + FileUtils
