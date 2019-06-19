@@ -35,5 +35,11 @@ public class Operator {
 		void calcAfterFunction(String dslPath) {
 			assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
 		}
+
+		@Test
+		@DslPath("複雑な計算式")
+		void complexFormula(String dslPath) {
+			assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
+		}
 	}
 }

@@ -40,6 +40,22 @@ commands:
             gcloud --quiet components update
             gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
             gcloud --quiet config set project $PROJECT
+  edit_integration_test_conf_files:
+    description: "Replace placeholders in conf and env files of integration test with environment variables"
+    steps:
+      - run:
+          name: Edit conf files
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test/conf
+            sed -i -e "s/\[YOUR_BUCKET_NAME\]/${BUCKET}/g" dataflow_job_publisher_sample.env
+            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" dataflow_job_publisher_sample.env
+            sed -i -e "s/\[YOUR_SUBSCRIPTION_NAME\]/${SUBSCRIPTION}/g" dataflow_job_publisher_sample.env
+            for confFile in dslDataStore effectorDataStore illegalEventDataStore persisterDataStore publisher
+            do
+            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" ${confFile}.properties
+            done
+            sed -i -e "s/\[YOUR_TOPIC_NAME\]/${TOPIC}/" publisher.properties
+            popd
 jobs:
   build_engine:
     docker:
@@ -103,10 +119,6 @@ jobs:
             chmod +x gradlew
             ./gradlew build -x test
             popd
-      - save_cache:
-          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
-          paths:
-            - ~/.gradle
       - run:
           name: Run test
           command: |
@@ -118,6 +130,10 @@ jobs:
           name: Copy log file
           command: cp -f ~/fdsl-test/fluxengine-local-test/debug.log ~/fdsl-test/fluxengine-local-test/build/reports/tests/test/
           when: always
+      - save_cache:
+          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
+          paths:
+            - ~/.gradle
       - store_artifacts:
           path: ~/fdsl-test/fluxengine-local-test/build/reports/tests/test
   deploy_dsl:
@@ -219,18 +235,7 @@ jobs:
       - install_java_auth_gcp
       - attach_workspace:
           at: ~/state-engine
-      - run:
-          name: Edit env file
-          command: |
-            pushd ~/fdsl-test/fluxengine-integration-test/conf
-            sed -i -e "s/\[YOUR_BUCKET_NAME\]/${BUCKET}/g" dataflow_job_publisher_sample.env
-            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" dataflow_job_publisher_sample.env
-            sed -i -e "s/\[YOUR_SUBSCRIPTION_NAME\]/${SUBSCRIPTION}/g" dataflow_job_publisher_sample.env
-            for confFile in dslDataStore effectorDataStore illegalEventDataStore persisterDataStore
-            do
-            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" ${confFile}.properties
-            done
-            popd
+      - edit_integration_test_conf_files
       - run:
           name: Replace jar
           command: |
@@ -332,19 +337,7 @@ jobs:
       - install_java_auth_gcp
       - attach_workspace:
           at: ~/state-engine
-      - run:
-          name: Edit env file
-          command: |
-            pushd ~/fdsl-test/fluxengine-integration-test/conf
-            sed -i -e "s/\[YOUR_BUCKET_NAME\]/${BUCKET}/g" dataflow_job_publisher_sample.env
-            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" dataflow_job_publisher_sample.env
-            sed -i -e "s/\[YOUR_SUBSCRIPTION_NAME\]/${SUBSCRIPTION}/g" dataflow_job_publisher_sample.env
-            for confFile in dslDataStore effectorDataStore illegalEventDataStore persisterDataStore publisher
-            do
-            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" ${confFile}.properties
-            done
-            sed -i -e "s/\[YOUR_TOPIC_NAME\]/${TOPIC}/" publisher.properties
-            popd
+      - edit_integration_test_conf_files
       - run:
           name: Replace jar
           command: |
