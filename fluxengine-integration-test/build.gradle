@@ -30,6 +30,7 @@ dependencies {
     testCompile 'org.assertj:assertj-core:3.12.2'
     testCompile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.11.2'
     testCompile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.11.2'
+    testCompile 'com.squareup.okhttp3:okhttp:3.14.2'
 }
 
 test {

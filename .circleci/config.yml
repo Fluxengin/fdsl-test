@@ -404,6 +404,7 @@ workflows:
             branches:
               only:
                 - master
+                - feature/1.0.7_sample_test
       - test_fdsl:
           requires:
             - build_engine
@@ -411,6 +412,7 @@ workflows:
             branches:
               only:
                 - master
+                - feature/1.0.7_sample_test
   deploy_dsl_test:
     jobs:
       - build_engine:
@@ -418,6 +420,7 @@ workflows:
             branches:
               only:
                 - master
+                - feature/1.0.7_sample_test
       - deploy_dsl:
           requires:
             - build_engine
@@ -425,6 +428,7 @@ workflows:
             branches:
               only:
                 - master
+                - feature/1.0.7_sample_test
       - deploy_dataflow_job:
           requires:
             - deploy_dsl
@@ -432,6 +436,7 @@ workflows:
             branches:
               only:
                 - master
+                - feature/1.0.7_sample_test
       - test_dataflow:
           requires:
             - deploy_dataflow_job
@@ -439,6 +444,7 @@ workflows:
             branches:
               only:
                 - master
+                - feature/1.0.7_sample_test
       - test_web_service:
           requires:
             - test_dataflow
@@ -446,3 +452,4 @@ workflows:
             branches:
               only:
                 - master
+                - feature/1.0.7_sample_test

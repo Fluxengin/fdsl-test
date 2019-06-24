@@ -3,7 +3,7 @@ event Housekeepパケット使用A:
   ユーザーID: string
   使用量: number
 
-persister Housekeepパケット積算A<Housekeepパケット使用A>:
+persister Housekeepパケット積算A:
   使用量: number
   persist(Housekeepパケット使用A.ユーザーID):
 
@@ -26,7 +26,7 @@ event Housekeepパケット使用B:
   使用量: number
   期限1: string
 
-persister Housekeepパケット積算B<Housekeepパケット使用B>:
+persister Housekeepパケット積算B:
   使用量: number
   persist(Housekeepパケット使用B.ユーザーID):
     lifetime: Housekeepパケット使用B.期限1
@@ -50,7 +50,7 @@ event Housekeepパケット使用C:
   使用量: number
   期限2: string
 
-persister Housekeepパケット積算C<Housekeepパケット使用C>:
+persister Housekeepパケット積算C:
   使用量: number
   persist(Housekeepパケット使用C.ユーザーID):
 
@@ -75,7 +75,7 @@ event Housekeepパケット使用D:
   期限1: string
   期限2: string
 
-persister Housekeepパケット積算D<Housekeepパケット使用D>:
+persister Housekeepパケット積算D:
   使用量: number
   persist(Housekeepパケット使用D.ユーザーID):
     lifetime: Housekeepパケット使用D.期限1
