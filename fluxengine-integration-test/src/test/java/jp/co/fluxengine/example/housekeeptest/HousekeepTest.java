@@ -87,38 +87,38 @@ public class HousekeepTest {
         JsonNode[] before = getResultJson();
         assertThat(before).anySatisfy(json -> {
             assertThat(json.get("id").asText()).isEqualTo("[user1]");
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeepパケット積算A").get("value").get("使用量").isNull()).isFalse();
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeepパケット積算A").get("lifetime").isNull()).isTrue();
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeep状態A").get("value").get("currentState").asText()).isEqualTo("s2");
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeep状態A").get("lifetime").isNull()).isTrue();
-            assertThat(json.get("lifetime")).isNull();
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeepパケット積算A").get("value").get("使用量").isNumber()).isTrue();
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeepパケット積算A").get("lifetime").asText()).isEmpty();
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeep状態A").get("value").get("currentState").asText()).isEqualTo("s2");
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeep状態A").get("lifetime").asText()).isEmpty();
+            assertThat(json.get("lifetime").asText()).isEmpty();
         }).anySatisfy(json -> {
             assertThat(json.get("id").asText()).isEqualTo("[user2]");
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeepパケット積算B").get("value").get("使用量").isNull()).isFalse();
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeepパケット積算B").get("lifetime").asText()).isEqualTo(todayString);
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeep状態B").get("value").get("currentState").asText()).isEqualTo("s2");
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeep状態B").get("lifetime").isNull()).isTrue();
-            assertThat(json.get("lifetime")).isNull();
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeepパケット積算B").get("value").get("使用量").isNumber()).isTrue();
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeepパケット積算B").get("lifetime").asText()).isEqualTo(todayString);
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeep状態B").get("value").get("currentState").asText()).isEqualTo("s2");
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeep状態B").get("lifetime").asText()).isEmpty();
+            assertThat(json.get("lifetime").asText()).isEmpty();
         }).anySatisfy(json -> {
             assertThat(json.get("id").asText()).isEqualTo("[user3]");
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeepパケット積算C").get("value").get("使用量").isNull()).isFalse();
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeepパケット積算C").get("lifetime").isNull()).isTrue();
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeep状態C").get("value").get("currentState").asText()).isEqualTo("s2");
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeep状態C").get("lifetime").asText()).isEqualTo(todayString);
-            assertThat(json.get("lifetime")).isNull();
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeepパケット積算C").get("value").get("使用量").isNumber()).isTrue();
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeepパケット積算C").get("lifetime").asText()).isEmpty();
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeep状態C").get("value").get("currentState").asText()).isEqualTo("s2");
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeep状態C").get("lifetime").asText()).isEqualTo(todayString);
+            assertThat(json.get("lifetime").asText()).isEmpty();
         }).anySatisfy(json -> {
             assertThat(json.get("id").asText()).isEqualTo("[user4]");
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeepパケット積算D").get("value").get("使用量").isNull()).isFalse();
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeepパケット積算D").get("lifetime").asText()).isEqualTo(todayString);
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeep状態D").get("value").get("currentState").asText()).isEqualTo("s2");
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeep状態D").get("lifetime").asText()).isEqualTo(todayString);
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeepパケット積算D").get("value").get("使用量").isNumber()).isTrue();
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeepパケット積算D").get("lifetime").asText()).isEqualTo(todayString);
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeep状態D").get("value").get("currentState").asText()).isEqualTo("s2");
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeep状態D").get("lifetime").asText()).isEqualTo(todayString);
             assertThat(json.get("lifetime").asText()).isEqualTo(todayString);
         }).anySatisfy(json -> {
             assertThat(json.get("id").asText()).isEqualTo("[user5]");
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeepパケット積算D").get("value").get("使用量").isNull()).isFalse();
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeepパケット積算D").get("lifetime").asText()).isEqualTo(todayString);
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeep状態D").get("value").get("currentState").asText()).isEqualTo("s2");
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeep状態D").get("lifetime").asText()).isEqualTo(tomorrowString);
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeepパケット積算D").get("value").get("使用量").isNumber()).isTrue();
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeepパケット積算D").get("lifetime").asText()).isEqualTo(todayString);
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeep状態D").get("value").get("currentState").asText()).isEqualTo("s2");
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeep状態D").get("lifetime").asText()).isEqualTo(tomorrowString);
             assertThat(json.get("lifetime").asText()).isEqualTo(tomorrowString);
         });
 
@@ -131,40 +131,35 @@ public class HousekeepTest {
 
         // Housekeep実行後の状態のassetionを行う
         JsonNode[] after = getResultJson();
-        assertThat(after).anySatisfy(json -> {
+        assertThat(before).anySatisfy(json -> {
             assertThat(json.get("id").asText()).isEqualTo("[user1]");
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeepパケット積算A").get("value").get("使用量").isNull()).isFalse();
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeepパケット積算A").get("lifetime").isNull()).isTrue();
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeep状態A").get("value").get("currentState").asText()).isEqualTo("s2");
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeep状態A").get("lifetime").isNull()).isTrue();
-            assertThat(json.get("lifetime")).isNull();
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeepパケット積算A").get("value").get("使用量").isNumber()).isTrue();
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeepパケット積算A").get("lifetime").asText()).isEmpty();
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeep状態A").get("value").get("currentState").asText()).isEqualTo("s2");
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeep状態A").get("lifetime").asText()).isEmpty();
+            assertThat(json.get("lifetime").asText()).isEmpty();
         }).anySatisfy(json -> {
             assertThat(json.get("id").asText()).isEqualTo("[user2]");
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeepパケット積算B").get("value").get("使用量").isNull()).isFalse();
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeepパケット積算B").get("lifetime").asText()).isEqualTo(todayString);
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeep状態B").get("value").get("currentState").asText()).isEqualTo("s2");
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeep状態B").get("lifetime").isNull()).isTrue();
-            assertThat(json.get("lifetime")).isNull();
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeepパケット積算B").get("value").get("使用量").isNumber()).isTrue();
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeepパケット積算B").get("lifetime").asText()).isEqualTo(todayString);
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeep状態B").get("value").get("currentState").asText()).isEqualTo("s2");
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeep状態B").get("lifetime").asText()).isEmpty();
+            assertThat(json.get("lifetime").asText()).isEmpty();
         }).anySatisfy(json -> {
             assertThat(json.get("id").asText()).isEqualTo("[user3]");
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeepパケット積算C").get("value").get("使用量").isNull()).isFalse();
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeepパケット積算C").get("lifetime").isNull()).isTrue();
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeep状態C").get("value").get("currentState").asText()).isEqualTo("s2");
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeep状態C").get("lifetime").asText()).isEqualTo(todayString);
-            assertThat(json.get("lifetime")).isNull();
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeepパケット積算C").get("value").get("使用量").isNumber()).isTrue();
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeepパケット積算C").get("lifetime").asText()).isEmpty();
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeep状態C").get("value").get("currentState").asText()).isEqualTo("s2");
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeep状態C").get("lifetime").asText()).isEqualTo(todayString);
+            assertThat(json.get("lifetime").asText()).isEmpty();
         }).noneSatisfy(json -> {
             assertThat(json.get("id").asText()).isEqualTo("[user4]");
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeepパケット積算D").get("value").get("使用量").isNull()).isFalse();
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeepパケット積算D").get("lifetime").asText()).isEqualTo(todayString);
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeep状態D").get("value").get("currentState").asText()).isEqualTo("s2");
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeep状態D").get("lifetime").asText()).isEqualTo(todayString);
-            assertThat(json.get("lifetime").asText()).isEqualTo(todayString);
         }).anySatisfy(json -> {
             assertThat(json.get("id").asText()).isEqualTo("[user5]");
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeepパケット積算D").get("value").get("使用量").isNull()).isFalse();
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeepパケット積算D").get("lifetime").asText()).isEqualTo(todayString);
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeep状態D").get("value").get("currentState").asText()).isEqualTo("s2");
-            assertThat(json.get("value").get("persister/様々なlifetimeで永続化#Housekeep状態D").get("lifetime").asText()).isEqualTo(tomorrowString);
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeepパケット積算D").get("value").get("使用量").isNumber()).isTrue();
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeepパケット積算D").get("lifetime").asText()).isEqualTo(todayString);
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeep状態D").get("value").get("currentState").asText()).isEqualTo("s2");
+            assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeep状態D").get("lifetime").asText()).isEqualTo(tomorrowString);
             assertThat(json.get("lifetime").asText()).isEqualTo(tomorrowString);
         });
     }

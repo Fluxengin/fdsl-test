@@ -56,11 +56,14 @@ commands:
             done
             sed -i -e "s/\[YOUR_TOPIC_NAME\]/${TOPIC}/" publisher.properties
             popd
-jobs:
-  build_engine:
-    docker:
-      - image: circleci/openjdk:8-jdk
+  build_engine_if_modified:
+    description: "Build engine if a desgnated fdsl-test directory modified"
+    parameters:
+      dir:
+        type: string
     steps:
+      - check_update:
+          dir: << parameters.dir >>
       - run:
           name: Checkout state-engine
           command: |
@@ -91,6 +94,13 @@ jobs:
           root: ~/state-engine
           paths:
             - .
+jobs:
+  build_engine_if_local_modified:
+    docker:
+      - image: circleci/openjdk:8-jdk
+    steps:
+      - build_engine_if_modified:
+          dir: "fluxengine-local-test"
   test_fdsl:
     docker:
       - image: circleci/openjdk:8-jdk
@@ -136,6 +146,12 @@ jobs:
             - ~/.gradle
       - store_artifacts:
           path: ~/fdsl-test/fluxengine-local-test/build/reports/tests/test
+  build_engine_if_integration_modified:
+    docker:
+      - image: circleci/openjdk:8-jdk
+    steps:
+      - build_engine_if_modified:
+          dir: "fluxengine-integration-test"
   deploy_dsl:
     # Required environmental variables
     # GCLOUD_SERVICE_KEY: contents of JSON key file of service account
@@ -399,28 +415,28 @@ workflows:
   version: 2
   test_fdsl:
     jobs:
-      - build_engine:
+      - build_engine_if_local_modified:
           filters:
             branches:
               only:
                 - master
       - test_fdsl:
           requires:
-            - build_engine
+            - build_engine_if_local_modified
           filters:
             branches:
               only:
                 - master
   deploy_dsl_test:
     jobs:
-      - build_engine:
+      - build_engine_if_integration_modified:
           filters:
             branches:
               only:
                 - master
       - deploy_dsl:
           requires:
-            - build_engine
+            - build_engine_if_integration_modified
           filters:
             branches:
               only:
