@@ -67,7 +67,7 @@ commands:
       - run:
           name: Checkout state-engine
           command: |
-            mkdir ~/.ssh
+            mkdir -p ~/.ssh
             echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
             pushd ~/
             git clone git@github.com:Fluxengin/state-engine.git
@@ -420,6 +420,7 @@ workflows:
             branches:
               only:
                 - master
+                - feature/1.0.7_sample_test
       - test_fdsl:
           requires:
             - build_engine_if_local_modified
@@ -427,6 +428,7 @@ workflows:
             branches:
               only:
                 - master
+                - feature/1.0.7_sample_test
   deploy_dsl_test:
     jobs:
       - build_engine_if_integration_modified:
@@ -434,6 +436,7 @@ workflows:
             branches:
               only:
                 - master
+                - feature/1.0.7_sample_test
       - deploy_dsl:
           requires:
             - build_engine_if_integration_modified
@@ -441,6 +444,7 @@ workflows:
             branches:
               only:
                 - master
+                - feature/1.0.7_sample_test
       - deploy_dataflow_job:
           requires:
             - deploy_dsl
@@ -448,6 +452,7 @@ workflows:
             branches:
               only:
                 - master
+                - feature/1.0.7_sample_test
       - test_dataflow:
           requires:
             - deploy_dataflow_job
@@ -455,6 +460,7 @@ workflows:
             branches:
               only:
                 - master
+                - feature/1.0.7_sample_test
       - test_web_service:
           requires:
             - test_dataflow
@@ -462,3 +468,4 @@ workflows:
             branches:
               only:
                 - master
+                - feature/1.0.7_sample_test
