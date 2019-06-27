@@ -2,7 +2,9 @@ package jp.co.fluxengine.example.housekeeptest;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import okhttp3.*;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -124,7 +126,7 @@ public class HousekeepTest {
 
         // ここでHousekeepを実行する
         // 既にHousekeepのServletがデプロイされている前提
-        postToHousekeep();
+        assertThat(executeHousekeep()).isTrue();
 
         // 少し待つ
         Thread.sleep(30000);
@@ -164,15 +166,14 @@ public class HousekeepTest {
         });
     }
 
-    private static boolean postToHousekeep() throws IOException {
-        RequestBody body = RequestBody.create(null, new byte[0]);
-        Request request = new Request.Builder()
-                .url(housekeepUrl)
-                .post(body)
-                .header("Content-Length", "0")
-                .build();
+    private static boolean executeHousekeep() throws IOException {
+        Request request = new Request.Builder().url(housekeepUrl).build();
         try (Response response = client.newCall(request).execute()) {
-            LOG.info("got response: " + response.body().string());
+            if (response.body() == null) {
+                LOG.info("got no response");
+            } else {
+                LOG.info("got response: " + response.body().string());
+            }
             return response.isSuccessful();
         } catch (IOException e) {
             LOG.error("exception occurred", e);
