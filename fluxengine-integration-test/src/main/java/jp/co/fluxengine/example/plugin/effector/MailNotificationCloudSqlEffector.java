@@ -42,7 +42,7 @@ public class MailNotificationCloudSqlEffector {
 
             // PreparedStatements can be more efficient and project against injections.
             PreparedStatement voteStmt = conn.prepareStatement(
-                "INSERT INTO integration_test_effector (userid, message, createTime) VALUES (?, ? ,? );");
+                    "INSERT INTO integration_test_effector (userid, message, createTime) VALUES (?, ? ,? );");
 
             voteStmt.setString(1, userId);
             voteStmt.setString(2, message);
@@ -52,14 +52,14 @@ public class MailNotificationCloudSqlEffector {
             // Finally, execute the statement. If it fails, an error will be thrown.
             voteStmt.execute();
 
-          } catch (SQLException ex) {
-              throw new RuntimeException(ex);
-          }
+        } catch (SQLException ex) {
+            log.error("post実行中にエラーが発生しました", ex);
+            throw new RuntimeException(ex);
+        }
     }
 
 }
 /**
-*
-CREATE TABLE effector (userid VARCHAR(255), message VARCHAR(255),createTime timestamp ,
-messageId INT NOT NULL AUTO_INCREMENT, PRIMARY KEY(messageId));
-*/
+ * CREATE TABLE effector (userid VARCHAR(255), message VARCHAR(255),createTime timestamp ,
+ * messageId INT NOT NULL AUTO_INCREMENT, PRIMARY KEY(messageId));
+ */

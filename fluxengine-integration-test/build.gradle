@@ -41,6 +41,8 @@ dependencies {
 
 test {
     useJUnitPlatform()
+    // Not to exceed the limit of CircleCI (4GB)
+    maxHeapSize = "3g"
     environment 'CONF', file('conf').absolutePath
     jvmArgs = ["-Dlog4j.configuration=\"${file('conf/log4j2.xml').toURI().toString()}\"", "-Dfile.encoding=UTF-8"]
 }
