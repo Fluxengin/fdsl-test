@@ -2,11 +2,13 @@ package jp.co.fluxengine.example.dataflowtest;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jp.co.fluxengine.example.CloudSqlPool;
 import jp.co.fluxengine.example.plugin.read.DailyDataReader;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.db.type.Changes;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -20,6 +22,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Properties;
@@ -115,7 +118,7 @@ public class DataflowTest {
         Object csvPublisher = csvPublisherClass.getConstructor(String.class).newInstance("input/event.csv");
         csvPublisherClass.getMethod("publish").invoke(csvPublisher);
 
-        String eventJson = "[{\"eventName\":\"パケットイベント\", \"namespace\":\"event/パケットイベント\", \"createTime\":null, \"property\":{\"端末ID\":\"C01\",\"日時\":\"2018/11/10 00:00:01\",\"使用量\":500}}] ";
+        String eventJson = "[{\"eventName\":\"パケットイベント\", \"namespace\":\"event/パケットイベント\", \"createTime\":null, \"property\":{\"端末ID\":\"C01\",\"日時\":\"2018/11/10 00:00:01\",\"使用量\":500}}]";
         Class<?> jsonPublisherClass = eventPublisherLoader.loadClass("jp.co.fluxengine.publisher.JsonPublisher");
         Object jsonPublisher = jsonPublisherClass.getConstructor(String.class).newInstance(eventJson);
         jsonPublisherClass.getMethod("publish").invoke(jsonPublisher);
@@ -132,6 +135,32 @@ public class DataflowTest {
 
         // パケット積算データが2600増えているはず
         assertThat(currentPacketUsage()).isEqualTo(usageBefore + 2600);
+    }
+
+    @Test
+    void testEffector() throws Exception {
+        Changes changes = new Changes(CloudSqlPool.getDataSource());
+
+        changes.setStartPointNow();
+
+        // RemoteTestRunnerを使ってデータを流す
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSSSS");
+        String message = "イベント送信タイムスタンプ: " + LocalDateTime.now().format(formatter);
+        String eventJson = "[{\"eventName\":\"エフェクタ送信イベント\", \"namespace\":\"effector_check/エフェクタ動作確認\", \"createTime\":null, \"property\":{\"ユーザーID\":\"effector_check_01\",\"メッセージ\":\"" + message + "\"}}]";
+        remoteRunnerClass.getDeclaredMethod("publishOneTime", String.class, String.class).invoke(null, eventJson, topic);
+
+        // Dataflowが処理完了するまで少し待つ
+        Thread.sleep(20000);
+
+        changes.setEndPointNow();
+
+        // 結果のassertionを行う
+        org.assertj.db.api.Assertions.assertThat(changes)
+                .ofCreationOnTable("integration_test_effector").hasNumberOfChanges(1)
+                .changeOnTable("integration_test_effector")
+                .isCreation()
+                .rowAtEndPoint()
+                .value("message").isEqualTo(message);
     }
 
     private static double currentPacketUsage() throws Exception {
