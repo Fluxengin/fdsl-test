@@ -24,7 +24,7 @@ dependencies {
 test {
     useJUnitPlatform()
     environment 'CONF', file('conf').absolutePath
-    jvmArgs = ["-Dlog4j.configuration=\"${file('conf/log4j2.xml').toURI().toString()}\""]
+    jvmArgs = ["-Dlog4j.configuration=\"${file('conf/log4j2.xml').toURI().toString()}\"", "-Dfile.encoding=UTF-8"]
 }
 
 group   = "jp.co.fluxengine"
