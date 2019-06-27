@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -56,7 +57,12 @@ public class HousekeepTest {
 
         LOG.debug("namespace = {}, kind = {}", persisterNamespace, persisterKind);
 
-        client = new OkHttpClient();
+        client = new OkHttpClient.Builder()
+                .connectTimeout(60, TimeUnit.SECONDS)
+                .callTimeout(60, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS)
+                .build();
         housekeepUrl = "https://" + projectId + ".appspot.com/fluxengine-dataflow-housekeep";
     }
 
