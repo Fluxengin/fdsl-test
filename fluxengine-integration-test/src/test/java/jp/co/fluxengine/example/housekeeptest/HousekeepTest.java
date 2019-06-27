@@ -134,12 +134,12 @@ public class HousekeepTest {
         // 既にHousekeepのServletがデプロイされている前提
         assertThat(executeHousekeep()).isTrue();
 
-        // 少し待つ
-        Thread.sleep(30000);
+        // バッチの実行終了を待つ
+        Thread.sleep(60000);
 
         // Housekeep実行後の状態のassetionを行う
         JsonNode[] after = getResultJson();
-        assertThat(before).anySatisfy(json -> {
+        assertThat(after).anySatisfy(json -> {
             assertThat(json.get("id").asText()).isEqualTo("[user1]");
             assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeepパケット積算A").get("value").get("使用量").isNumber()).isTrue();
             assertThat(json.get("value").get("housekeep/様々なlifetimeで永続化#Housekeepパケット積算A").get("lifetime").asText()).isEmpty();
