@@ -135,7 +135,7 @@ public class HousekeepTest {
         assertThat(executeHousekeep()).isTrue();
 
         // バッチの実行終了を待つ
-        Thread.sleep(60000);
+        Thread.sleep(120000);
 
         // Housekeep実行後の状態のassetionを行う
         JsonNode[] after = getResultJson();
