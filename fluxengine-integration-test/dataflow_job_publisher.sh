@@ -51,6 +51,7 @@ fi
 
 
 OPTIONS=${OPTIONS}" --region=asia-northeast1"
+OPTIONS=${OPTIONS}" --tempLocation=${TEMP_LOCATION}"
 
 if [ $# -eq 3 ]; then
      OPTIONS=${OPTIONS}" --defaultWorkerLogLevel=DEBUG"
