@@ -9,6 +9,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.db.type.Changes;
+import org.assertj.db.type.Table;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -151,7 +152,8 @@ public class DataflowTest {
     @Test
     void testEffector() throws Exception {
         LOG.info("testEffector 開始");
-        Changes changes = new Changes(CloudSqlPool.getDataSource());
+        Table targetTable = new Table(CloudSqlPool.getDataSource(), "integration_test_effector");
+        Changes changes = new Changes(targetTable);
 
         changes.setStartPointNow();
 

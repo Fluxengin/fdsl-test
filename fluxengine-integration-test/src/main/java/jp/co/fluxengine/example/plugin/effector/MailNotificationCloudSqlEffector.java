@@ -36,7 +36,7 @@ public class MailNotificationCloudSqlEffector {
             sb.append(now);
             sb.append(" ");
             sb.append(message);
-            log.debug(sb.toString());
+            log.info(sb.toString());
         }
         try (Connection conn = CloudSqlPool.getDataSource().getConnection()) {
 
