@@ -54,7 +54,10 @@ commands:
             do
             sed -i -e "s/\[PROJECT\]/${PROJECT}/g" ${confFile}.properties
             done
-            sed -i -e "s/\[YOUR_TOPIC_NAME\]/${TOPIC}/" publisher.properties
+            sed -i -e "s/\[YOUR_TOPIC_NAME\]/${TOPIC}/g" publisher.properties
+            sed -i -e "s/\[CLOUD_SQL_INSTANCE_NAME\]/${CLOUD_SQL_INSTANCE_NAME}/g" application-jdbc.properties
+            sed -i -e "s/\[DB_USER\]/${DB_USER}/g" application-jdbc.properties
+            sed -i -e "s/\[DB_PASS\]/${DB_PASS}/g" application-jdbc.properties
             popd
   build_engine_if_modified:
     description: "Build engine if a designated fdsl-test directory modified"
@@ -123,16 +126,10 @@ jobs:
             - v1-gradle-{{ .Branch }}-
             - v1-gradle-
       - run:
-          name: Build test
-          command: |
-            pushd ~/fdsl-test/fluxengine-local-test
-            chmod +x gradlew
-            ./gradlew build -x test
-            popd
-      - run:
           name: Run test
           command: |
             pushd ~/fdsl-test/fluxengine-local-test
+            chmod +x gradlew
             export CONF=`pwd`/conf/
             ./gradlew test
             popd
@@ -187,7 +184,7 @@ jobs:
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test
             chmod +x gradlew
-            ./gradlew build
+            ./gradlew build copyDependencies
             popd
       - save_cache:
           key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
@@ -273,7 +270,7 @@ jobs:
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test
             chmod +x gradlew
-            ./gradlew build -x test
+            ./gradlew build copyDependencies
             cp -f build/libs/fluxengine-integration-test-*.jar lib/
             diff -q build/libs/fluxengine-integration-test-*.jar lib/fluxengine-integration-test-*.jar
             popd

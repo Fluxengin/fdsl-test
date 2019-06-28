@@ -1,4 +1,6 @@
-apply plugin: 'java-library'
+plugins {
+    id 'java-library'
+}
 
 group 'jp.co.fluxengine'
 version '1.0.7'
@@ -45,4 +47,16 @@ test {
     maxHeapSize = "3g"
     environment 'CONF', file('conf').absolutePath
     jvmArgs = ["-Dlog4j.configuration=\"${file('conf/log4j2.xml').toURI().toString()}\"", "-Dfile.encoding=UTF-8"]
+}
+
+task copyDependencies {
+    doLast {
+        copy {
+            // 最初からlibにあるfluxengine-local-test-runnerをコピーすると0byteになってしまうので、
+            // コピー対象から外す
+            from configurations.compileClasspath
+            into 'lib'
+            exclude 'fluxengine-*'
+        }
+    }
 }

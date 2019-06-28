@@ -12,6 +12,9 @@ public class CloudSqlPool {
     public CloudSqlPool() {
     }
 
+    private static final String CLOUD_SQL_INSTANCE_NAME;
+    private static final String DB_USER;
+    private static final String DB_PASS;
     private static final String DB_NAME;
 
     private static final int MAXIMUM_POOLSIZE;
@@ -35,6 +38,10 @@ public class CloudSqlPool {
             }
         }
 
+        CLOUD_SQL_INSTANCE_NAME = props.getProperty("CLOUD_SQL_INSTANCE_NAME");
+
+        DB_USER = props.getProperty("DB_USER");
+        DB_PASS = props.getProperty("DB_PASS");
         DB_NAME = props.getProperty("DB_NAME");
         MAXIMUM_POOLSIZE = Integer.valueOf(props.getProperty("MAXIMUM_POOLSIZE"));
         MINIMUM_IDLE = Integer.valueOf(props.getProperty("MINIMUM_IDLE"));
@@ -57,13 +64,13 @@ public class CloudSqlPool {
 
         // Configure which instance and what database user to connect with.
         config.setJdbcUrl(String.format("jdbc:mysql:///%s", DB_NAME));
-        config.setUsername(System.getenv("DB_USER")); // e.g. "root", "postgres"
-        config.setPassword(System.getenv("DB_PASS")); // e.g. "my-password"
+        config.setUsername(DB_USER); // e.g. "root", "postgres"
+        config.setPassword(DB_PASS); // e.g. "my-password"
 
         // For Java users, the Cloud SQL JDBC Socket Factory can provide authenticated connections.
         // See https://github.com/GoogleCloudPlatform/cloud-sql-jdbc-socket-factory for details.
         config.addDataSourceProperty("socketFactory", "com.google.cloud.sql.mysql.SocketFactory");
-        config.addDataSourceProperty("cloudSqlInstance", System.getenv("CLOUD_SQL_INSTANCE_NAME"));
+        config.addDataSourceProperty("cloudSqlInstance", CLOUD_SQL_INSTANCE_NAME);
         config.addDataSourceProperty("useSSL", "false");
 
         // ... Specify additional connection properties here.
@@ -85,7 +92,7 @@ public class CloudSqlPool {
         config.setConnectionTimeout(IDLE_TIMEOUT); // 10 seconds
         // idleTimeout is the maximum amount of time a connection can sit in the pool. Connections that
         // sit idle for this many milliseconds are retried if minimumIdle is exceeded.
-        config.setIdleTimeout(MAX_LIFETIME); // 10 minutes
+        config.setIdleTimeout(IDLE_TIMEOUT); // 10 minutes
         // [END cloud_sql_mysql_servlet_timeout]
 
         // [START cloud_sql_mysql_servlet_backoff]
@@ -98,7 +105,7 @@ public class CloudSqlPool {
         // live longer than this many milliseconds will be closed and reestablished between uses. This
         // value should be several minutes shorter than the database's timeout value to avoid unexpected
         // terminations.
-        config.setMaxLifetime(1800000); // 30 minutes
+        config.setMaxLifetime(MAX_LIFETIME); // 30 minutes
         // [END cloud_sql_mysql_servlet_lifetime]
 
         // [END_EXCLUDE]
