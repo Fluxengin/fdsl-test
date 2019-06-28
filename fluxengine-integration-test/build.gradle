@@ -47,6 +47,9 @@ test {
     maxHeapSize = "3g"
     environment 'CONF', file('conf').absolutePath
     jvmArgs = ["-Dlog4j.configuration=\"${file('conf/log4j2.xml').toURI().toString()}\"", "-Dfile.encoding=UTF-8"]
+    testLogging {
+        events 'standard_out', 'standard_error'
+    }
 }
 
 task copyDependencies {
@@ -56,7 +59,7 @@ task copyDependencies {
             // コピー対象から外す
             from configurations.compileClasspath
             into 'lib'
-            exclude 'fluxengine-*'
+            exclude 'fluxengine-*', 'guava-*android*'
         }
     }
 }

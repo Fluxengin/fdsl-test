@@ -36,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @EnabledIfEnvironmentVariable(named = "FLUXENGINE_INTEGRATION_TEST_MODE", matches = "DATAFLOW|dataflow")
 public class DataflowTest {
 
-    private static final Logger LOG = LogManager.getLogger();
+    private static final Logger LOG = LogManager.getLogger(DataflowTest.class);
 
     private static String topic;
 
@@ -48,6 +48,7 @@ public class DataflowTest {
 
     @BeforeAll
     static void setup() throws Exception {
+        LOG.info("setup 開始");
         String projectId = System.getenv("PROJECT");
 
         ClassLoader remoteTestRunnerLoader = getClassLoaderFromLib("fluxengine-remote-test-runner-.+\\.jar");
@@ -65,6 +66,7 @@ public class DataflowTest {
         persisterKind = persisterProps.getProperty("kind");
 
         LOG.debug("topic = {}, namespace = {}, kind = {}", topic, persisterNamespace, persisterKind);
+        LOG.info("setup 終了");
     }
 
     private static Properties loadProperties(String resourcePath) throws IOException {
@@ -85,6 +87,7 @@ public class DataflowTest {
 
     @Test
     void testDataflow() throws Exception {
+        LOG.info("testDataflow 開始");
         // persisterの現在の値を取得する
         double usageBefore = currentPacketUsage();
 
@@ -93,10 +96,13 @@ public class DataflowTest {
         String inputJsonString = IOUtils.toString(resourceURL, "UTF-8");
         LOG.debug("input = " + inputJsonString);
 
+        LOG.info("testDataflow データ送信");
         remoteRunnerClass.getDeclaredMethod("publishOneTime", String.class, String.class).invoke(null, inputJsonString, topic);
 
         // 処理完了を待つ
+        LOG.info("testDataflow 待機");
         Thread.sleep(20000);
+        LOG.info("testDataflow 待機終了");
 
         // 結果のassertionを行う
         assertThat(getResultJson()).anySatisfy(json -> {
@@ -104,10 +110,12 @@ public class DataflowTest {
             assertThat(json.get("value").get("persister/パケット積算データ#パケット積算データ").get("value").get("使用量").asDouble()).isEqualTo(usageBefore + 500);
             assertThat(json.get("value").get("rule/パケット積算#状態遷移").get("value").get("currentState").asText()).isEqualTo("s2");
         });
+        LOG.info("testDataflow 終了");
     }
 
     @Test
     void testEventPublisherAndTransaction() throws Exception {
+        LOG.info("testEventPublisherAndTransaction 開始");
         // persisterの現在の値を取得する
         double usageBefore = currentPacketUsage();
 
@@ -131,14 +139,18 @@ public class DataflowTest {
         readPublisherClass.getMethod("publish").invoke(readPublisher);
 
         // 競合によるリトライが発生するので、長く待つ
+        LOG.info("testEventPublisherAndTransaction 待機");
         Thread.sleep(50000);
+        LOG.info("testEventPublisherAndTransaction 待機終了");
 
         // パケット積算データが2600増えているはず
         assertThat(currentPacketUsage()).isEqualTo(usageBefore + 2600);
+        LOG.info("testEventPublisherAndTransaction 終了");
     }
 
     @Test
     void testEffector() throws Exception {
+        LOG.info("testEffector 開始");
         Changes changes = new Changes(CloudSqlPool.getDataSource());
 
         changes.setStartPointNow();
@@ -147,10 +159,13 @@ public class DataflowTest {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSSSS");
         String message = "イベント送信タイムスタンプ: " + LocalDateTime.now().format(formatter);
         String eventJson = "[{\"eventName\":\"エフェクタ送信イベント\", \"namespace\":\"effector_check/エフェクタ動作確認\", \"createTime\":null, \"property\":{\"ユーザーID\":\"effector_check_01\",\"メッセージ\":\"" + message + "\"}}]";
+        LOG.info("testEffector データ送信");
         remoteRunnerClass.getDeclaredMethod("publishOneTime", String.class, String.class).invoke(null, eventJson, topic);
 
         // Dataflowが処理完了するまで少し待つ
+        LOG.info("testEffector 待機");
         Thread.sleep(20000);
+        LOG.info("testEffector 待機終了");
 
         changes.setEndPointNow();
 
@@ -161,6 +176,7 @@ public class DataflowTest {
                 .isCreation()
                 .rowAtEndPoint()
                 .value("message").isEqualTo(message);
+        LOG.info("testEffector 終了");
     }
 
     private static double currentPacketUsage() throws Exception {

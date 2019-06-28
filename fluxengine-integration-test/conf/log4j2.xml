@@ -10,8 +10,10 @@
 </Appenders>
 <Loggers>
     <Logger name="jp.co.fluxengine" level="debug">
-        <AppenderRef ref="Console"/>
         <AppenderRef ref="log"/>
+    </Logger>
+    <Logger name="jp.co.fluxengine" level="info">
+        <AppenderRef ref="Console"/>
     </Logger>
     <Logger name="jp.co.irep.fluxengine" level="debug">
         <AppenderRef ref="Console"/>
