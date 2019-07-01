@@ -1,32 +1,20 @@
 package jp.co.fluxengine.example.dataflowtest;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jp.co.fluxengine.example.CloudSqlPool;
 import jp.co.fluxengine.example.plugin.read.DailyDataReader;
-import org.apache.commons.io.FileUtils;
+import jp.co.fluxengine.example.util.PersisterExtractor;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.db.type.Changes;
 import org.assertj.db.type.Table;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.charset.Charset;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Properties;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,62 +23,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 // 環境変数"FLUXENGINE_INTEGRATION_TEST_MODE"が"DATAFLOW"のときだけ実行できるようにしている
 // CI/CDで実行されることを想定したテストクラス
 @EnabledIfEnvironmentVariable(named = "FLUXENGINE_INTEGRATION_TEST_MODE", matches = "DATAFLOW|dataflow")
-public class DataflowTest {
+public class DataflowTest extends PersisterExtractor {
 
     private static final Logger LOG = LogManager.getLogger(DataflowTest.class);
-
-    private static String topic;
-
-    private static String persisterNamespace;
-    private static String persisterKind;
-
-    private static Class<?> remoteRunnerClass;
-    private static Class<?> cloudStoreSelecterClass;
-
-    @BeforeAll
-    static void setup() throws Exception {
-        LOG.info("setup 開始");
-        String projectId = System.getenv("PROJECT");
-
-        ClassLoader remoteTestRunnerLoader = getClassLoaderFromLib("fluxengine-remote-test-runner-.+\\.jar");
-
-        remoteRunnerClass = remoteTestRunnerLoader.loadClass("jp.co.fluxengine.remote.test.RemoteRunner");
-        cloudStoreSelecterClass = remoteTestRunnerLoader.loadClass("jp.co.fluxengine.remote.test.CloudStoreSelecter");
-
-        remoteRunnerClass.getDeclaredMethod("setProjectId", String.class).invoke(null, projectId);
-
-        Properties envProps = loadProperties("/publisher.properties");
-        topic = envProps.getProperty("totopic");
-
-        Properties persisterProps = loadProperties("/persisterDataStore.properties");
-        persisterNamespace = persisterProps.getProperty("namespace");
-        persisterKind = persisterProps.getProperty("kind");
-
-        LOG.debug("topic = {}, namespace = {}, kind = {}", topic, persisterNamespace, persisterKind);
-        LOG.info("setup 終了");
-    }
-
-    private static Properties loadProperties(String resourcePath) throws IOException {
-        try (InputStream in = DataflowTest.class.getResourceAsStream(resourcePath)) {
-            Properties props = new Properties();
-            props.load(in);
-            return props;
-        }
-    }
-
-    private static ClassLoader getClassLoaderFromLib(String jarNameRegex) throws MalformedURLException {
-        File jarFile = Arrays.stream(new File("lib").listFiles())
-                .filter(file -> file.getName().matches(jarNameRegex))
-                .findAny()
-                .orElseThrow(() -> new RuntimeException(jarNameRegex + " にマッチするjarが見つかりませんでした"));
-        return new URLClassLoader(new URL[]{jarFile.toURI().toURL()});
-    }
 
     @Test
     void testDataflow() throws Exception {
         LOG.info("testDataflow 開始");
         // persisterの現在の値を取得する
-        double usageBefore = currentPacketUsage();
+        double usageBefore = currentPacketUsage("uid12345", "persister/パケット積算データ#パケット積算データ");
 
         // テストデータをDataflowのジョブに流す
         URL resourceURL = getClass().getResource("/dataflow_test_data.json");
@@ -118,7 +59,7 @@ public class DataflowTest {
     void testEventPublisherAndTransaction() throws Exception {
         LOG.info("testEventPublisherAndTransaction 開始");
         // persisterの現在の値を取得する
-        double usageBefore = currentPacketUsage();
+        double usageBefore = currentPacketUsage("uid12345", "persister/パケット積算データ#パケット積算データ");
 
         ClassLoader eventPublisherLoader = getClassLoaderFromLib("fluxengine-event-publisher-.+\\.jar");
 
@@ -145,7 +86,7 @@ public class DataflowTest {
         LOG.info("testEventPublisherAndTransaction 待機終了");
 
         // パケット積算データが2600増えているはず
-        assertThat(currentPacketUsage()).isEqualTo(usageBefore + 2600);
+        assertThat(currentPacketUsage("uid12345", "persister/パケット積算データ#パケット積算データ")).isEqualTo(usageBefore + 2600);
         LOG.info("testEventPublisherAndTransaction 終了");
     }
 
@@ -181,35 +122,4 @@ public class DataflowTest {
         LOG.info("testEffector 終了");
     }
 
-    private static double currentPacketUsage() throws Exception {
-        String todayString = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDate.now());
-        return Arrays.stream(getResultJson()).filter(json -> {
-            JsonNode id = json.get("id");
-            JsonNode lifetime = json.get("lifetime");
-            return id != null && id.asText().equals("[uid12345]")
-                    && lifetime != null && lifetime.asText().equals(todayString);
-        }).map(json -> json.get("value").get("persister/パケット積算データ#パケット積算データ").get("value").get("使用量").asDouble())
-                .findFirst().orElse(0.0);
-    }
-
-    private static JsonNode[] getResultJson() throws Exception {
-        File resultFile = File.createTempFile("persister", ".txt");
-
-        // CloudStoreSelecterはexportEntityDataToFileを呼ぶたびにインスタンス内に結果を蓄積する
-        // このテストでは毎回現在の状態のみが欲しいので
-        // 呼ばれるごとにインスタンスを作成する
-        Object cloudStoreSelecter = cloudStoreSelecterClass.getConstructor(String.class, String.class).newInstance(persisterNamespace, persisterKind);
-        cloudStoreSelecterClass.getDeclaredMethod("exportEntityDataToFile", String.class).invoke(cloudStoreSelecter, resultFile.getAbsolutePath());
-
-        String resultJsonString =
-                "[" + FileUtils
-                        .readFileToString(new File(resultFile.getAbsolutePath()), Charset.defaultCharset())
-                        .trim()
-                        .replace('\n', ',') + "]";
-        LOG.debug("result = " + resultJsonString);
-
-        resultFile.delete();
-
-        return new ObjectMapper().readValue(resultJsonString, JsonNode[].class);
-    }
 }

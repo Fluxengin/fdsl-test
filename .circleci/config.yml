@@ -393,21 +393,56 @@ jobs:
             gcloud dataflow jobs drain $dataflowJobId --region=asia-northeast1
             done < ~/state-engine/dataflow_job_id.txt
           when: always
-  test_web_service:
+  test_dataflow_batch:
+    # Required environmental variables
+    # GCLOUD_SERVICE_KEY: contents of JSON key file of service account
+    # PROJECT: GCP project name to deploy
+    # BUCKET: Storage bucket name to use for deployment
+    # TOPIC: Pub/Sub topic name to use for deployment
+    # SUBSCRIPTION: Pub/Sub subscription name for dataflow to use for deployment
     docker:
       - image: google/cloud-sdk:alpine
     working_directory: ~/fdsl-test
     steps:
       - check_update:
           dir: "fluxengine-integration-test"
+      - install_java_auth_gcp
+      - attach_workspace:
+          at: ~/state-engine
+      - edit_integration_test_conf_files
       - run:
-          name: Post event
+          name: Replace jar
           command: |
-            mkdir ~/curl
-            curl -H 'Content-Type:application/json' -d '[{"eventName":"パケットイベント","namespace":"event/パケットイベント","createTime":null,"property":{"端末ID":"C01","日時":"2018/11/10 00:00:01","使用量":500}}]' https://${PROJECT}.appspot.com/fluxengine-web/event | tee ~/curl/result.json
-            grep SUCCEED ~/curl/result.json
+            pushd ~/fdsl-test/fluxengine-integration-test/lib
+            rm -f fluxengine-*.jar
+            for projectDir in local-test-runner remote-test-runner event-publisher
+            do
+            cp -f ~/state-engine/fluxengine-${projectDir}/target/fluxengine-${projectDir}-*.jar ./
+            diff -q ~/state-engine/fluxengine-${projectDir}/target/fluxengine-${projectDir}-*.jar fluxengine-${projectDir}-*.jar
+            done
+            popd
+      - restore_cache:
+          keys:
+            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
+            - v1-gradle-{{ .Branch }}-
+            - v1-gradle-
+      - run:
+          name: Test Dataflow batch job
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test
+            chmod +x gradlew
+            env FLUXENGINE_INTEGRATION_TEST_MODE=DATAFLOWBATCH ./gradlew test --tests jp.co.fluxengine.example.dataflowtest.DataflowBatchTest
+            popd
+      - save_cache:
+          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
+          paths:
+            - ~/.gradle
+      - run:
+          name: Copy log file
+          command: cp -f ~/fdsl-test/fluxengine-integration-test/debug.log ~/fdsl-test/fluxengine-integration-test/build/reports/tests/test/
+          when: always
       - store_artifacts:
-          path: ~/curl
+          path: ~/fdsl-test/fluxengine-integration-test/build/reports/tests/test
 workflows:
   version: 2
   test_fdsl:
@@ -458,7 +493,7 @@ workflows:
               only:
                 - master
                 - /.*circleci.*/
-      - test_web_service:
+      - test_dataflow_batch:
           requires:
             - test_dataflow
           filters:

@@ -1,20 +1,24 @@
-import パケットイベント: event/パケットイベント
-import ユーザー情報<パケットイベント.端末ID>: variant/ユーザー情報
-import メール送信: effector/ユーザー通知
+import ユーザー情報<日別パケットイベント.端末ID>: variant/ユーザー情報
+
+event 日別パケットイベント:
+    端末ID: string
+    使用量: number
+    日時: datetime
 
 read 日別データ:
     端末ID: string
     日時: string
     使用量: number
-    watch(パケットイベント):
-    get(パケットイベント.端末ID):
+    watch(日別パケットイベント):
+    get(日別パケットイベント.端末ID):
 
-rule 日別データ検証:
-    日別データ.使用量 > 500:
+persister 日別積算データ:
+    使用量: number
+    persist(ユーザー情報.ユーザーID):
+        lifetime: today()
+
+number 日別累積パケットデータ: 日別積算データ.使用量 + 日別データ.使用量
+
+persist 日別積算データ:
+    使用量: 日別累積パケットデータ
     watch(日別データ):
-
-effect メール送信 as アラート:
-    ユーザーID: ユーザー情報.ユーザーID
-    日時: 日別データ.日時
-    メッセージ: "閾値超過のデータがありました。"
-    watch(日別データ検証):
