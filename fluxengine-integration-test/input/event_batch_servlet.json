@@ -1,7 +1,7 @@
 [
   {
-    "eventName":"パケットイベント",
-    "namespace":"event/パケットイベント",
+    "eventName":"日別パケットイベント",
+    "namespace":"rule/日別データ検証",
     "createTime":null,
     "property":{
       "端末ID":"C01",

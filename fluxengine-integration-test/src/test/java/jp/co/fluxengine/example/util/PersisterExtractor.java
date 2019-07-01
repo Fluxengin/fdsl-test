@@ -76,8 +76,6 @@ public abstract class PersisterExtractor {
         String todayString = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDate.now());
         return Arrays.stream(getResultJson()).filter(json -> {
             try {
-                JsonNode id = json.get("id");
-                JsonNode lifetime = json.get("value").get(name).get("lifetime");
                 return json.get("id").asText().equals("[" + userId + "]")
                         && json.get("value").get(name).get("lifetime").asText().equals(todayString);
             } catch (NullPointerException e) {

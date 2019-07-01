@@ -495,7 +495,7 @@ workflows:
                 - /.*circleci.*/
       - test_dataflow_batch:
           requires:
-            - test_dataflow
+            - deploy_dataflow_job
           filters:
             branches:
               only:
