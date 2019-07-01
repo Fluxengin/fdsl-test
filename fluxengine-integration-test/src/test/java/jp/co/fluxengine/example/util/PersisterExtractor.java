@@ -75,10 +75,14 @@ public abstract class PersisterExtractor {
     public double currentPacketUsage(String userId, String name) throws Exception {
         String todayString = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDate.now());
         return Arrays.stream(getResultJson()).filter(json -> {
-            JsonNode id = json.get("id");
-            JsonNode lifetime = json.get("value").get(name).get("lifetime");
-            return id != null && id.asText().equals("[" + userId + "]")
-                    && lifetime != null && lifetime.asText().equals(todayString);
+            try {
+                JsonNode id = json.get("id");
+                JsonNode lifetime = json.get("value").get(name).get("lifetime");
+                return json.get("id").asText().equals("[" + userId + "]")
+                        && json.get("value").get(name).get("lifetime").asText().equals(todayString);
+            } catch (NullPointerException e) {
+                return false;
+            }
         }).map(json -> json.get("value").get(name).get("value").get("使用量").asDouble())
                 .findFirst().orElse(0.0);
     }
