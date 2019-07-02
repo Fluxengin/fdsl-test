@@ -301,6 +301,8 @@ jobs:
             ./dataflow_job_publisher.sh stream conf/dataflow_job_publisher_sample.env debug | tee temp_dataflow_job_register_output.txt
             # Obtain deployed job ID in order to stop it later
             grep 'Submitted job:' temp_dataflow_job_register_output.txt | awk '{print $3}' > ~/state-engine/dataflow_job_id.txt
+            # also deploy batch job
+            ./dataflow_job_publisher.sh batch conf/dataflow_job_publisher_sample.env debug
             popd
       - persist_to_workspace:
           root: ~/state-engine
