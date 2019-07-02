@@ -90,7 +90,7 @@ commands:
       - run:
           name: Build state-engine
           command: |
-            for projectDir in stateengine fluxengine-dsl-register fluxengine-event-publisher fluxengine-parser fluxengine-local-test-runner fluxengine-dsl-loader fluxengine-persist-manager fluxengine-remote-test-runner fluxengine-dataflow fluxengine-web-service fluxengine-dataflow-housekeep fluxengine-dataflow-housekeep-servlet fluxengine-dataflow-batch-servlet
+            for projectDir in stateengine fluxengine-dsl-register fluxengine-event-publisher fluxengine-parser fluxengine-local-test-runner fluxengine-dsl-loader fluxengine-persist-manager fluxengine-remote-test-runner fluxengine-cloud-sql fluxengine-dataflow fluxengine-web-service fluxengine-dataflow-housekeep fluxengine-dataflow-housekeep-servlet fluxengine-dataflow-batch-servlet
             do
             pushd ~/state-engine/$projectDir
             mvn clean install -U
