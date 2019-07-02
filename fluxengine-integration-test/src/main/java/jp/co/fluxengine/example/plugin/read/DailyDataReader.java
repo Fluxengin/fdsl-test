@@ -1,19 +1,22 @@
 package jp.co.fluxengine.example.plugin.read;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import jp.co.fluxengine.stateengine.annotation.DslName;
+import jp.co.fluxengine.stateengine.annotation.Read;
+import jp.co.fluxengine.stateengine.plugin.Fetch;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-
-import jp.co.fluxengine.stateengine.annotation.DslName;
-import jp.co.fluxengine.stateengine.annotation.Read;
-import jp.co.fluxengine.stateengine.plugin.Fetch;
-
 @Read("rule/日別データ検証#日別データ")
 public class DailyDataReader implements Fetch {
+
+	private static final Logger LOG = LogManager.getLogger(DailyDataReader.class);
 
 	private List<Object> cursor;
 
@@ -23,6 +26,8 @@ public class DailyDataReader implements Fetch {
 
 	@DslName("get")
 	public void getList(String id) throws InterruptedException {
+		LOG.debug("getList 開始");
+
 		cursor = Lists.newArrayList();
 		HashMap<String, Object> map = Maps.newHashMap();
 		map.put("端末ID", "C01");
@@ -37,11 +42,13 @@ public class DailyDataReader implements Fetch {
 		cursor.add(map1);
 		index = 0;
 		length = cursor.size();
+		LOG.debug("getList 終了");
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public Map<String, Object> fetch() {
+		LOG.debug("fetch index = " + index);
 
 		if (index >= length) {
 			return null;
