@@ -535,7 +535,7 @@ workflows:
                 - /.*circleci.*/
       - deploy_dataflow_job:
           requires:
-            - deploy_dsl
+            - build_engine_if_integration_modified
           filters:
             branches:
               only:
@@ -543,6 +543,7 @@ workflows:
                 - /.*circleci.*/
       - test_dataflow:
           requires:
+            - deploy_dsl
             - deploy_dataflow_job
           filters:
             branches:

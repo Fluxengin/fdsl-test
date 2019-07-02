@@ -51,7 +51,7 @@ public class DataflowBatchTest extends PersisterExtractor {
 
         // ここで、ジョブの実行終了を待つ
         LOG.info("testRead 待機");
-        Thread.sleep(30000);
+        Thread.sleep(60000);
         LOG.info("testRead 待機終了");
 
         // ジョブ実行後の状態のassertionを行う
