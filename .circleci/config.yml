@@ -1,3 +1,10 @@
+# Required environmental variables
+# GCLOUD_SERVICE_KEY: contents of JSON key file of service account
+# PROJECT: GCP project name to deploy
+# BUCKET: Storage bucket name to use for deployment
+# TOPIC: Pub/Sub topic name to use for deployment
+# SUBSCRIPTION: Pub/Sub subscription name for dataflow to use for deployment
+# FLUXENGINE_LICENSE_ENCODED: base64-encoded Fluxengine license file
 version: 2.1
 commands:
   check_update:
@@ -74,9 +81,6 @@ commands:
             echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
             pushd ~/
             git clone git@github.com:Fluxengin/state-engine.git
-            pushd state-engine
-            git checkout 820e60dd92c26d1b8d99e23e3152bcf64556a1e6 # TODO remove this line when merging into master
-            popd
             popd
       - restore_cache:
           keys:
@@ -165,10 +169,6 @@ jobs:
       - build_engine_if_modified:
           dir: "fluxengine-integration-test"
   deploy_dsl:
-    # Required environmental variables
-    # GCLOUD_SERVICE_KEY: contents of JSON key file of service account
-    # PROJECT: GCP project name to deploy
-    # FLUXENGINE_LICENSE_ENCODED: base64-encoded Fluxengine license file
     docker:
       - image: google/cloud-sdk:alpine
     working_directory: ~/fdsl-test
@@ -248,12 +248,6 @@ jobs:
             env CLASSPATH=~/state-engine/fluxengine-dsl-register/target/lib/* ./regisdsl.sh ${VERSION} ${EFFECTIVE_DATE}
             popd
   deploy_dataflow_job:
-    # Required environmental variables
-    # GCLOUD_SERVICE_KEY: contents of JSON key file of service account
-    # PROJECT: GCP project name to deploy
-    # BUCKET: Storage bucket name to use for deployment
-    # TOPIC: Pub/Sub topic name to use for deployment
-    # SUBSCRIPTION: Pub/Sub subscription name for dataflow to use for deployment
     docker:
       - image: google/cloud-sdk:alpine
     working_directory: ~/fdsl-test
@@ -344,12 +338,6 @@ jobs:
             mvn clean package appengine:deploy
             popd
   test_dataflow:
-    # Required environmental variables
-    # GCLOUD_SERVICE_KEY: contents of JSON key file of service account
-    # PROJECT: GCP project name to deploy
-    # BUCKET: Storage bucket name to use for deployment
-    # TOPIC: Pub/Sub topic name to use for deployment
-    # SUBSCRIPTION: Pub/Sub subscription name for dataflow to use for deployment
     docker:
       - image: google/cloud-sdk:alpine
     working_directory: ~/fdsl-test
@@ -450,12 +438,6 @@ jobs:
             mvn clean package appengine:deploy
             popd
   test_dataflow_batch:
-    # Required environmental variables
-    # GCLOUD_SERVICE_KEY: contents of JSON key file of service account
-    # PROJECT: GCP project name to deploy
-    # BUCKET: Storage bucket name to use for deployment
-    # TOPIC: Pub/Sub topic name to use for deployment
-    # SUBSCRIPTION: Pub/Sub subscription name for dataflow to use for deployment
     docker:
       - image: google/cloud-sdk:alpine
     working_directory: ~/fdsl-test
