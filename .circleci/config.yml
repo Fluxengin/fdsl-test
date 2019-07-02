@@ -74,6 +74,7 @@ commands:
             echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
             pushd ~/
             git clone git@github.com:Fluxengin/state-engine.git
+            git checkout 820e60dd92c26d1b8d99e23e3152bcf64556a1e6 # TODO remove this line when merging into master
             popd
       - restore_cache:
           keys:
