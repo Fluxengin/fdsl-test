@@ -3,19 +3,17 @@
 <head>
 <link href='//fonts.googleapis.com/css?family=Marmelad' rel='stylesheet'
 	type='text/css'>
-<title>Hello Sample Housekeep Project</title>
+<title>Hello Fluxengine Integration Test Housekeep</title>
 </head>
 <body>
-	<h1>Hello Sample Housekeep Project -- GAE!</h1>
+	<h1>Hello Fluxengine Integration Test Housekeep -- GAE!</h1>
 
-	<p>Fluxengine House Keepingのサンプルです</p>
+	<p>Hello Fluxengine Integration Test Housekeepのページです</p>
 
 	<h2>Usage:</h2>
 	<ol>
-		<li><p>fluxengine-dataflow-housekeepでバッチタイプジョブのテンプレートを作成してください。</p></li>
-		<li><p>housekeepJob.propertiesに作成したジョブのステージング先を設定してください。</p></li>
 		<li><p>
-				次のURLにPOST実行してください：<br />
+				次のURLにGETを実行してください：<br />
 				{Domain}/fluxengine-dataflow-housekeep
 			</p></li>
 		<li><p>エラーが返ってこなければ成功です。</p></li>

@@ -100,6 +100,18 @@ commands:
           root: ~/state-engine
           paths:
             - .
+  install_maven:
+    description: "Install maven into alpine"
+    steps:
+      - run:
+          name: Install maven
+          command: |
+            mkdir ~/maven
+            pushd ~/maven
+            wget https://www-us.apache.org/dist/maven/maven-3/3.6.1/binaries/apache-maven-3.6.1-bin.tar.gz
+            tar xzvf apache-maven-3.6.1-bin.tar.gz
+            echo 'export PATH=$PATH:~/maven/apache-maven-3.6.1/bin' >> $BASH_ENV
+            popd
 jobs:
   build_engine_if_local_modified:
     docker:
@@ -294,15 +306,7 @@ jobs:
           root: ~/state-engine
           paths:
             - .
-      - run:
-          name: Install maven
-          command: |
-            mkdir ~/maven
-            pushd ~/maven
-            wget https://www-us.apache.org/dist/maven/maven-3/3.6.1/binaries/apache-maven-3.6.1-bin.tar.gz
-            tar xzvf apache-maven-3.6.1-bin.tar.gz
-            echo 'export PATH=$PATH:~/maven/apache-maven-3.6.1/bin' >> $BASH_ENV
-            popd
+      - install_maven
       - run:
           name: Delete source files to deploy web service
           command: |
@@ -396,6 +400,53 @@ jobs:
             gcloud dataflow jobs drain $dataflowJobId --region=asia-northeast1
             done < ~/state-engine/dataflow_job_id.txt
           when: always
+  test_web_service:
+    docker:
+      - image: google/cloud-sdk:alpine
+    working_directory: ~/fdsl-test
+    steps:
+      - check_update:
+          dir: "fluxengine-integration-test"
+      - run:
+          name: Post event
+          command: |
+            mkdir ~/curl
+            curl -H 'Content-Type:application/json' -d '[{"eventName":"パケットイベント","namespace":"event/パケットイベント","createTime":null,"property":{"端末ID":"C01","日時":"2018/11/10 00:00:01","使用量":500}}]' https://${PROJECT}.appspot.com/fluxengine-web/event | tee ~/curl/result.json
+            grep SUCCEED ~/curl/result.json
+      - store_artifacts:
+          path: ~/curl
+  deploy_batch_servlet:
+    docker:
+      - image: google/cloud-sdk:alpine
+    working_directory: ~/fdsl-test
+    steps:
+      - check_update:
+          dir: "fluxengine-integration-test"
+      - install_java_auth_gcp
+      - attach_workspace:
+          at: ~/state-engine
+      - install_maven
+      - run:
+          name: Edit conf file
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test-batch-servlet/src/main/webapp/WEB-INF
+            sed -i -e "s/\[YOUR_BUCKET_NAME\]/${BUCKET}/g" job.properties
+            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" job.properties
+            popd
+      - run:
+          name: Replace jar
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test-batch-servlet/src/main/webapp/WEB-INF/lib
+            rm -f fluxengine-*.jar
+            cp -f ~/state-engine/fluxengine-dataflow-batch-servlet/target/fluxengine-dataflow-batch-servlet-*.jar ./
+            diff -q ~/state-engine/fluxengine-dataflow-batch-servlet/target/fluxengine-dataflow-batch-servlet-*.jar fluxengine-dataflow-batch-servlet-*.jar
+            popd
+      - run:
+          name: Deploy batch servlet
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test-batch-servlet
+            mvn clean package appengine:deploy
+            popd
   test_dataflow_batch:
     # Required environmental variables
     # GCLOUD_SERVICE_KEY: contents of JSON key file of service account
@@ -496,9 +547,25 @@ workflows:
               only:
                 - master
                 - /.*circleci.*/
+      - test_web_service:
+          requires:
+            - test_dataflow
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+      - deploy_batch_servlet:
+          requires:
+            - test_web_service
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
       - test_dataflow_batch:
           requires:
-            - deploy_dataflow_job
+            - deploy_batch_servlet
           filters:
             branches:
               only:
