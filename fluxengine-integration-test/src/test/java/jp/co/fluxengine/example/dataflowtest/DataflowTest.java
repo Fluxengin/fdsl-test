@@ -122,4 +122,19 @@ public class DataflowTest extends PersisterExtractor {
         LOG.info("testEffector 終了");
     }
 
+    @Test
+    void testSubscription() throws Exception {
+        LOG.info("testSubscription 開始");
+
+        String targetUserId = System.getenv("TEST_PERSIST_USERID");
+        String targetString = System.getenv("TEST_PERSIST_STRING");
+
+        assertThat(getResultJson()).anySatisfy(json -> {
+            assertThat(json.get("id").asText()).isEqualTo("[" + targetUserId + "]");
+            assertThat(json.get("value").get("subscription/イベントの文字列をそのまま永続化#Subscriptionイベント永続化").get("value").get("文字列").asText()).isEqualTo(targetString);
+        });
+
+        LOG.info("testSubscription 終了");
+    }
+
 }

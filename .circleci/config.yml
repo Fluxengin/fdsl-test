@@ -257,6 +257,16 @@ jobs:
       - install_java_auth_gcp
       - attach_workspace:
           at: ~/state-engine
+      - run:
+          name: Publish event before deployment
+          command: |
+            # Empty subscription
+            gcloud pubsub subscriptions pull projects/${PROJECT}/subscriptions/${SUBSCRIPTION} --limit=1000 --auto-ack
+            # Publish event
+            TEST_PERSIST_STRING=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -1 | tr -d '\n'`
+            echo -n $TEST_PERSIST_STRING > ~/state-engine/test_persist_string.txt
+            gcloud pubsub topics publish projects/${PROJECT}/topics/${TOPIC} --message="[{\"eventName\":\"Subscriptionイベント永続化\",\"namespace\":\"subscription/イベントの文字列をそのまま永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"S01\",\"文字列\":\"${TEST_PERSIST_STRING}\"}}]"
+          background: true
       - edit_integration_test_conf_files
       - run:
           name: Replace jar
@@ -369,7 +379,7 @@ jobs:
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test
             chmod +x gradlew
-            env FLUXENGINE_INTEGRATION_TEST_MODE=DATAFLOW ./gradlew test --tests jp.co.fluxengine.example.dataflowtest.DataflowTest
+            env FLUXENGINE_INTEGRATION_TEST_MODE=DATAFLOW TEST_PERSIST_USERID=S01 TEST_PERSIST_STRING=`cat ~/state-engine/test_persist_string.txt` ./gradlew test --tests jp.co.fluxengine.example.dataflowtest.DataflowTest
             popd
       - save_cache:
           key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
