@@ -250,6 +250,8 @@ jobs:
   deploy_dataflow_job:
     docker:
       - image: google/cloud-sdk:alpine
+        environment:
+          LANG: ja_JP.UTF-8
     working_directory: ~/fdsl-test
     steps:
       - check_update:
