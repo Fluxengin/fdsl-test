@@ -43,8 +43,8 @@ commands:
             apk --update add openjdk8
             apk --update add libc6-compat # required to run dataflow_job_publisher.sh
             ln -s /lib/libc.musl-x86_64.so.1 /lib/ld-linux-x86-64.so.2 # not enough to install libc6-compat
-            gcloud components install app-engine-java
             gcloud --quiet components update
+            gcloud components install app-engine-java
             gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
             gcloud --quiet config set project $PROJECT
   edit_integration_test_conf_files:
@@ -261,11 +261,11 @@ jobs:
           name: Publish event before deployment
           command: |
             # Empty subscription
-            gcloud pubsub subscriptions pull projects/${PROJECT}/subscriptions/${SUBSCRIPTION} --limit=1000 --auto-ack
+            gcloud pubsub subscriptions pull projects/${PROJECT}/subscriptions/${SUBSCRIPTION} --limit=1000 --auto-ack > /dev/null 2>&1
             # Publish event
             TEST_PERSIST_STRING=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -1 | tr -d '\n'`
             echo -n $TEST_PERSIST_STRING > ~/state-engine/test_persist_string.txt
-            gcloud pubsub topics publish projects/${PROJECT}/topics/${TOPIC} --message="[{\"eventName\":\"Subscriptionイベント永続化\",\"namespace\":\"subscription/イベントの文字列をそのまま永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"S01\",\"文字列\":\"${TEST_PERSIST_STRING}\"}}]" --quiet
+            gcloud pubsub topics publish projects/${PROJECT}/topics/${TOPIC} --message="[{\"eventName\":\"Subscriptionイベント永続化\",\"namespace\":\"subscription/イベントの文字列をそのまま永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"S01\",\"文字列\":\"${TEST_PERSIST_STRING}\"}}]" --quiet > /dev/null 2>&1
           background: true
       - edit_integration_test_conf_files
       - run:
