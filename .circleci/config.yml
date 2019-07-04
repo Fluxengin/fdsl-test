@@ -250,8 +250,6 @@ jobs:
   deploy_dataflow_job:
     docker:
       - image: google/cloud-sdk:alpine
-        environment:
-          LANG: ja_JP.UTF-8
     working_directory: ~/fdsl-test
     steps:
       - check_update:
@@ -270,7 +268,7 @@ jobs:
             TEST_PERSIST_STRING=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -1 | tr -d '\n'`
             set -o pipefail
             echo -n $TEST_PERSIST_STRING > ~/state-engine/test_persist_string.txt
-            gcloud pubsub topics publish projects/${PROJECT}/topics/${TOPIC} --message="[{\"eventName\":\"Subscriptionイベント永続化\",\"namespace\":\"subscription/イベントの文字列をそのまま永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"S01\",\"文字列\":\"${TEST_PERSIST_STRING}\"}}]"
+            gcloud pubsub topics publish projects/${PROJECT}/topics/${TOPIC} --message="[{\"eventName\":\"Subscriptionイベント\",\"namespace\":\"subscription/イベントの文字列をそのまま永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"S01\",\"文字列\":\"${TEST_PERSIST_STRING}\"}}]"
           background: true
       - edit_integration_test_conf_files
       - run:
