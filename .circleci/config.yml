@@ -263,9 +263,13 @@ jobs:
             # Empty subscription
             gcloud pubsub subscriptions pull projects/${PROJECT}/subscriptions/${SUBSCRIPTION} --limit=1000 --auto-ack
             # Publish event
+            # Temporarily disable pipefail because "cat /dev/urandom" raises it
+            set +o pipefail
             TEST_PERSIST_STRING=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -1 | tr -d '\n'`
+            set -o pipefail
             echo -n $TEST_PERSIST_STRING > ~/state-engine/test_persist_string.txt
             gcloud pubsub topics publish projects/${PROJECT}/topics/${TOPIC} --message="[{\"eventName\":\"Subscriptionイベント永続化\",\"namespace\":\"subscription/イベントの文字列をそのまま永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"S01\",\"文字列\":\"${TEST_PERSIST_STRING}\"}}]"
+          background: true
       - edit_integration_test_conf_files
       - run:
           name: Replace jar
