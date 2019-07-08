@@ -19,6 +19,11 @@ public class Utility {
 
   private static final Logger log = LogManager.getLogger(Utility.class);
 
+  @DslName("weekday")
+  public static String weekday() {
+    return "201852";
+  }
+
   //DSLから呼び出すにはstaticメソッドである必要がある
   @DslName("文字列連結")
   public static String strCat(String str1, String str2) {

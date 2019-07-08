@@ -1,15 +1,14 @@
 package jp.co.fluxengine.example.plugin.variant;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import jp.co.fluxengine.stateengine.annotation.DslName;
+import jp.co.fluxengine.stateengine.annotation.Variant;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import jp.co.fluxengine.stateengine.annotation.DslName;
-import jp.co.fluxengine.stateengine.annotation.Variant;
+import java.util.HashMap;
+import java.util.Map;
 
-@Variant("ユーザー情報#ユーザー情報")
+@Variant("variant/ユーザー情報#ユーザー情報")
 public class UserInfoVariant {
 
 	private static final Logger log = LogManager.getLogger(UserInfoVariant.class);
@@ -24,4 +23,19 @@ public class UserInfoVariant {
 		m.put("パケット上限", Long.valueOf(5368709120l));
 		return m;
 	}
+
+	// For Testing ver1.0.3 Map
+	@DslName("getbyParameters")
+	public Map<String, Object> get(Map test) {
+
+		log.debug("UserInfoVariant:" + test.get("a1"));
+		log.debug("UserInfoVariant:" + test.get("a2"));
+		log.debug("UserInfoVariant:" + test.get("a3"));
+
+		Map<String, Object> m = new HashMap<String, Object>();
+		m.put("ユーザーID", "uid12345");
+		m.put("パケット上限", Long.valueOf(5368709120l));
+		return m;
+	}
+
 }
