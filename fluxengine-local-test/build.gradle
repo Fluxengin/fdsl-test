@@ -28,7 +28,7 @@ test {
 }
 
 group   = "jp.co.fluxengine"
-version = "1.0.7.alpha.2"
+version = "1.0.7"
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
