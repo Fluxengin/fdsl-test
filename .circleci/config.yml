@@ -301,6 +301,11 @@ jobs:
           paths:
             - ~/.gradle
       - run:
+          name: Remove local test runner
+          command: |
+            # Avoid local test runner to work in dataflow
+            rm -f ~/fdsl-test/fluxengine-integration-test/lib/fluxengine-local-test-runner-*.jar
+      - run:
           name: Register job
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test
