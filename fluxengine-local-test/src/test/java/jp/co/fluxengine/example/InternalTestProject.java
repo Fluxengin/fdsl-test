@@ -135,5 +135,45 @@ public class InternalTestProject {
                     .hasSize(42)
                     .allMatch(TestResult::isSucceeded);
         }
+
+        @Test
+        @DslPath("bigdecimal")
+        void testBigdecimal(String dslPath) {
+            assertThat(testDslAndGetResults(dslPath))
+                    .hasSize(24)
+                    .allMatch(TestResult::isSucceeded);
+        }
+
+        @Test
+        @DslPath("calc")
+        void testCalc(String dslPath) {
+            assertThat(testDslAndGetResults(dslPath))
+                    .hasSize(33)
+                    .allMatch(TestResult::isSucceeded);
+        }
+
+        @Test
+        @DslPath("date_functions")
+        void testDateFunctions(String dslPath) {
+            assertThat(testDslAndGetResults(dslPath))
+                    .hasSize(71)
+                    .allMatch(TestResult::isSucceeded);
+        }
+
+        @Test
+        @DslPath("event")
+        void testEvent(String dslPath) {
+            assertThat(testDslAndGetResults(dslPath))
+                    .hasSize(3)
+                    .allMatch(TestResult::isSucceeded);
+        }
+
+        @Test
+        @DslPath("quotation")
+        void testQuotation(String dslPath) {
+            assertThat(testDslAndGetResults(dslPath))
+                    .hasSize(32)
+                    .allMatch(TestResult::isSucceeded);
+        }
     }
 }
