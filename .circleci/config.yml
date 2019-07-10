@@ -320,41 +320,6 @@ jobs:
           root: ~/state-engine
           paths:
             - .
-      - install_maven
-      - run:
-          name: Delete source files to deploy web service
-          command: |
-            pushd ~/fdsl-test/fluxengine-integration-test/src
-            rm -rf test
-            rm -rf main/dsl
-            rm -rf main/java
-            popd
-      - run:
-          name: Copy jar
-          command: |
-            pushd ~/fdsl-test/fluxengine-integration-test
-            mkdir -p src/main/webapp/WEB-INF/lib
-            cp -f build/libs/fluxengine-integration-test-*.jar ~/state-engine/fluxengine-web-service/target/fluxengine-web-service-*.jar src/main/webapp/WEB-INF/lib/
-            diff -q build/libs/fluxengine-integration-test-*.jar src/main/webapp/WEB-INF/lib/fluxengine-integration-test-*.jar
-            diff -q ~/state-engine/fluxengine-web-service/target/fluxengine-web-service-*.jar src/main/webapp/WEB-INF/lib/fluxengine-web-service-*.jar
-            popd
-      - run:
-          name: Copy conf files
-          command: |
-            pushd ~/fdsl-test/fluxengine-integration-test
-            mkdir -p src/main/resources
-            for confFile in dslDataStore dslLoader effectorDataStore persisterDataStore variant_cache
-            do
-            cp -f conf/${confFile}.properties src/main/resources/
-            diff -q conf/${confFile}.properties src/main/resources/${confFile}.properties
-            done
-            popd
-      - run:
-          name: Deploy web service
-          command: |
-            pushd ~/fdsl-test/fluxengine-integration-test
-            mvn clean package appengine:deploy
-            popd
   test_dataflow:
     docker:
       - image: google/cloud-sdk:alpine
@@ -408,6 +373,78 @@ jobs:
             gcloud dataflow jobs drain $dataflowJobId --region=asia-northeast1
             done < ~/state-engine/dataflow_job_id.txt
           when: always
+  deploy_webservice:
+    docker:
+      - image: google/cloud-sdk:alpine
+    working_directory: ~/fdsl-test
+    steps:
+      - check_update:
+          dir: "fluxengine-integration-test"
+      - install_java_auth_gcp
+      - install_maven
+      - attach_workspace:
+          at: ~/state-engine
+      - edit_integration_test_conf_files
+      - run:
+          name: Replace jar
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test/lib
+            rm -f fluxengine-*.jar
+            cp -f ~/state-engine/fluxengine-local-test-runner/target/fluxengine-local-test-runner-*.jar ./
+            diff -q ~/state-engine/fluxengine-local-test-runner/target/fluxengine-local-test-runner-*.jar fluxengine-local-test-runner-*.jar
+            popd
+      - restore_cache:
+          keys:
+            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
+            - v1-gradle-{{ .Branch }}-
+            - v1-gradle-
+      - run:
+          name: Build integration test
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test
+            chmod +x gradlew
+            ./gradlew build copyDependencies
+            cp -f build/libs/fluxengine-integration-test-*.jar lib/
+            diff -q build/libs/fluxengine-integration-test-*.jar lib/fluxengine-integration-test-*.jar
+            popd
+      - save_cache:
+          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
+          paths:
+            - ~/.gradle
+      - run:
+          name: Delete source files to deploy web service
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test/src
+            rm -rf test
+            rm -rf main/dsl
+            rm -rf main/java
+            popd
+      - run:
+          name: Copy jar
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test
+            mkdir -p src/main/webapp/WEB-INF/lib
+            cp -f build/libs/fluxengine-integration-test-*.jar ~/state-engine/fluxengine-web-service/target/fluxengine-web-service-*.jar src/main/webapp/WEB-INF/lib/
+            diff -q build/libs/fluxengine-integration-test-*.jar src/main/webapp/WEB-INF/lib/fluxengine-integration-test-*.jar
+            diff -q ~/state-engine/fluxengine-web-service/target/fluxengine-web-service-*.jar src/main/webapp/WEB-INF/lib/fluxengine-web-service-*.jar
+            popd
+      - run:
+          name: Copy conf files
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test
+            mkdir -p src/main/resources
+            for confFile in dslDataStore dslLoader effectorDataStore persisterDataStore variant_cache
+            do
+            cp -f conf/${confFile}.properties src/main/resources/
+            diff -q conf/${confFile}.properties src/main/resources/${confFile}.properties
+            done
+            popd
+      - run:
+          name: Deploy web service
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test
+            mvn clean package appengine:deploy
+            popd
   test_web_service:
     docker:
       - image: google/cloud-sdk:alpine
@@ -431,9 +468,9 @@ jobs:
       - check_update:
           dir: "fluxengine-integration-test"
       - install_java_auth_gcp
+      - install_maven
       - attach_workspace:
           at: ~/state-engine
-      - install_maven
       - run:
           name: Edit conf file
           command: |
@@ -550,9 +587,17 @@ workflows:
               only:
                 - master
                 - /.*circleci.*/
+      - deploy_webservice:
+          requires:
+            - build_engine_if_integration_modified
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
       - test_web_service:
           requires:
-            - test_dataflow
+            - deploy_webservice
           filters:
             branches:
               only:

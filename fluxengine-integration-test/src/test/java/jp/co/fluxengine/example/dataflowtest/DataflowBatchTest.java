@@ -1,7 +1,5 @@
 package jp.co.fluxengine.example.dataflowtest;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jp.co.fluxengine.example.util.PersisterExtractor;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
