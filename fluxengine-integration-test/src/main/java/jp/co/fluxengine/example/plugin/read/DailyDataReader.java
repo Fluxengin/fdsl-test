@@ -30,12 +30,12 @@ public class DailyDataReader implements Fetch {
 
 		cursor = Lists.newArrayList();
 		HashMap<String, Object> map = Maps.newHashMap();
-		map.put("端末ID", "C01");
+		map.put("端末ID", "batch");
 		map.put("日時", LocalDateTime.now());
 		map.put("使用量", 500);
 
 		HashMap<String, Object> map1 = Maps.newHashMap();
-		map1.put("端末ID", "C01");
+		map1.put("端末ID", "batch");
 		map1.put("日時", LocalDateTime.now().plusSeconds(1));
 		map1.put("使用量", 600);
 		cursor.add(map);

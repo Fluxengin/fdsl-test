@@ -16,11 +16,10 @@ public class UserInfoVariant {
 
 	@DslName("get")
 	public Map<String, Object> get(String id) {
-		//TODO 永続化しているデータを取得したり、加工処理を記載
 		log.debug("UserInfoVariant:" + id);
 		//ダミ－データ
-		Map<String, Object> m = new HashMap<String, Object>();
-		m.put("ユーザーID", "uid12345");
+		Map<String, Object> m = new HashMap<>();
+		m.put("ユーザーID", id.equals("batch") ? "batch" : "uid12345");
 		m.put("パケット上限", Long.valueOf(5368709120l));
 		return m;
 	}
