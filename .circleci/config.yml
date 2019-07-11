@@ -23,10 +23,21 @@ commands:
             else
             DIFF_TARGET="origin/master"
             fi
-            DIFF_FILES=`git diff ${DIFF_TARGET} --name-only --relative=<< parameters.dir >> | wc -l`
+            DIFF_EXISTS=false
+            for targetDir in << parameters.dir >>
+            do
+            DIFF_FILES=`git diff ${DIFF_TARGET} --name-only --relative=${targetDir} | wc -l`
             if [ $DIFF_FILES -eq 0 ]
             then
-            echo "There is no update under << parameters.dir >>"
+            echo "There is no update under ${targetDir}"
+            else
+            echo "There is update under ${targetDir}"
+            DIFF_EXISTS=true
+            break
+            fi
+            done
+            if ! $DIFF_EXISTS
+            then
             circleci step halt
             fi
   install_java_auth_gcp:
@@ -66,44 +77,6 @@ commands:
             sed -i -e "s/\[DB_USER\]/${DB_USER}/g" application-jdbc.properties
             sed -i -e "s/\[DB_PASS\]/${DB_PASS}/g" application-jdbc.properties
             popd
-  build_engine_if_modified:
-    description: "Build engine if a designated fdsl-test directory modified"
-    parameters:
-      dir:
-        type: string
-    steps:
-      - check_update:
-          dir: << parameters.dir >>
-      - run:
-          name: Checkout state-engine
-          command: |
-            mkdir -p ~/.ssh
-            echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
-            pushd ~/
-            git clone git@github.com:Fluxengin/state-engine.git
-            popd
-      - restore_cache:
-          keys:
-            - v1-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-web-service/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
-            - v1-m2-{{ .Branch }}-
-            - v1-m2-
-      - run:
-          name: Build state-engine
-          command: |
-            for projectDir in stateengine fluxengine-dsl-register fluxengine-event-publisher fluxengine-parser fluxengine-local-test-runner fluxengine-dsl-loader fluxengine-persist-manager fluxengine-remote-test-runner fluxengine-cloud-sql fluxengine-dataflow fluxengine-web-service fluxengine-dataflow-housekeep fluxengine-dataflow-housekeep-servlet fluxengine-dataflow-batch-servlet
-            do
-            pushd ~/state-engine/$projectDir
-            mvn clean install -U
-            popd
-            done
-      - save_cache:
-          key: v1-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-web-service/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
-          paths:
-            - ~/.m2
-      - persist_to_workspace:
-          root: ~/state-engine
-          paths:
-            - .
   install_maven:
     description: "Install maven into alpine"
     steps:
@@ -117,12 +90,42 @@ commands:
             echo 'export PATH=$PATH:~/maven/apache-maven-3.6.1/bin' >> $BASH_ENV
             popd
 jobs:
-  build_engine_if_local_modified:
+  build_engine:
     docker:
       - image: circleci/openjdk:8-jdk
     steps:
-      - build_engine_if_modified:
-          dir: "fluxengine-local-test"
+      - check_update:
+          dir: "fluxengine-local-test fluxengine-integration-test"
+      - run:
+          name: Checkout state-engine
+          command: |
+            mkdir -p ~/.ssh
+            echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+            pushd ~/
+            git clone git@github.com:Fluxengin/state-engine.git
+            popd
+      - restore_cache:
+          keys:
+            - v1-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-web-service/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
+            - v1-m2-{{ .Branch }}-
+            - v1-m2-
+      - run:
+          name: Build state-engine
+          command: |
+            for projectDir in stateengine fluxengine-dsl-register fluxengine-event-publisher fluxengine-parser fluxengine-local-test-runner fluxengine-dsl-loader fluxengine-persist-manager fluxengine-remote-test-runner fluxengine-cloud-sql fluxengine-dataflow fluxengine-web-service fluxengine-dataflow-housekeep fluxengine-dataflow-housekeep-servlet fluxengine-dataflow-batch-servlet
+            do
+            pushd ~/state-engine/$projectDir
+            mvn clean install -U
+            popd
+            done
+      - save_cache:
+          key: v1-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-web-service/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
+          paths:
+            - ~/.m2
+      - persist_to_workspace:
+          root: ~/state-engine
+          paths:
+            - .
   test_fdsl:
     docker:
       - image: circleci/openjdk:8-jdk
@@ -162,12 +165,9 @@ jobs:
             - ~/.gradle
       - store_artifacts:
           path: ~/fdsl-test/fluxengine-local-test/build/reports/tests/test
-  build_engine_if_integration_modified:
-    docker:
-      - image: circleci/openjdk:8-jdk
-    steps:
-      - build_engine_if_modified:
-          dir: "fluxengine-integration-test"
+          destination: test
+      - store_test_results:
+          path: ~/fdsl-test/fluxengine-local-test/build/test-results
   deploy_dsl:
     docker:
       - image: google/cloud-sdk:alpine
@@ -364,6 +364,9 @@ jobs:
           when: always
       - store_artifacts:
           path: ~/fdsl-test/fluxengine-integration-test/build/reports/tests/test
+          destination: test
+      - store_test_results:
+          path: ~/fdsl-test/fluxengine-integration-test/build/test-results
       - run:
           name: Stop Dataflow job
           command: |
@@ -489,6 +492,9 @@ jobs:
           when: always
       - store_artifacts:
           path: ~/fdsl-test/fluxengine-integration-test/build/reports/tests/test
+          destination: test
+      - store_test_results:
+          path: ~/fdsl-test/fluxengine-integration-test/build/test-results
   deploy_batch_servlet:
     docker:
       - image: google/cloud-sdk:alpine
@@ -565,11 +571,14 @@ jobs:
           when: always
       - store_artifacts:
           path: ~/fdsl-test/fluxengine-integration-test/build/reports/tests/test
+          destination: test
+      - store_test_results:
+          path: ~/fdsl-test/fluxengine-integration-test/build/test-results
 workflows:
   version: 2
-  test_fdsl:
+  deploy_dsl_test:
     jobs:
-      - build_engine_if_local_modified:
+      - build_engine:
           filters:
             branches:
               only:
@@ -577,15 +586,7 @@ workflows:
                 - /.*circleci.*/
       - test_fdsl:
           requires:
-            - build_engine_if_local_modified
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-  deploy_dsl_test:
-    jobs:
-      - build_engine_if_integration_modified:
+            - build_engine
           filters:
             branches:
               only:
@@ -593,7 +594,7 @@ workflows:
                 - /.*circleci.*/
       - deploy_dsl:
           requires:
-            - build_engine_if_integration_modified
+            - build_engine
           filters:
             branches:
               only:
@@ -601,7 +602,7 @@ workflows:
                 - /.*circleci.*/
       - deploy_dataflow_job:
           requires:
-            - build_engine_if_integration_modified
+            - build_engine
           filters:
             branches:
               only:
@@ -616,25 +617,9 @@ workflows:
               only:
                 - master
                 - /.*circleci.*/
-      - deploy_webservice:
-          requires:
-            - build_engine_if_integration_modified
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-      - test_web_service:
-          requires:
-            - deploy_webservice
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
       - deploy_batch_servlet:
           requires:
-            - test_web_service
+            - build_engine
           filters:
             branches:
               only:
