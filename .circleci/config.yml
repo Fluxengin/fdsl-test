@@ -95,7 +95,7 @@ jobs:
       - image: circleci/openjdk:8-jdk
     steps:
       - check_update:
-          dir: "fluxengine-local-test fluxengine-integration-test"
+          dir: "fluxengine-local-test fluxengine-integration-test .circleci"
       - run:
           name: Checkout state-engine
           command: |
@@ -133,7 +133,7 @@ jobs:
     working_directory: ~/fdsl-test
     steps:
       - check_update:
-          dir: "fluxengine-local-test"
+          dir: "fluxengine-local-test .circleci"
       - attach_workspace:
           at: ~/state-engine
       - run:
@@ -174,7 +174,7 @@ jobs:
     working_directory: ~/fdsl-test
     steps:
       - check_update:
-          dir: "fluxengine-integration-test"
+          dir: "fluxengine-integration-test .circleci"
       - install_java_auth_gcp
       - attach_workspace:
           at: ~/state-engine
@@ -253,7 +253,7 @@ jobs:
     working_directory: ~/fdsl-test
     steps:
       - check_update:
-          dir: "fluxengine-integration-test"
+          dir: "fluxengine-integration-test .circleci"
       - install_java_auth_gcp
       - attach_workspace:
           at: ~/state-engine
@@ -326,7 +326,7 @@ jobs:
     working_directory: ~/fdsl-test
     steps:
       - check_update:
-          dir: "fluxengine-integration-test"
+          dir: "fluxengine-integration-test .circleci"
       - install_java_auth_gcp
       - attach_workspace:
           at: ~/state-engine
@@ -382,7 +382,7 @@ jobs:
     working_directory: ~/fdsl-test
     steps:
       - check_update:
-          dir: "fluxengine-integration-test"
+          dir: "fluxengine-integration-test .circleci"
       - install_java_auth_gcp
       - install_maven
       - attach_workspace:
@@ -454,7 +454,7 @@ jobs:
     working_directory: ~/fdsl-test
     steps:
       - check_update:
-          dir: "fluxengine-integration-test"
+          dir: "fluxengine-integration-test .circleci"
       - install_java_auth_gcp
       - attach_workspace:
           at: ~/state-engine
@@ -501,7 +501,7 @@ jobs:
     working_directory: ~/fdsl-test
     steps:
       - check_update:
-          dir: "fluxengine-integration-test"
+          dir: "fluxengine-integration-test .circleci"
       - install_java_auth_gcp
       - install_maven
       - attach_workspace:
@@ -533,7 +533,7 @@ jobs:
     working_directory: ~/fdsl-test
     steps:
       - check_update:
-          dir: "fluxengine-integration-test"
+          dir: "fluxengine-integration-test .circleci"
       - install_java_auth_gcp
       - attach_workspace:
           at: ~/state-engine
