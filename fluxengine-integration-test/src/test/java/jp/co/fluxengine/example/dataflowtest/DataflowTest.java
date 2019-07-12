@@ -1,7 +1,7 @@
 package jp.co.fluxengine.example.dataflowtest;
 
 import jp.co.fluxengine.example.CloudSqlPool;
-import jp.co.fluxengine.example.plugin.read.DailyDataReader;
+import jp.co.fluxengine.example.plugin.read.PublishDataReader;
 import jp.co.fluxengine.example.util.PersisterExtractor;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
@@ -59,7 +59,7 @@ public class DataflowTest extends PersisterExtractor {
     void testEventPublisherAndTransaction() throws Exception {
         LOG.info("testEventPublisherAndTransaction 開始");
         // persisterの現在の値を取得する
-        double usageBefore = currentPacketUsage("uid12345", "persister/パケット積算データ#パケット積算データ");
+        double usageBefore = currentPacketUsage("publish", "persister/パケット積算データ#パケット積算データ");
 
         ClassLoader eventPublisherLoader = getClassLoaderFromLib("fluxengine-event-publisher-.+\\.jar");
 
@@ -68,16 +68,16 @@ public class DataflowTest extends PersisterExtractor {
         Object csvPublisher = csvPublisherClass.getConstructor(String.class).newInstance("input/event.csv");
         csvPublisherClass.getMethod("publish").invoke(csvPublisher);
 
-        String eventJson = "[{\"eventName\":\"パケットイベント\", \"namespace\":\"event/パケットイベント\", \"createTime\":null, \"property\":{\"端末ID\":\"C01\",\"日時\":\"2018/11/10 00:00:01\",\"使用量\":500}}]";
+        String eventJson = "[{\"eventName\":\"パケットイベント\", \"namespace\":\"event/パケットイベント\", \"createTime\":null, \"property\":{\"端末ID\":\"publish\",\"日時\":\"2018/11/10 00:00:01\",\"使用量\":500}}]";
         Class<?> jsonPublisherClass = eventPublisherLoader.loadClass("jp.co.fluxengine.publisher.JsonPublisher");
         Object jsonPublisher = jsonPublisherClass.getConstructor(String.class).newInstance(eventJson);
         jsonPublisherClass.getMethod("publish").invoke(jsonPublisher);
 
 
-        Class<?> readClazz = DailyDataReader.class;
+        Class<?> readClazz = PublishDataReader.class;
         Method method = readClazz.getMethod("getList", String.class);
         Class<?> readPublisherClass = eventPublisherLoader.loadClass("jp.co.fluxengine.publisher.ReadPublisher");
-        Object readPublisher = readPublisherClass.getConstructor(String.class, String.class, Class.class, Method.class, Object[].class).newInstance("event/パケットイベント", "パケットイベント", readClazz, method, new Object[]{"C01"});
+        Object readPublisher = readPublisherClass.getConstructor(String.class, String.class, Class.class, Method.class, Object[].class).newInstance("event/パケットイベント", "パケットイベント", readClazz, method, new Object[]{"publish"});
         readPublisherClass.getMethod("publish").invoke(readPublisher);
 
         // 競合によるリトライが発生するので、長く待つ
@@ -86,7 +86,7 @@ public class DataflowTest extends PersisterExtractor {
         LOG.info("testEventPublisherAndTransaction 待機終了");
 
         // パケット積算データが2600増えているはず
-        assertThat(currentPacketUsage("uid12345", "persister/パケット積算データ#パケット積算データ")).isEqualTo(usageBefore + 2600);
+        assertThat(currentPacketUsage("publish", "persister/パケット積算データ#パケット積算データ")).isEqualTo(usageBefore + 2600);
         LOG.info("testEventPublisherAndTransaction 終了");
     }
 

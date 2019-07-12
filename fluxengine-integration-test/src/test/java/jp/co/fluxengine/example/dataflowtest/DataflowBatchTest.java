@@ -27,7 +27,7 @@ public class DataflowBatchTest extends PersisterExtractor {
     void testRead() throws Exception {
         LOG.info("testRead 開始");
         // persisterの現在の値を取得する
-        double usageBefore = currentPacketUsage("uid12345", "rule/日別データ検証#日別積算データ");
+        double usageBefore = currentPacketUsage("batch", "rule/日別データ検証#日別積算データ");
 
         // バッチにデータを流すために、バッチ用サーブレットにデータを入力する
         OkHttpClient client = new OkHttpClient.Builder()
@@ -53,7 +53,7 @@ public class DataflowBatchTest extends PersisterExtractor {
         LOG.info("testRead 待機終了");
 
         // ジョブ実行後の状態のassertionを行う
-        double usageAfter = currentPacketUsage("uid12345", "rule/日別データ検証#日別積算データ");
+        double usageAfter = currentPacketUsage("batch", "rule/日別データ検証#日別積算データ");
         assertThat(usageAfter).isEqualTo(usageBefore + 1100);
         LOG.info("testRead 終了");
     }
