@@ -45,7 +45,9 @@ test {
     useJUnitPlatform()
     // Each test using Dataflow waits for process to complete for a long time
     // So make them dependent and execute them in parallel
-    maxParallelForks 5
+    systemProperties['junit.jupiter.execution.parallel.enabled'] = true
+    systemProperties['junit.jupiter.execution.parallel.mode.default'] = 'concurrent'
+    maxParallelForks = 5
     // Not to exceed the limit of CircleCI (4GB)
     maxHeapSize = "3g"
     environment 'CONF', file('conf').absolutePath

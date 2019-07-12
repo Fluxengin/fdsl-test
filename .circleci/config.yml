@@ -51,13 +51,18 @@ commands:
             source $BASH_ENV
             echo $GCLOUD_SERVICE_KEY > $GOOGLE_APPLICATION_CREDENTIALS
             # Install
-            apk --update add openjdk8
+            apk --update add openjdk8 &
+            pidInstallJava=$!
+            {
             apk --update add libc6-compat # required to run dataflow_job_publisher.sh
             ln -s /lib/libc.musl-x86_64.so.1 /lib/ld-linux-x86-64.so.2 # not enough to install libc6-compat
+            } &
+            pidInstallLibc6Compat=$!
             gcloud --quiet components update
             gcloud components install app-engine-java
             gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
             gcloud --quiet config set project $PROJECT
+            wait $pidInstallJava $pidInstallLibc6Compat
   edit_integration_test_conf_files:
     description: "Replace placeholders in conf and env files of integration test with environment variables"
     steps:
@@ -112,16 +117,48 @@ jobs:
       - run:
           name: Build state-engine
           command: |
-            for projectDir in stateengine fluxengine-dsl-register fluxengine-event-publisher fluxengine-parser fluxengine-local-test-runner fluxengine-dsl-loader fluxengine-persist-manager fluxengine-remote-test-runner fluxengine-cloud-sql fluxengine-dataflow fluxengine-web-service fluxengine-dataflow-housekeep fluxengine-dataflow-housekeep-servlet fluxengine-dataflow-batch-servlet
-            do
-            pushd ~/state-engine/$projectDir
-            mvn clean install -U
-            popd
-            done
+            mkdir ~/logs
+            function buildEngine() {
+              pushd ~/state-engine/$1
+              mvn clean install -U > ~/logs/$1.log
+              popd
+            }
+            buildEngine fluxengine-dataflow-housekeep-servlet &
+            pidDataflowHousekeepServlet=$!
+            buildEngine stateengine
+            buildEngine fluxengine-dsl-register &
+            pidDslRegister=$!
+            buildEngine fluxengine-event-publisher &
+            pidEventPublisher=$!
+            buildEngine fluxengine-dataflow-batch-servlet &
+            pidDataflowBatchServlet=$!
+            {
+              buildEngine fluxengine-parser
+              buildEngine fluxengine-local-test-runner
+            } &
+            pidLocalTestRunner=$!
+            buildEngine fluxengine-dsl-loader &
+            pidDslLoader=$!
+            buildEngine fluxengine-persist-manager
+            wait $pidDslLoader
+            {
+              buildEngine fluxengine-cloud-sql
+              buildEngine fluxengine-dataflow
+            } &
+            pidDataflow=$!
+            buildEngine fluxengine-remote-test-runner &
+            pidRemoteTestRunner=$!
+            buildEngine fluxengine-web-service &
+            pidWebService=$!
+            buildEngine fluxengine-dataflow-housekeep
+            wait $pidDataflowHousekeepServlet $pidDslRegister $pidEventPublisher $pidDataflowBatchServlet $pidLocalTestRunner $pidDataflow $pidRemoteTestRunner $pidWebService
       - save_cache:
           key: v1-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-web-service/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
           paths:
             - ~/.m2
+      - store_artifacts:
+          path: ~/logs
+          destination: logs
       - persist_to_workspace:
           root: ~/state-engine
           paths:
@@ -310,11 +347,13 @@ jobs:
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test
             chmod +x dataflow_job_publisher.sh
+            # also deploy batch job
+            ./dataflow_job_publisher.sh batch conf/dataflow_job_publisher_sample.env debug &
+            pidDeployBatch=$!
             ./dataflow_job_publisher.sh stream conf/dataflow_job_publisher_sample.env debug | tee temp_dataflow_job_register_output.txt
             # Obtain deployed job ID in order to stop it later
             grep 'Submitted job:' temp_dataflow_job_register_output.txt | awk '{print $3}' > ~/state-engine/dataflow_job_id.txt
-            # also deploy batch job
-            ./dataflow_job_publisher.sh batch conf/dataflow_job_publisher_sample.env debug
+            wait $pidDeployBatch
             popd
       - persist_to_workspace:
           root: ~/state-engine
