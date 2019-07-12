@@ -51,8 +51,7 @@ commands:
             source $BASH_ENV
             echo $GCLOUD_SERVICE_KEY > $GOOGLE_APPLICATION_CREDENTIALS
             # Install
-            apk --update add openjdk8 &
-            pidInstallJava=$!
+            apk --update add openjdk8
             {
             apk --update add libc6-compat # required to run dataflow_job_publisher.sh
             ln -s /lib/libc.musl-x86_64.so.1 /lib/ld-linux-x86-64.so.2 # not enough to install libc6-compat
@@ -62,7 +61,7 @@ commands:
             gcloud components install app-engine-java
             gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
             gcloud --quiet config set project $PROJECT
-            wait $pidInstallJava $pidInstallLibc6Compat
+            wait $pidInstallLibc6Compat
   edit_integration_test_conf_files:
     description: "Replace placeholders in conf and env files of integration test with environment variables"
     steps:
