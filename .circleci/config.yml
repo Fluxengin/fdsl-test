@@ -144,7 +144,6 @@ commands:
             chmod +x gradlew
             ./gradlew build copyDependencies -x test
             cp -f build/libs/fluxengine-integration-test-*.jar lib/
-            diff -q build/libs/fluxengine-integration-test-*.jar lib/fluxengine-integration-test-*.jar
             popd
       - save_cache:
           key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}

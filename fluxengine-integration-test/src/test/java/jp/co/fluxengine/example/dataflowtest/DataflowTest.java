@@ -62,7 +62,7 @@ public class DataflowTest {
 
         // 結果のassertionを行う
         Map<String, Object> result = extractor.getResultJson("[uid12345]");
-        assertThat(getNested(result, double.class, "value", "persister/パケット積算データ#パケット積算データ", "value", "使用量")).isEqualTo(usageBefore + 500);
+        assertThat(getNested(result, Number.class, "value", "persister/パケット積算データ#パケット積算データ", "value", "使用量")).isEqualTo(usageBefore + 500);
         assertThat(getNested(result, String.class, "value", "rule/パケット積算#状態遷移", "value", "currentState")).isEqualTo("s2");
 
         LOG.info("testDataflow 終了");
