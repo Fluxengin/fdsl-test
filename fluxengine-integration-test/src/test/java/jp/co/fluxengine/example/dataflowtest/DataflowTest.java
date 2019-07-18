@@ -2,20 +2,27 @@ package jp.co.fluxengine.example.dataflowtest;
 
 import jp.co.fluxengine.example.CloudSqlPool;
 import jp.co.fluxengine.example.plugin.read.PublishDataReader;
+import jp.co.fluxengine.example.util.EnabledIfPersisterDbIs;
 import jp.co.fluxengine.example.util.PersisterExtractor;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.db.type.Changes;
 import org.assertj.db.type.Table;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
+import static jp.co.fluxengine.example.util.PersisterExtractor.getClassLoaderFromLib;
+import static jp.co.fluxengine.example.util.PersisterExtractor.getNested;
 import static org.assertj.core.api.Assertions.assertThat;
 
 // このクラスは、Dataflowのジョブにデータを投入するので、
@@ -23,15 +30,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 // 環境変数"FLUXENGINE_INTEGRATION_TEST_MODE"が"DATAFLOW"のときだけ実行できるようにしている
 // CI/CDで実行されることを想定したテストクラス
 @EnabledIfEnvironmentVariable(named = "FLUXENGINE_INTEGRATION_TEST_MODE", matches = "DATAFLOW|dataflow")
-public class DataflowTest extends PersisterExtractor {
+public class DataflowTest {
 
     private static final Logger LOG = LogManager.getLogger(DataflowTest.class);
+
+    private static PersisterExtractor extractor;
+
+    @BeforeAll
+    static void setup() throws NoSuchMethodException, IOException, InstantiationException, IllegalAccessException, InvocationTargetException, ClassNotFoundException {
+        extractor = PersisterExtractor.getInstance();
+    }
 
     @Test
     void testDataflow() throws Exception {
         LOG.info("testDataflow 開始");
         // persisterの現在の値を取得する
-        double usageBefore = currentPacketUsage("uid12345", "persister/パケット積算データ#パケット積算データ");
+        double usageBefore = extractor.currentPacketUsage("uid12345", "persister/パケット積算データ#パケット積算データ");
 
         // テストデータをDataflowのジョブに流す
         URL resourceURL = getClass().getResource("/dataflow_test_data.json");
@@ -39,7 +53,7 @@ public class DataflowTest extends PersisterExtractor {
         LOG.debug("input = " + inputJsonString);
 
         LOG.info("testDataflow データ送信");
-        remoteRunnerClass.getDeclaredMethod("publishOneTime", String.class, String.class).invoke(null, inputJsonString, topic);
+        extractor.publishOneTime(inputJsonString);
 
         // 処理完了を待つ
         LOG.info("testDataflow 待機");
@@ -47,19 +61,19 @@ public class DataflowTest extends PersisterExtractor {
         LOG.info("testDataflow 待機終了");
 
         // 結果のassertionを行う
-        assertThat(getResultJson()).anySatisfy(json -> {
-            assertThat(json.get("id").asText()).isEqualTo("[uid12345]");
-            assertThat(json.get("value").get("persister/パケット積算データ#パケット積算データ").get("value").get("使用量").asDouble()).isEqualTo(usageBefore + 500);
-            assertThat(json.get("value").get("rule/パケット積算#状態遷移").get("value").get("currentState").asText()).isEqualTo("s2");
-        });
+        Map<String, Object> result = extractor.getResultJson("[uid12345]");
+        assertThat(getNested(result, double.class, "value", "persister/パケット積算データ#パケット積算データ", "value", "使用量")).isEqualTo(usageBefore + 500);
+        assertThat(getNested(result, String.class, "value", "rule/パケット積算#状態遷移", "value", "currentState")).isEqualTo("s2");
+
         LOG.info("testDataflow 終了");
     }
 
     @Test
+    @EnabledIfPersisterDbIs("memorystore")
     void testEventPublisherAndTransaction() throws Exception {
         LOG.info("testEventPublisherAndTransaction 開始");
         // persisterの現在の値を取得する
-        double usageBefore = currentPacketUsage("publish", "persister/パケット積算データ#パケット積算データ");
+        double usageBefore = extractor.currentPacketUsage("publish", "persister/パケット積算データ#パケット積算データ");
 
         ClassLoader eventPublisherLoader = getClassLoaderFromLib("fluxengine-event-publisher-.+\\.jar");
 
@@ -73,7 +87,6 @@ public class DataflowTest extends PersisterExtractor {
         Object jsonPublisher = jsonPublisherClass.getConstructor(String.class).newInstance(eventJson);
         jsonPublisherClass.getMethod("publish").invoke(jsonPublisher);
 
-
         Class<?> readClazz = PublishDataReader.class;
         Method method = readClazz.getMethod("getList", String.class);
         Class<?> readPublisherClass = eventPublisherLoader.loadClass("jp.co.fluxengine.publisher.ReadPublisher");
@@ -86,7 +99,7 @@ public class DataflowTest extends PersisterExtractor {
         LOG.info("testEventPublisherAndTransaction 待機終了");
 
         // パケット積算データが2600増えているはず
-        assertThat(currentPacketUsage("publish", "persister/パケット積算データ#パケット積算データ")).isEqualTo(usageBefore + 2600);
+        assertThat(extractor.currentPacketUsage("publish", "persister/パケット積算データ#パケット積算データ")).isEqualTo(usageBefore + 2600);
         LOG.info("testEventPublisherAndTransaction 終了");
     }
 
@@ -103,7 +116,7 @@ public class DataflowTest extends PersisterExtractor {
         String message = "イベント送信タイムスタンプ: " + LocalDateTime.now().format(formatter);
         String eventJson = "[{\"eventName\":\"エフェクタ送信イベント\", \"namespace\":\"effector_check/エフェクタ動作確認\", \"createTime\":null, \"property\":{\"ユーザーID\":\"effector_check_01\",\"メッセージ\":\"" + message + "\"}}]";
         LOG.info("testEffector データ送信");
-        remoteRunnerClass.getDeclaredMethod("publishOneTime", String.class, String.class).invoke(null, eventJson, topic);
+        extractor.publishOneTime(eventJson);
 
         // Dataflowが処理完了するまで少し待つ
         LOG.info("testEffector 待機");
@@ -129,10 +142,8 @@ public class DataflowTest extends PersisterExtractor {
         String targetUserId = System.getenv("TEST_PERSIST_USERID");
         String targetString = System.getenv("TEST_PERSIST_STRING");
 
-        assertThat(getResultJson()).anySatisfy(json -> {
-            assertThat(json.get("id").asText()).isEqualTo("[" + targetUserId + "]");
-            assertThat(json.get("value").get("subscription/イベントの文字列をそのまま永続化#Subscriptionイベント永続化").get("value").get("文字列").asText()).isEqualTo(targetString);
-        });
+        Map<String, Object> result = extractor.getResultJson("[" + targetUserId + "]");
+        assertThat(getNested(result, String.class, "value", "subscription/イベントの文字列をそのまま永続化#Subscriptionイベント永続化", "value", "文字列")).isEqualTo(targetString);
 
         LOG.info("testSubscription 終了");
     }
