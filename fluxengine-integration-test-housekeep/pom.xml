@@ -11,7 +11,7 @@
 
     <groupId>jp.co.fluxengine</groupId>
     <artifactId>fluxengine-integration-test-housekeep</artifactId>
-    <version>1.0.7</version>
+    <version>1.0.8</version>
 
     <!-- [START properties] -->
     <properties>
@@ -21,7 +21,7 @@
             for your application -->
         <failOnMissingWebXml>false</failOnMissingWebXml>
         <!-- [END_EXCLUDE] -->
-        <fluxengine.version>1.0.7</fluxengine.version>
+        <fluxengine.version>1.0.8</fluxengine.version>
     </properties>
     <!-- [END properties] -->
 

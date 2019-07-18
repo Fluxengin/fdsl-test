@@ -72,7 +72,7 @@ public abstract class PersisterExtractor {
         Map<String, Object> targetMap = getResultJson("[" + userId + "]");
 
         return targetMap.get("lifetime").equals(todayString) ?
-                getNested(targetMap, double.class, "value", name, "value", "使用量") :
+                getNested(targetMap, Number.class, "value", name, "value", "使用量").doubleValue() :
                 0.0;
     }
 

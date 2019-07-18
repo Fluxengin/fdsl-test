@@ -154,6 +154,7 @@ commands:
           command: |
             # Avoid local test runner to work in dataflow
             rm -f ~/fdsl-test/fluxengine-integration-test/lib/fluxengine-local-test-runner-*.jar
+            ls -lFa ~/fdsl-test/fluxengine-integration-test/lib/
       - run:
           name: Register job
           command: |

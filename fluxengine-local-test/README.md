@@ -6,7 +6,7 @@ FluxengineのエンジンやDSLのテストをすることができます。
 ビルドツール：gradle
 
 # Version
-Fluxengine 1.0.7
+Fluxengine 1.0.8
 
 # SetUp
 
