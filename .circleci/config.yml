@@ -292,11 +292,12 @@ jobs:
             buildEngine fluxengine-dataflow-housekeep &
             pidDataflowHousekeep=$!
 
-            mkdir ~/engine/fluxengine-dsl-register-lib
-            cp -f ~/state-engine/fluxengine-dsl-register/target/lib/* ~/engine/fluxengine-dsl-register-lib/
             cp -f ~/state-engine/fluxengine-dsl-register/tools/gcp/regisdsl.sh ~/engine/
+            mkdir ~/engine/fluxengine-dsl-register-lib
+            wait $pidDslRegister
+            cp -f ~/state-engine/fluxengine-dsl-register/target/lib/* ~/engine/fluxengine-dsl-register-lib/
 
-            wait $pidDataflowHousekeepServlet $pidDslRegister $pidEventPublisher $pidDataflowBatchServlet $pidLocalTestRunner $pidDataflow $pidRemoteTestRunner $pidWebService $pidDataflowHousekeep
+            wait $pidDataflowHousekeepServlet $pidEventPublisher $pidDataflowBatchServlet $pidLocalTestRunner $pidDataflow $pidRemoteTestRunner $pidWebService $pidDataflowHousekeep
       - save_cache:
           key: v1-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-web-service/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
           paths:
