@@ -103,7 +103,7 @@ commands:
           dir: "fluxengine-integration-test .circleci"
       - install_java_auth_gcp
       - attach_workspace:
-          at: ~/engine
+          at: ~/state-engine
       - run:
           name: Publish event before deployment
           command: |
@@ -114,7 +114,7 @@ commands:
             set +o pipefail
             TEST_PERSIST_STRING=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -1 | tr -d '\n'`
             set -o pipefail
-            echo -n $TEST_PERSIST_STRING > ~/engine/test_persist_string.txt
+            echo -n $TEST_PERSIST_STRING > ~/state-engine/test_persist_string.txt
             gcloud pubsub topics publish projects/${PROJECT}/topics/${TOPIC} --message="[{\"eventName\":\"Subscriptionイベント\",\"namespace\":\"subscription/イベントの文字列をそのまま永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"S01\",\"文字列\":\"${TEST_PERSIST_STRING}\"}}]"
           background: true
       - edit_integration_test_conf_files
@@ -129,7 +129,7 @@ commands:
             rm -f fluxengine-*.jar
             for libname in local-test-runner dataflow
             do
-            cp -f ~/engine/fluxengine-${libname}-*.jar ./
+            cp -f ~/state-engine/fluxengine-${libname}/target/fluxengine-${libname}-*.jar ./
             done
             popd
       - restore_cache:
@@ -154,7 +154,6 @@ commands:
           command: |
             # Avoid local test runner to work in dataflow
             rm -f ~/fdsl-test/fluxengine-integration-test/lib/fluxengine-local-test-runner-*.jar
-            ls -lFa ~/fdsl-test/fluxengine-integration-test/lib/
       - run:
           name: Register job
           command: |
@@ -165,11 +164,11 @@ commands:
             pidDeployBatch=$!
             ./dataflow_job_publisher.sh stream conf/dataflow_job_publisher_sample.env debug | tee temp_dataflow_job_register_output.txt
             # Obtain deployed job ID in order to stop it later
-            grep 'Submitted job:' temp_dataflow_job_register_output.txt | awk '{print $3}' > ~/engine/dataflow_job_id.txt
+            grep 'Submitted job:' temp_dataflow_job_register_output.txt | awk '{print $3}' > ~/state-engine/dataflow_job_id.txt
             wait $pidDeployBatch
             popd
       - persist_to_workspace:
-          root: ~/engine
+          root: ~/state-engine
           paths:
             - .
   test_dataflow_stream:
@@ -182,7 +181,7 @@ commands:
           dir: "fluxengine-integration-test .circleci"
       - install_java_auth_gcp
       - attach_workspace:
-          at: ~/engine
+          at: ~/state-engine
       - edit_integration_test_conf_files
       - run:
           name: Edit persister db setting
@@ -195,7 +194,7 @@ commands:
             rm -f fluxengine-*.jar
             for projectDir in local-test-runner remote-test-runner event-publisher
             do
-            cp -f ~/engine/fluxengine-${projectDir}-*.jar ./
+            cp -f ~/state-engine/fluxengine-${projectDir}/target/fluxengine-${projectDir}-*.jar ./
             done
             popd
       - restore_cache:
@@ -208,7 +207,7 @@ commands:
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test
             chmod +x gradlew
-            env FLUXENGINE_INTEGRATION_TEST_MODE=DATAFLOW TEST_PERSIST_USERID=S01 TEST_PERSIST_STRING=`cat ~/engine/test_persist_string.txt` ./gradlew test --tests jp.co.fluxengine.example.dataflowtest.DataflowTest
+            env FLUXENGINE_INTEGRATION_TEST_MODE=DATAFLOW TEST_PERSIST_USERID=S01 TEST_PERSIST_STRING=`cat ~/state-engine/test_persist_string.txt` ./gradlew test --tests jp.co.fluxengine.example.dataflowtest.DataflowTest
             popd
       - save_cache:
           key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
@@ -230,7 +229,7 @@ commands:
             do
             echo "Stopping $dataflowJobId"
             gcloud dataflow jobs drain $dataflowJobId --region=asia-northeast1
-            done < ~/engine/dataflow_job_id.txt
+            done < ~/state-engine/dataflow_job_id.txt
           when: always
 jobs:
   build_engine:
@@ -255,12 +254,10 @@ jobs:
       - run:
           name: Build state-engine
           command: |
-            mkdir ~/engine
             mkdir ~/logs
             function buildEngine() {
               pushd ~/state-engine/$1
               mvn clean install -U > ~/logs/$1.log
-              cp -f target/fluxengine-*.jar ~/engine/
               popd
             }
             buildEngine fluxengine-dataflow-housekeep-servlet &
@@ -290,15 +287,8 @@ jobs:
             pidRemoteTestRunner=$!
             buildEngine fluxengine-web-service &
             pidWebService=$!
-            buildEngine fluxengine-dataflow-housekeep &
-            pidDataflowHousekeep=$!
-
-            cp -f ~/state-engine/fluxengine-dsl-register/tools/gcp/regisdsl.sh ~/engine/
-            mkdir ~/engine/fluxengine-dsl-register-lib
-            wait $pidDslRegister
-            cp -f ~/state-engine/fluxengine-dsl-register/target/lib/* ~/engine/fluxengine-dsl-register-lib/
-
-            wait $pidDataflowHousekeepServlet $pidEventPublisher $pidDataflowBatchServlet $pidLocalTestRunner $pidDataflow $pidRemoteTestRunner $pidWebService $pidDataflowHousekeep
+            buildEngine fluxengine-dataflow-housekeep
+            wait $pidDataflowHousekeepServlet $pidDslRegister $pidEventPublisher $pidDataflowBatchServlet $pidLocalTestRunner $pidDataflow $pidRemoteTestRunner $pidWebService
       - save_cache:
           key: v1-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-web-service/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
           paths:
@@ -307,7 +297,7 @@ jobs:
           path: ~/logs
           destination: logs
       - persist_to_workspace:
-          root: ~/engine
+          root: ~/state-engine
           paths:
             - .
   test_fdsl:
@@ -319,12 +309,12 @@ jobs:
       - check_update:
           dir: "fluxengine-local-test .circleci"
       - attach_workspace:
-          at: ~/engine
+          at: ~/state-engine
       - run:
           name: Replace test runner
           command: |
             rm -f ~/fdsl-test/fluxengine-local-test/lib/fluxengine-local-test-runner-*.jar
-            cp -f ~/engine/fluxengine-local-test-runner-*.jar ~/fdsl-test/fluxengine-local-test/lib/
+            cp -f ~/state-engine/fluxengine-local-test-runner/target/fluxengine-local-test-runner-*.jar ~/fdsl-test/fluxengine-local-test/lib/
       - restore_cache:
           keys:
             - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
@@ -360,7 +350,7 @@ jobs:
           dir: "fluxengine-integration-test .circleci"
       - install_java_auth_gcp
       - attach_workspace:
-          at: ~/engine
+          at: ~/state-engine
       - run:
           name: Replace jar
           command: |
@@ -368,7 +358,7 @@ jobs:
             rm -f fluxengine-*.jar
             for projectDir in local-test-runner remote-test-runner event-publisher
             do
-            cp -f ~/engine/fluxengine-${projectDir}-*.jar ./
+            cp -f ~/state-engine/fluxengine-${projectDir}/target/fluxengine-${projectDir}-*.jar ./
             done
             popd
       - restore_cache:
@@ -405,26 +395,26 @@ jobs:
             # Copy integration test jar
             cp -f ../build/libs/fluxengine-integration-test-*.jar ./
             # Copy core jar
-            cp -f ~/engine/fluxengine-core-*.jar ./
+            cp -f ~/state-engine/stateengine/target/fluxengine-core-*.jar ./
             rm -f fluxengine-core-*-tests.jar
             # Copy other jars
             for libname in dsl-register parser persist-manager
             do
-            cp -f ~/engine/fluxengine-${libname}-*.jar ./
+            cp -f ~/state-engine/fluxengine-${libname}/target/fluxengine-${libname}-*.jar ./
             done
             popd
       - run:
           name: Register DSL
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test
-            cp -f ~/engine/regisdsl.sh ./
+            cp -f ~/state-engine/fluxengine-dsl-register/tools/gcp/regisdsl.sh ./
             chmod +x regisdsl.sh
             mkdir -p out
             mkdir -p log
             VERSION=`ls lib/fluxengine-core-*.jar | sed -e 's/^.*fluxengine-core-\([0-9]\+\).*\.jar/\1/'`
             EFFECTIVE_DATE=`date +"%Y%m%d"`
             # Run regisdsl with classpath of fluxengine-dsl-register because fluxengine-dsl-register requires GCP related jars but it's not a fat jar
-            env CLASSPATH=~/engine/fluxengine-dsl-register-lib/* ./regisdsl.sh ${VERSION} ${EFFECTIVE_DATE}
+            env CLASSPATH=~/state-engine/fluxengine-dsl-register/target/lib/* ./regisdsl.sh ${VERSION} ${EFFECTIVE_DATE}
             popd
   deploy_dataflow_jobs_datastore:
     docker:
@@ -464,7 +454,7 @@ jobs:
       - install_java_auth_gcp
       - install_maven
       - attach_workspace:
-          at: ~/engine
+          at: ~/state-engine
       - run:
           name: Edit conf file
           command: |
@@ -477,7 +467,7 @@ jobs:
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test-batch-servlet/src/main/webapp/WEB-INF/lib
             rm -f fluxengine-*.jar
-            cp -f ~/engine/fluxengine-dataflow-batch-servlet-*.jar ./
+            cp -f ~/state-engine/fluxengine-dataflow-batch-servlet/target/fluxengine-dataflow-batch-servlet-*.jar ./
             popd
       - run:
           name: Deploy batch servlet
@@ -494,7 +484,7 @@ jobs:
           dir: "fluxengine-integration-test .circleci"
       - install_java_auth_gcp
       - attach_workspace:
-          at: ~/engine
+          at: ~/state-engine
       - edit_integration_test_conf_files
       - run:
           name: Replace jar
@@ -503,7 +493,7 @@ jobs:
             rm -f fluxengine-*.jar
             for projectDir in local-test-runner remote-test-runner event-publisher
             do
-            cp -f ~/engine/fluxengine-${projectDir}-*.jar ./
+            cp -f ~/state-engine/fluxengine-${projectDir}/target/fluxengine-${projectDir}-*.jar ./
             done
             popd
       - restore_cache:
