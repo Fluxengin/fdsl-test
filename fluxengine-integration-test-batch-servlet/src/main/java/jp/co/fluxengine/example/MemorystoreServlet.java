@@ -106,11 +106,28 @@ public class MemorystoreServlet extends HttpServlet {
             throw new UncheckedIOException(e);
         }
 
-        try (InputStream in = new FileInputStream(config.getServletContext().getRealPath("/") + "/job.properties")) {
+        File jobPropFile = findFile(new File(config.getServletContext().getRealPath("/")), "job.properties");
+        try (InputStream in = new FileInputStream(jobPropFile)) {
             jobProperties.load(in);
         } catch (IOException e) {
             log.log(Level.SEVERE, "error in init", e);
             throw new UncheckedIOException(e);
+        }
+    }
+
+    private File findFile(File file, String targetFileName) {
+        if (file.getName().equals(targetFileName)) {
+            return file;
+        } else if (file.isDirectory()) {
+            for (File sub : file.listFiles()) {
+                File subResult = findFile(sub, targetFileName);
+                if (subResult != null) {
+                    return subResult;
+                }
+            }
+            return null;
+        } else {
+            return null;
         }
     }
 }
