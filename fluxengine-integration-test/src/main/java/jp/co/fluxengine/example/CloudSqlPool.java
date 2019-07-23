@@ -6,6 +6,7 @@ import org.apache.commons.lang.StringUtils;
 
 import javax.sql.DataSource;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 public class CloudSqlPool {
@@ -25,7 +26,7 @@ public class CloudSqlPool {
 
     private static final int MAX_LIFETIME;
 
-    public static DataSource pool;
+    private static DataSource pool;
 
     static {
         Properties props = new Properties();
@@ -47,7 +48,6 @@ public class CloudSqlPool {
         MINIMUM_IDLE = Integer.valueOf(props.getProperty("MINIMUM_IDLE"));
         IDLE_TIMEOUT = Integer.valueOf(props.getProperty("IDLE_TIMEOUT"));
         MAX_LIFETIME = Integer.valueOf(props.getProperty("MAX_LIFETIME"));
-        props = null;
 
         pool = createConnectionPool();
     }
@@ -120,7 +120,7 @@ public class CloudSqlPool {
         FileInputStream in;
         try {
             in = new FileInputStream(fileName);
-            props.load(new InputStreamReader(in, "utf-8"));
+            props.load(new InputStreamReader(in, StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -128,7 +128,7 @@ public class CloudSqlPool {
 
     public static void load(InputStream in, Properties props) {
         try {
-            props.load(new InputStreamReader(in, "utf-8"));
+            props.load(new InputStreamReader(in, StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

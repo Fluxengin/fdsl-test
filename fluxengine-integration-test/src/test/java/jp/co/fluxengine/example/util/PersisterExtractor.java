@@ -2,22 +2,34 @@ package jp.co.fluxengine.example.util;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Maps;
+import jp.co.fluxengine.example.CloudSqlPool;
+import jp.co.fluxengine.stateengine.util.Serializer.KryoSerializer;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public abstract class PersisterExtractor {
 
@@ -48,28 +60,40 @@ public abstract class PersisterExtractor {
         LOG.debug("topic = {}", topic);
     }
 
-    public Class<?> getRemoteRunnerClass() {
-        return remoteRunnerClass;
-    }
-
-    public String getTopic() {
-        return topic;
-    }
-
     public String getProjectId() {
         return projectId;
     }
 
-    public abstract Map<String, Object> getResultJson() throws Exception;
+    public abstract Map<String, Object> getPersisterAsMap() throws Exception;
 
-    public Map<String, Object> getResultJson(String id) throws Exception {
-        return (Map<String, Object>) getResultJson().get(id);
+    public abstract Map<String, Object> getPersisterAsMap(String[] keys) throws Exception;
+
+    public Map<String, Object> getPersisterAsMap(String id) throws Exception {
+        return (Map<String, Object>) getPersisterAsMap(new String[]{id}).get(id);
     }
 
     public double currentPacketUsage(String userId, String name) throws Exception {
         String todayString = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDate.now());
 
-        Map<String, Object> targetMap = getResultJson("[" + userId + "]");
+        Map<String, Object> targetMap = getPersisterAsMap("[" + userId + "]");
+
+        return targetMap.get("lifetime").equals(todayString) ?
+                getNested(targetMap, Number.class, "value", name, "value", "使用量").doubleValue() :
+                0.0;
+    }
+
+    public abstract Map<String, Object> waitAndGetPersisterAsMap(int seconds) throws Exception;
+
+    public abstract Map<String, Object> waitAndGetPersisterAsMap(String[] keys, int seconds) throws Exception;
+
+    public Map<String, Object> waitAndGetPersisterAsMap(String id, int seconds) throws Exception {
+        return (Map<String, Object>) waitAndGetPersisterAsMap(new String[]{id}, seconds).get(id);
+    }
+
+    public double waitCurrentPacketUsage(String userId, String name, int seconds) throws Exception {
+        String todayString = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDate.now());
+
+        Map<String, Object> targetMap = waitAndGetPersisterAsMap("[" + userId + "]", seconds);
 
         return targetMap.get("lifetime").equals(todayString) ?
                 getNested(targetMap, Number.class, "value", name, "value", "使用量").doubleValue() :
@@ -145,7 +169,7 @@ class DatastoreExtractor extends PersisterExtractor {
     }
 
     @Override
-    public Map<String, Object> getResultJson() throws Exception {
+    public Map<String, Object> getPersisterAsMap() throws Exception {
         File resultFile = File.createTempFile("persister", ".txt");
 
         // CloudStoreSelecterはexportEntityDataToFileを呼ぶたびにインスタンス内に結果を蓄積する
@@ -181,12 +205,36 @@ class DatastoreExtractor extends PersisterExtractor {
         return result;
     }
 
+    @Override
+    public Map<String, Object> getPersisterAsMap(String[] keys) throws Exception {
+        // Datastoreの方は、キーを絞って取得する機能はないので、全件取得する
+        return getPersisterAsMap();
+    }
+
+    @Override
+    public Map<String, Object> waitAndGetPersisterAsMap(int seconds) throws Exception {
+        Thread.sleep(seconds * 1000);
+        return getPersisterAsMap();
+    }
+
+    @Override
+    public Map<String, Object> waitAndGetPersisterAsMap(String[] keys, int seconds) throws Exception {
+        Thread.sleep(seconds * 1000);
+        return getPersisterAsMap(keys);
+    }
 }
 
 class MemorystoreExtractor extends PersisterExtractor {
 
     private Object memoryStoreSelecter;
     private Method selectAllData;
+
+    private OkHttpClient client = new OkHttpClient.Builder()
+            .connectTimeout(60, TimeUnit.SECONDS)
+            .callTimeout(60, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
+            .build();
 
     protected MemorystoreExtractor() throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, IOException, InstantiationException {
         super();
@@ -201,8 +249,102 @@ class MemorystoreExtractor extends PersisterExtractor {
     }
 
     @Override
-    public Map<String, Object> getResultJson() throws Exception {
-        return (Map<String, Object>) selectAllData.invoke(memoryStoreSelecter);
+    public Map<String, Object> getPersisterAsMap() throws Exception {
+        return getPersisterAsMap(new String[]{});
     }
 
+    private void waitUntilFinished(String jobId) throws IOException, InterruptedException {
+        Runtime runtime = Runtime.getRuntime();
+        String[] command = {"/bin/sh", "-c", "gcloud dataflow jobs show " + jobId + " --region=asia-northeast1 | grep 'state:'"};
+
+        // ジョブ終了まで待つ
+        while (true) {
+            Process process = runtime.exec(command);
+            process.waitFor();
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"))) {
+                String stateLine = br.readLine();
+
+                if (stateLine == null) {
+                    // 恐らく、ジョブの準備ができていないと思われるので、待つ。
+                } else {
+                    Matcher stateMatcher = Pattern.compile("state: (.*+)").matcher(stateLine);
+                    if (stateMatcher.find()) {
+                        String state = stateMatcher.group(1);
+                        switch (state) {
+                            case "Done":
+                            case "Failed":
+                            case "Cancelled":
+                                // ジョブ終了
+                                return;
+                            default:
+                                break;
+                        }
+                    } else {
+                        throw new RuntimeException("想定外のエラー: " + stateLine);
+                    }
+                }
+            }
+            // 次にジョブの状態を取得するまで3秒待つ
+            Thread.sleep(3000);
+        }
+    }
+
+    @Override
+    public Map<String, Object> getPersisterAsMap(String[] keys) throws Exception {
+        // DSLのプラグインによって、MemorystoreからCloud SQLに値を移す
+        String requestId = UUID.randomUUID().toString();
+
+        HttpUrl url = HttpUrl.get("https://" + projectId + ".appspot.com/fluxengine-integration-test-memorystore")
+                .newBuilder()
+                .addQueryParameter("requestid", requestId)
+                .addQueryParameter("keys", String.join(",", keys))
+                .build();
+        Request request = new Request.Builder().url(url).build();
+        Response response = client.newCall(request).execute();
+        String responseBody = response.body().string();
+
+        Matcher jobIdMatcher = Pattern.compile("JobId=(.*+)").matcher(responseBody);
+        if (jobIdMatcher.find()) {
+            String jobId = jobIdMatcher.group(1);
+
+            // ジョブ終了まで待つ
+            waitUntilFinished(jobId);
+
+            Map<String, Object> result = Maps.newHashMap();
+
+            // ジョブが終了するとSQLにデータが入っているので、取得する
+            try (Connection conn = CloudSqlPool.getDataSource().getConnection()) {
+                PreparedStatement selectStmt = conn.prepareStatement("SELECT key, value FROM memorystore_contents WHERE requestid = ?");
+                selectStmt.setString(1, requestId);
+
+                try (ResultSet rs = selectStmt.executeQuery()) {
+                    while (rs.next()) {
+                        String key = rs.getString(1);
+                        try (InputStream in = rs.getBinaryStream(2)) {
+                            byte[] value = IOUtils.toByteArray(in);
+                            KryoSerializer serializer = new KryoSerializer(HashMap.class);
+                            Map<String, Object> valueMap = serializer.deserialize(value);
+
+                            result.put(key, valueMap);
+                        }
+                    }
+                }
+            }
+
+            return result;
+        } else {
+            // JobIdが返ってこないのは異常
+            throw new RuntimeException("JobIdが取得できませんでした: " + responseBody);
+        }
+    }
+
+    @Override
+    public Map<String, Object> waitAndGetPersisterAsMap(int seconds) throws Exception {
+        return getPersisterAsMap();
+    }
+
+    @Override
+    public Map<String, Object> waitAndGetPersisterAsMap(String[] keys, int seconds) throws Exception {
+        return getPersisterAsMap(keys);
+    }
 }

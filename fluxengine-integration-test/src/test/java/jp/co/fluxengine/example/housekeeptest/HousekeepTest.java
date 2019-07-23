@@ -46,7 +46,7 @@ public class HousekeepTest {
         String tomorrowString = tomorrow.format(formatter);
 
         // Housekeep実行前の状態のassetionを行う
-        Map<String, Object> before = extractor.getResultJson();
+        Map<String, Object> before = extractor.getPersisterAsMap();
 
         Map<String, Object> before1 = (Map<String, Object>) before.get("[user1]");
         assertThat(getNested(before1, Object.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算A", "value", "使用量")).isInstanceOf(Number.class);
@@ -87,11 +87,8 @@ public class HousekeepTest {
         // 既にHousekeepのServletがデプロイされている前提
         assertThat(executeHousekeep()).isTrue();
 
-        // バッチの実行終了を待つ
-        Thread.sleep(120000);
-
         // Housekeep実行後の状態のassetionを行う
-        Map<String, Object> after = extractor.getResultJson();
+        Map<String, Object> after = extractor.waitAndGetPersisterAsMap(120);
 
         Map<String, Object> after1 = (Map<String, Object>) after.get("[user1]");
         assertThat(getNested(after1, Object.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算A", "value", "使用量")).isInstanceOf(Number.class);
