@@ -106,7 +106,7 @@ public class MemorystoreServlet extends HttpServlet {
             throw new UncheckedIOException(e);
         }
 
-        try (InputStream in = new FileInputStream(config.getServletContext().getRealPath("/") + "job.properties")) {
+        try (InputStream in = new FileInputStream(config.getServletContext().getRealPath("/") + "/job.properties")) {
             jobProperties.load(in);
         } catch (IOException e) {
             log.log(Level.SEVERE, "error in init", e);
