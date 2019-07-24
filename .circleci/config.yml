@@ -470,6 +470,9 @@ jobs:
   deploy_dataflow_jobs_datastore:
     docker:
       - image: google/cloud-sdk:alpine
+        environment:
+          LANG: ja_JP.UTF-8
+          LC_ALL: ja_JP.UTF-8
     working_directory: ~/fdsl-test
     steps:
       - deploy_dataflow_jobs:
@@ -484,6 +487,9 @@ jobs:
   deploy_dataflow_jobs_memorystore:
     docker:
       - image: google/cloud-sdk:alpine
+        environment:
+          LANG: ja_JP.UTF-8
+          LC_ALL: ja_JP.UTF-8
     working_directory: ~/fdsl-test
     steps:
       - deploy_dataflow_jobs:
