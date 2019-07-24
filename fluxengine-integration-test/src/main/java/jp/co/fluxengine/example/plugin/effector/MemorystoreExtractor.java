@@ -57,7 +57,7 @@ public class MemorystoreExtractor {
 
                 log.debug("insert key = {}", key);
 
-                PreparedStatement insert = conn.prepareStatement("INSERT INTO memorystore_contents (requestid, key, value) VALUES (?, ?, ?)");
+                PreparedStatement insert = conn.prepareStatement("INSERT INTO `memorystore_contents` (`requestid`, `key`, `value`) VALUES (?, ?, ?)");
 
                 insert.setString(1, requestId);
                 insert.setString(2, key);

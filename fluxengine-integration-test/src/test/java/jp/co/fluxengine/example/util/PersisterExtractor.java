@@ -314,7 +314,7 @@ class MemorystoreExtractor extends PersisterExtractor {
 
             // ジョブが終了するとSQLにデータが入っているので、取得する
             try (Connection conn = CloudSqlPool.getDataSource().getConnection()) {
-                PreparedStatement selectStmt = conn.prepareStatement("SELECT key, value FROM memorystore_contents WHERE requestid = ?");
+                PreparedStatement selectStmt = conn.prepareStatement("SELECT `key`, `value` FROM `memorystore_contents` WHERE `requestid` = ?");
                 selectStmt.setString(1, requestId);
 
                 try (ResultSet rs = selectStmt.executeQuery()) {
