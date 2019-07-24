@@ -76,11 +76,15 @@ public abstract class PersisterExtractor {
         String todayString = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDate.now());
 
         Map<String, Object> targetMap = getPersisterAsMap("[" + userId + "]");
+        Map<String, Object> nameMap = getPersisterMap(targetMap, name);
+        String lifetime = getNested(nameMap, String.class, "lifetime");
 
-        return targetMap.get("lifetime").equals(todayString) ?
-                getNested(targetMap, Number.class, "value", name, "value", "使用量").doubleValue() :
+        return lifetime != null && lifetime.equals(todayString) ?
+                getNested(nameMap, Number.class, "value", "使用量").doubleValue() :
                 0.0;
     }
+
+    public abstract Map<String, Object> getPersisterMap(Map<String, Object> idMap, String name);
 
     public void publishOneTime(String inputJsonString) throws InvocationTargetException, IllegalAccessException {
         publishOneTime.invoke(null, inputJsonString, topic);
@@ -122,6 +126,9 @@ public abstract class PersisterExtractor {
         Object result = map;
 
         for (String path : paths) {
+            if (result == null) {
+                return null;
+            }
             Map<String, Object> next = (Map<String, Object>) result;
             result = next.get(path);
         }
@@ -191,6 +198,11 @@ class DatastoreExtractor extends PersisterExtractor {
     public Map<String, Object> getPersisterAsMap(String[] keys) throws Exception {
         // Datastoreの方は、キーを絞って取得する機能はないので、全件取得する
         return getPersisterAsMap();
+    }
+
+    @Override
+    public Map<String, Object> getPersisterMap(Map<String, Object> idMap, String name) {
+        return getNested(idMap, Map.class, "value", name);
     }
 }
 
@@ -299,5 +311,10 @@ class MemorystoreExtractor extends PersisterExtractor {
             // JobIdが返ってこないのは異常
             throw new RuntimeException("JobIdが取得できませんでした: " + responseBody);
         }
+    }
+
+    @Override
+    public Map<String, Object> getPersisterMap(Map<String, Object> idMap, String name) {
+        return getNested(idMap, Map.class, name);
     }
 }

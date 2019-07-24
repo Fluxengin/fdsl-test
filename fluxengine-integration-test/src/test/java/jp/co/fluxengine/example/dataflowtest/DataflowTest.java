@@ -61,8 +61,8 @@ public class DataflowTest {
 
         // 結果のassertionを行う
         Map<String, Object> result = extractor.getPersisterAsMap("[uid12345]");
-        assertThat(getNested(result, Number.class, "value", "persister/パケット積算データ#パケット積算データ", "value", "使用量").doubleValue()).isEqualTo(usageBefore + 500);
-        assertThat(getNested(result, String.class, "value", "rule/パケット積算#状態遷移", "value", "currentState")).isEqualTo("s2");
+        assertThat(getNested(extractor.getPersisterMap(result, "persister/パケット積算データ#パケット積算データ"), Number.class, "value", "使用量").doubleValue()).isEqualTo(usageBefore + 500);
+        assertThat(getNested(extractor.getPersisterMap(result, "persister/パケット積算データ#パケット積算データ"), String.class, "value", "currentState")).isEqualTo("s2");
 
         LOG.info("testDataflow 終了");
     }
@@ -141,7 +141,7 @@ public class DataflowTest {
         String targetString = System.getenv("TEST_PERSIST_STRING");
 
         Map<String, Object> result = extractor.getPersisterAsMap("[" + targetUserId + "]");
-        assertThat(getNested(result, String.class, "value", "subscription/イベントの文字列をそのまま永続化#Subscriptionイベント永続化", "value", "文字列")).isEqualTo(targetString);
+        assertThat(getNested(extractor.getPersisterMap(result, "subscription/イベントの文字列をそのまま永続化#Subscriptionイベント永続化"), String.class, "value", "文字列")).isEqualTo(targetString);
 
         LOG.info("testSubscription 終了");
     }
