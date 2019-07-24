@@ -51,17 +51,20 @@ commands:
             source $BASH_ENV
             echo $GCLOUD_SERVICE_KEY > $GOOGLE_APPLICATION_CREDENTIALS
             # Install
-            apk --update add openjdk8
+            apt update
             {
-            apk --update add libc6-compat # required to run dataflow_job_publisher.sh
-            ln -s /lib/libc.musl-x86_64.so.1 /lib/ld-linux-x86-64.so.2 # not enough to install libc6-compat
+              apt install -y locales
+              sed -i -e "s/# ja_JP\.UTF-8 UTF-8/ja_JP.UTF-8 UTF-8/" /etc/locale.gen
+              locale-gen
+              update-locale LANG=ja_JP.UTF-8
             } &
-            pidInstallLibc6Compat=$!
+            pidSetLocale=$!
+            apt install -y openjdk-8-jdk
             gcloud --quiet components update
             gcloud components install app-engine-java
             gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
             gcloud --quiet config set project $PROJECT
-            wait $pidInstallLibc6Compat
+            wait $pidSetLocale
   edit_integration_test_conf_files:
     description: "Replace placeholders in conf and env files of integration test with environment variables"
     steps:
@@ -394,7 +397,9 @@ jobs:
           path: ~/fdsl-test/fluxengine-local-test/build/test-results
   deploy_dsl:
     docker:
-      - image: google/cloud-sdk:alpine
+      - image: google/cloud-sdk:slim
+        environment:
+          LANG: ja_JP.UTF-8
     working_directory: ~/fdsl-test
     steps:
       - check_update:
@@ -469,41 +474,45 @@ jobs:
             popd
   deploy_dataflow_jobs_datastore:
     docker:
-      - image: google/cloud-sdk:alpine
+      - image: google/cloud-sdk:slim
         environment:
           LANG: ja_JP.UTF-8
-          LC_ALL: ja_JP.UTF-8
     working_directory: ~/fdsl-test
     steps:
       - deploy_dataflow_jobs:
           persisterdb: datastore
   test_dataflow_stream_datastore:
     docker:
-      - image: google/cloud-sdk:alpine
+      - image: google/cloud-sdk:slim
+        environment:
+          LANG: ja_JP.UTF-8
     working_directory: ~/fdsl-test
     steps:
       - test_dataflow_stream:
           persisterdb: datastore
   deploy_dataflow_jobs_memorystore:
     docker:
-      - image: google/cloud-sdk:alpine
+      - image: google/cloud-sdk:slim
         environment:
           LANG: ja_JP.UTF-8
-          LC_ALL: ja_JP.UTF-8
     working_directory: ~/fdsl-test
     steps:
       - deploy_dataflow_jobs:
           persisterdb: memorystore
   test_dataflow_stream_memorystore:
     docker:
-      - image: google/cloud-sdk:alpine
+      - image: google/cloud-sdk:slim
+        environment:
+          LANG: ja_JP.UTF-8
     working_directory: ~/fdsl-test
     steps:
       - test_dataflow_stream:
           persisterdb: memorystore
   deploy_batch_servlet:
     docker:
-      - image: google/cloud-sdk:alpine
+      - image: google/cloud-sdk:slim
+        environment:
+          LANG: ja_JP.UTF-8
     working_directory: ~/fdsl-test
     steps:
       - check_update:
@@ -534,14 +543,18 @@ jobs:
             popd
   test_dataflow_batch_datastore:
     docker:
-      - image: google/cloud-sdk:alpine
+      - image: google/cloud-sdk:slim
+        environment:
+          LANG: ja_JP.UTF-8
     working_directory: ~/fdsl-test
     steps:
       - test_dataflow_batch:
           persisterdb: datastore
   test_dataflow_batch_memorystore:
     docker:
-      - image: google/cloud-sdk:alpine
+      - image: google/cloud-sdk:slim
+        environment:
+          LANG: ja_JP.UTF-8
     working_directory: ~/fdsl-test
     steps:
       - test_dataflow_batch:
