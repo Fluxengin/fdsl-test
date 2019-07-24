@@ -51,15 +51,14 @@ commands:
             source $BASH_ENV
             echo $GCLOUD_SERVICE_KEY > $GOOGLE_APPLICATION_CREDENTIALS
             # Install
-            apt update
             {
+              apt update
               apt install -y locales
               sed -i -e "s/# ja_JP\.UTF-8 UTF-8/ja_JP.UTF-8 UTF-8/" /etc/locale.gen
               locale-gen
               update-locale LANG=ja_JP.UTF-8
             } &
             pidSetLocale=$!
-            apt install -y openjdk-8-jdk
             gcloud --quiet components update
             gcloud components install app-engine-java
             gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
@@ -397,7 +396,7 @@ jobs:
           path: ~/fdsl-test/fluxengine-local-test/build/test-results
   deploy_dsl:
     docker:
-      - image: google/cloud-sdk:slim
+      - image: google/cloud-sdk:latest
         environment:
           LANG: ja_JP.UTF-8
     working_directory: ~/fdsl-test
@@ -474,7 +473,7 @@ jobs:
             popd
   deploy_dataflow_jobs_datastore:
     docker:
-      - image: google/cloud-sdk:slim
+      - image: google/cloud-sdk:latest
         environment:
           LANG: ja_JP.UTF-8
     working_directory: ~/fdsl-test
@@ -483,7 +482,7 @@ jobs:
           persisterdb: datastore
   test_dataflow_stream_datastore:
     docker:
-      - image: google/cloud-sdk:slim
+      - image: google/cloud-sdk:latest
         environment:
           LANG: ja_JP.UTF-8
     working_directory: ~/fdsl-test
@@ -492,7 +491,7 @@ jobs:
           persisterdb: datastore
   deploy_dataflow_jobs_memorystore:
     docker:
-      - image: google/cloud-sdk:slim
+      - image: google/cloud-sdk:latest
         environment:
           LANG: ja_JP.UTF-8
     working_directory: ~/fdsl-test
@@ -501,7 +500,7 @@ jobs:
           persisterdb: memorystore
   test_dataflow_stream_memorystore:
     docker:
-      - image: google/cloud-sdk:slim
+      - image: google/cloud-sdk:latest
         environment:
           LANG: ja_JP.UTF-8
     working_directory: ~/fdsl-test
@@ -510,7 +509,7 @@ jobs:
           persisterdb: memorystore
   deploy_batch_servlet:
     docker:
-      - image: google/cloud-sdk:slim
+      - image: google/cloud-sdk:latest
         environment:
           LANG: ja_JP.UTF-8
     working_directory: ~/fdsl-test
@@ -543,7 +542,7 @@ jobs:
             popd
   test_dataflow_batch_datastore:
     docker:
-      - image: google/cloud-sdk:slim
+      - image: google/cloud-sdk:latest
         environment:
           LANG: ja_JP.UTF-8
     working_directory: ~/fdsl-test
@@ -552,7 +551,7 @@ jobs:
           persisterdb: datastore
   test_dataflow_batch_memorystore:
     docker:
-      - image: google/cloud-sdk:slim
+      - image: google/cloud-sdk:latest
         environment:
           LANG: ja_JP.UTF-8
     working_directory: ~/fdsl-test
