@@ -226,8 +226,7 @@ class DatastoreExtractor extends PersisterExtractor {
 
 class MemorystoreExtractor extends PersisterExtractor {
 
-    private Object memoryStoreSelecter;
-    private Method selectAllData;
+    private static final Logger LOG = LogManager.getLogger(MemorystoreExtractor.class);
 
     private OkHttpClient client = new OkHttpClient.Builder()
             .connectTimeout(60, TimeUnit.SECONDS)
@@ -238,14 +237,6 @@ class MemorystoreExtractor extends PersisterExtractor {
 
     protected MemorystoreExtractor() throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, IOException, InstantiationException {
         super();
-
-        Properties fluxengineProps = loadProperties("/fluxengine.properties");
-        String host = fluxengineProps.getProperty("persister.memorystore.host");
-        int port = Integer.parseInt(fluxengineProps.getProperty("persister.memorystore.port"));
-
-        Class<?> memoryStoreSelecterClass = remoteTestRunnerLoader.loadClass("jp.co.fluxengine.remote.test.MemoryStoreSelecter");
-        memoryStoreSelecter = memoryStoreSelecterClass.getConstructor(String.class, int.class).newInstance(host, port);
-        selectAllData = memoryStoreSelecterClass.getDeclaredMethod("selectAllData");
     }
 
     @Override
@@ -330,6 +321,8 @@ class MemorystoreExtractor extends PersisterExtractor {
                     }
                 }
             }
+
+            LOG.debug("Memorystore = " + result.toString());
 
             return result;
         } else {
