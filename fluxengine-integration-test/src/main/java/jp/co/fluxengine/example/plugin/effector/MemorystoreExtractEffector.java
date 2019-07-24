@@ -4,6 +4,7 @@ import jp.co.fluxengine.example.CloudSqlPool;
 import jp.co.fluxengine.stateengine.annotation.DslName;
 import jp.co.fluxengine.stateengine.annotation.Effector;
 import jp.co.fluxengine.stateengine.annotation.Post;
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import redis.clients.jedis.Jedis;
@@ -51,20 +52,20 @@ public class MemorystoreExtractEffector {
 
             List<byte[]> values = jedis.mget(targetKeys);
 
+            PreparedStatement insertStmt = conn.prepareStatement("INSERT INTO `memorystore_contents` (`requestid`, `key`, `value`) VALUES " + StringUtils.repeat("(?,?,?)", ",", targetKeys.length));
+
             for (int i = 0; i < targetKeys.length; i++) {
                 String key = new String(targetKeys[i]);
                 byte[] value = values.get(i);
 
                 log.debug("insert key = {}", key);
 
-                PreparedStatement insert = conn.prepareStatement("INSERT INTO `memorystore_contents` (`requestid`, `key`, `value`) VALUES (?, ?, ?)");
-
-                insert.setString(1, requestId);
-                insert.setString(2, key);
-                insert.setBinaryStream(3, new ByteArrayInputStream(value));
-
-                insert.execute();
+                insertStmt.setString(i * 3 + 1, requestId);
+                insertStmt.setString(i * 3 + 2, key);
+                insertStmt.setBinaryStream(i * 3 + 3, new ByteArrayInputStream(value));
             }
+
+            insertStmt.execute();
         } catch (SQLException e) {
             log.error("error in MemorystoreExtractEffector#post", e);
         }

@@ -302,6 +302,10 @@ class MemorystoreExtractor extends PersisterExtractor {
                         }
                     }
                 }
+
+                PreparedStatement deleteStmt =conn.prepareStatement("DELETE FROM `memorystore_contents` WHERE `requestid` = ?");
+                deleteStmt.setString(1, requestId);
+                deleteStmt.execute();
             }
 
             LOG.debug("Memorystore = " + result.toString());
