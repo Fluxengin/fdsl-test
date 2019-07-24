@@ -58,8 +58,12 @@ public class WebServiceTest {
         // POSTが成功したことを確認する
         assertThat(responseJson.get("status").asText()).isEqualTo("SUCCEED");
 
+        LOG.info("testWebService 待機開始");
+        Thread.sleep(20000);
+        LOG.info("testWebService 待機終了");
+
         // 実行後のパケット積算量を取得する
-        double usageAfter = extractor.waitCurrentPacketUsage("webservice", "webservice/パケット積算#Webserviceパケット積算データ", 20);
+        double usageAfter = extractor.currentPacketUsage("webservice", "webservice/パケット積算#Webserviceパケット積算データ");
         assertThat(usageAfter).isEqualTo(usageBefore + 1000);
     }
 }

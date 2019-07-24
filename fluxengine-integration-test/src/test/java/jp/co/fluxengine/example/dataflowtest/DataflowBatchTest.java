@@ -57,8 +57,12 @@ public class DataflowBatchTest {
         LOG.debug("Response from servlet: " + response.body().string());
         assertThat(response.isSuccessful()).isTrue();
 
+        LOG.info("testRead 待機開始");
+        Thread.sleep(120000);
+        LOG.info("testRead 待機終了");
+
         // ジョブ実行後の状態のassertionを行う
-        double usageAfter = extractor.waitCurrentPacketUsage("batch", "rule/日別データ検証#日別積算データ", 120);
+        double usageAfter = extractor.currentPacketUsage("batch", "rule/日別データ検証#日別積算データ");
         assertThat(usageAfter).isEqualTo(usageBefore + 1100);
         LOG.info("testRead 終了");
     }

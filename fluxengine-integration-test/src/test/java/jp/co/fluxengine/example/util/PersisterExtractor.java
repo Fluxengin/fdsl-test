@@ -82,24 +82,6 @@ public abstract class PersisterExtractor {
                 0.0;
     }
 
-    public abstract Map<String, Object> waitAndGetPersisterAsMap(int seconds) throws Exception;
-
-    public abstract Map<String, Object> waitAndGetPersisterAsMap(String[] keys, int seconds) throws Exception;
-
-    public Map<String, Object> waitAndGetPersisterAsMap(String id, int seconds) throws Exception {
-        return (Map<String, Object>) waitAndGetPersisterAsMap(new String[]{id}, seconds).get(id);
-    }
-
-    public double waitCurrentPacketUsage(String userId, String name, int seconds) throws Exception {
-        String todayString = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDate.now());
-
-        Map<String, Object> targetMap = waitAndGetPersisterAsMap("[" + userId + "]", seconds);
-
-        return targetMap.get("lifetime").equals(todayString) ?
-                getNested(targetMap, Number.class, "value", name, "value", "使用量").doubleValue() :
-                0.0;
-    }
-
     public void publishOneTime(String inputJsonString) throws InvocationTargetException, IllegalAccessException {
         publishOneTime.invoke(null, inputJsonString, topic);
     }
@@ -210,18 +192,6 @@ class DatastoreExtractor extends PersisterExtractor {
         // Datastoreの方は、キーを絞って取得する機能はないので、全件取得する
         return getPersisterAsMap();
     }
-
-    @Override
-    public Map<String, Object> waitAndGetPersisterAsMap(int seconds) throws Exception {
-        Thread.sleep(seconds * 1000);
-        return getPersisterAsMap();
-    }
-
-    @Override
-    public Map<String, Object> waitAndGetPersisterAsMap(String[] keys, int seconds) throws Exception {
-        Thread.sleep(seconds * 1000);
-        return getPersisterAsMap(keys);
-    }
 }
 
 class MemorystoreExtractor extends PersisterExtractor {
@@ -329,15 +299,5 @@ class MemorystoreExtractor extends PersisterExtractor {
             // JobIdが返ってこないのは異常
             throw new RuntimeException("JobIdが取得できませんでした: " + responseBody);
         }
-    }
-
-    @Override
-    public Map<String, Object> waitAndGetPersisterAsMap(int seconds) throws Exception {
-        return getPersisterAsMap();
-    }
-
-    @Override
-    public Map<String, Object> waitAndGetPersisterAsMap(String[] keys, int seconds) throws Exception {
-        return getPersisterAsMap(keys);
     }
 }

@@ -87,8 +87,12 @@ public class HousekeepTest {
         // 既にHousekeepのServletがデプロイされている前提
         assertThat(executeHousekeep()).isTrue();
 
+        LOG.info("testAfterHousekeep 待機開始");
+        Thread.sleep(120000);
+        LOG.info("testAfterHousekeep 待機終了");
+
         // Housekeep実行後の状態のassetionを行う
-        Map<String, Object> after = extractor.waitAndGetPersisterAsMap(120);
+        Map<String, Object> after = extractor.getPersisterAsMap();
 
         Map<String, Object> after1 = (Map<String, Object>) after.get("[user1]");
         assertThat(getNested(after1, Object.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算A", "value", "使用量")).isInstanceOf(Number.class);

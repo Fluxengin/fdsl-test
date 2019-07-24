@@ -55,8 +55,12 @@ public class DataflowTest {
         LOG.info("testDataflow データ送信");
         extractor.publishOneTime(inputJsonString);
 
+        LOG.info("testDataflow 待機開始");
+        Thread.sleep(20000);
+        LOG.info("testDataflow 待機終了");
+
         // 結果のassertionを行う
-        Map<String, Object> result = extractor.waitAndGetPersisterAsMap("[uid12345]", 20);
+        Map<String, Object> result = extractor.getPersisterAsMap("[uid12345]");
         assertThat(getNested(result, Number.class, "value", "persister/パケット積算データ#パケット積算データ", "value", "使用量").doubleValue()).isEqualTo(usageBefore + 500);
         assertThat(getNested(result, String.class, "value", "rule/パケット積算#状態遷移", "value", "currentState")).isEqualTo("s2");
 
@@ -88,8 +92,12 @@ public class DataflowTest {
         Object readPublisher = readPublisherClass.getConstructor(String.class, String.class, Class.class, Method.class, Object[].class).newInstance("event/パケットイベント", "パケットイベント", readClazz, method, new Object[]{"publish"});
         readPublisherClass.getMethod("publish").invoke(readPublisher);
 
+        LOG.info("testEventPublisherAndTransaction 待機開始");
+        Thread.sleep(50000);
+        LOG.info("testEventPublisherAndTransaction 待機終了");
+
         // パケット積算データが2600増えているはず
-        assertThat(extractor.waitCurrentPacketUsage("publish", "persister/パケット積算データ#パケット積算データ", 50)).isEqualTo(usageBefore + 2600);
+        assertThat(extractor.currentPacketUsage("publish", "persister/パケット積算データ#パケット積算データ")).isEqualTo(usageBefore + 2600);
         LOG.info("testEventPublisherAndTransaction 終了");
     }
 
