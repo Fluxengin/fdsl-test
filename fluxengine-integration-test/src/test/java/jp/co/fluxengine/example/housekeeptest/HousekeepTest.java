@@ -46,7 +46,7 @@ public class HousekeepTest {
         String tomorrowString = tomorrow.format(formatter);
 
         // Housekeep実行前の状態のassetionを行う
-        Map<String, Object> before = extractor.getPersisterAsMap();
+        Map<String, Object> before = extractor.getAllAsMap();
 
         Map<String, Object> before1 = (Map<String, Object>) before.get("[user1]");
         assertThat(getNested(before1, Object.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算A", "value", "使用量")).isInstanceOf(Number.class);
@@ -92,7 +92,7 @@ public class HousekeepTest {
         LOG.info("testAfterHousekeep 待機終了");
 
         // Housekeep実行後の状態のassetionを行う
-        Map<String, Object> after = extractor.getPersisterAsMap();
+        Map<String, Object> after = extractor.getAllAsMap();
 
         Map<String, Object> after1 = (Map<String, Object>) after.get("[user1]");
         assertThat(getNested(after1, Object.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算A", "value", "使用量")).isInstanceOf(Number.class);
