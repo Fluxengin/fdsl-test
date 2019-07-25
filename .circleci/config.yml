@@ -59,8 +59,8 @@ commands:
               update-locale LANG=ja_JP.UTF-8
             } &
             pidSetLocale=$!
-            gcloud --quiet components update
-            gcloud components install app-engine-java
+            #gcloud --quiet components update
+            #gcloud components install app-engine-java
             gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
             gcloud --quiet config set project $PROJECT
             wait $pidSetLocale
