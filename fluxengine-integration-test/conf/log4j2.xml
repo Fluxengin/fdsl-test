@@ -2,10 +2,10 @@
 <Configuration status="WARN">
 <Appenders>
     <Console name="Console" target="SYSTEM_OUT">
-        <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %msg%n"/>
+        <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %msg%n" charset="UTF-8"/>
     </Console>
     <File name="log" fileName="debug.log" append="false">
-        <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %msg%xEx%n"/>
+        <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %msg%xEx%n" charset="UTF-8"/>
     </File>
 </Appenders>
 <Loggers>
