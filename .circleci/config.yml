@@ -91,8 +91,7 @@ commands:
           command: |
             mkdir ~/maven
             pushd ~/maven
-            wget https://www-us.apache.org/dist/maven/maven-3/3.6.1/binaries/apache-maven-3.6.1-bin.tar.gz
-            tar xzvf apache-maven-3.6.1-bin.tar.gz
+            curl https://www-us.apache.org/dist/maven/maven-3/3.6.1/binaries/apache-maven-3.6.1-bin.tar.gz | tar xzvf -
             echo 'export PATH=$PATH:~/maven/apache-maven-3.6.1/bin' >> $BASH_ENV
             popd
   deploy_dataflow_jobs:
@@ -159,6 +158,8 @@ commands:
       - run:
           name: Register job
           command: |
+            echo '念のため、update-localeを実行しておく'
+            update-locale LANG=ja_JP.UTF-8
             pushd ~/fdsl-test/fluxengine-integration-test
             chmod +x dataflow_job_publisher.sh
             # also deploy batch job
