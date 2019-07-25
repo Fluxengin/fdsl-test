@@ -6,7 +6,7 @@
 ビルドツール：gradle
 
 # Version
-Fluxengine 1.0.8
+Fluxengine 1.0.9
 
 # Authors
 Fluxengine株式会社
