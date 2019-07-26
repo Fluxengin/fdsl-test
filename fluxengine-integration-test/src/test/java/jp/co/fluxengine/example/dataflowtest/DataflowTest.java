@@ -162,6 +162,12 @@ public class DataflowTest {
         String targetUserId = System.getenv("TEST_PERSIST_USERID");
         String targetString = System.getenv("TEST_PERSIST_STRING");
 
+        // testSubscription用のテストデータは事前に投入されているが、
+        // それでも処理に時間がかかることがあるので、少し待つ
+        LOG.info("testSubscription 待機");
+        Thread.sleep(10000);
+        LOG.info("testSubscription 待機終了");
+
         Map<String, Object> result = extractor.getIdMap("[" + targetUserId + "]");
         assertThat(getNested(extractor.getPersisterMap(result, "subscription/イベントの文字列をそのまま永続化#Subscriptionイベント永続化"), String.class, "value", "文字列")).isEqualTo(targetString);
 
