@@ -68,6 +68,28 @@ public class DataflowTest {
     }
 
     @Test
+    void testPersisterPut() throws Exception {
+        LOG.info("testPersisterPut 開始");
+
+        URL resourceURL = getClass().getResource("/dataflow_persister_put_data.json");
+        String inputJsonString = IOUtils.toString(resourceURL, "UTF-8");
+        LOG.debug("input = " + inputJsonString);
+
+        LOG.info("testPersisterPut データ送信");
+        extractor.publishOneTime(inputJsonString);
+
+        LOG.info("testPersisterPut 待機開始");
+        Thread.sleep(20000);
+        LOG.info("testPersisterPut 待機終了");
+
+        // [PersisterRead01]に何も永続化されていないことを確認する
+        Map<String, Object> result = extractor.getIdMap("[PersisterRead01]");
+        assertThat(result).isNull();
+
+        LOG.info("testPersisterPut 終了");
+    }
+
+    @Test
     @EnabledIfPersisterDbIs("memorystore")
     void testEventPublisherAndTransaction() throws Exception {
         LOG.info("testEventPublisherAndTransaction 開始");
