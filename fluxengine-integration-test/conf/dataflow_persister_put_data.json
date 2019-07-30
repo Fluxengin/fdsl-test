@@ -1,0 +1,10 @@
+[
+  {
+    "eventName": "Persister参照イベント",
+    "namespace": "persister_put/永続化されないはずのイベント投入",
+    "createTime": null,
+    "property": {
+      "端末ID": "P01"
+    }
+  }
+]
