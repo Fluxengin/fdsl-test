@@ -294,7 +294,7 @@ jobs:
             mkdir -p ~/.ssh
             echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
             pushd ~/
-            git clone -b feature-1.0.9-persister_switching-circleci git@github.com:Fluxengin/state-engine.git
+            git clone git@github.com:Fluxengin/state-engine.git
             popd
       - restore_cache:
           keys:
