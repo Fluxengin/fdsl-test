@@ -1,6 +1,7 @@
 package jp.co.fluxengine.example.housekeeptest;
 
 import jp.co.fluxengine.example.util.PersisterExtractor;
+import jp.co.fluxengine.example.util.Utils;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -85,10 +86,14 @@ public class HousekeepTest {
 
         // ここでHousekeepを実行する
         // 既にHousekeepのServletがデプロイされている前提
-        assertThat(executeHousekeep()).isTrue();
+        String jobId = executeHousekeep();
 
         LOG.info("testAfterHousekeep 待機開始");
-        Thread.sleep(120000);
+        if (jobId == null) {
+            Thread.sleep(120000);
+        } else {
+            Utils.waitForBatchTermination(jobId, 120000);
+        }
         LOG.info("testAfterHousekeep 待機終了");
 
         // Housekeep実行後の状態のassetionを行う
@@ -125,7 +130,7 @@ public class HousekeepTest {
         assertThat(getNested(after5, String.class, "lifetime")).isEqualTo(tomorrowString);
     }
 
-    private static boolean executeHousekeep() throws IOException {
+    private static String executeHousekeep() throws IOException {
         OkHttpClient client = new OkHttpClient.Builder()
                 .connectTimeout(60, TimeUnit.SECONDS)
                 .callTimeout(60, TimeUnit.SECONDS)
@@ -136,12 +141,11 @@ public class HousekeepTest {
         Request request = new Request.Builder().url(housekeepUrl).build();
 
         try (Response response = client.newCall(request).execute()) {
-            if (response.body() == null) {
-                LOG.info("got no response");
-            } else {
-                LOG.info("got response: " + response.body().string());
-            }
-            return response.isSuccessful();
+            String responseBody = response.body().string();
+            LOG.info("Response from servlet: " + responseBody);
+            assertThat(response.isSuccessful()).isTrue();
+
+            return Utils.getJobId(responseBody);
         } catch (IOException e) {
             LOG.error("exception occurred", e);
             throw e;

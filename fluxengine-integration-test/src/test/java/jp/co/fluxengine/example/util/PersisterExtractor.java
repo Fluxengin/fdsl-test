@@ -14,7 +14,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -28,8 +30,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public abstract class PersisterExtractor {
 
@@ -226,42 +226,6 @@ class MemorystoreExtractor extends PersisterExtractor {
         return getEntriesAsMap(new String[]{});
     }
 
-    private void waitUntilFinished(String jobId) throws IOException, InterruptedException {
-        Runtime runtime = Runtime.getRuntime();
-        String[] command = {"/bin/sh", "-c", "gcloud dataflow jobs show " + jobId + " --region=asia-northeast1 | grep 'state:'"};
-
-        // ジョブ終了まで待つ
-        while (true) {
-            Process process = runtime.exec(command);
-            process.waitFor();
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"))) {
-                String stateLine = br.readLine();
-
-                if (stateLine == null) {
-                    // 恐らく、ジョブの準備ができていないと思われるので、待つ。
-                } else {
-                    Matcher stateMatcher = Pattern.compile("state: (.*+)").matcher(stateLine);
-                    if (stateMatcher.find()) {
-                        String state = stateMatcher.group(1);
-                        switch (state) {
-                            case "Done":
-                            case "Failed":
-                            case "Cancelled":
-                                // ジョブ終了
-                                return;
-                            default:
-                                break;
-                        }
-                    } else {
-                        throw new RuntimeException("想定外のエラー: " + stateLine);
-                    }
-                }
-            }
-            // 次にジョブの状態を取得するまで3秒待つ
-            Thread.sleep(3000);
-        }
-    }
-
     @Override
     public Map<String, Object> getEntriesAsMap(String[] keys) throws Exception {
         // DSLのプラグインによって、MemorystoreからCloud SQLに値を移す
@@ -276,45 +240,41 @@ class MemorystoreExtractor extends PersisterExtractor {
         Response response = client.newCall(request).execute();
         String responseBody = response.body().string();
 
-        Matcher jobIdMatcher = Pattern.compile("JobId=(.*+)").matcher(responseBody);
-        if (jobIdMatcher.find()) {
-            String jobId = jobIdMatcher.group(1);
+        String jobId = Utils.getJobId(responseBody);
+        if (jobId == null) {
+            Thread.sleep(180000);
+        } else {
+            Utils.waitForBatchTermination(jobId, 180000);
+        }
 
-            // ジョブ終了まで待つ
-            waitUntilFinished(jobId);
+        Map<String, Object> result = Maps.newHashMap();
 
-            Map<String, Object> result = Maps.newHashMap();
+        // ジョブが終了するとSQLにデータが入っているので、取得する
+        try (Connection conn = CloudSqlPool.getDataSource().getConnection()) {
+            PreparedStatement selectStmt = conn.prepareStatement("SELECT `key`, `value` FROM `memorystore_contents` WHERE `requestid` = ?");
+            selectStmt.setString(1, requestId);
 
-            // ジョブが終了するとSQLにデータが入っているので、取得する
-            try (Connection conn = CloudSqlPool.getDataSource().getConnection()) {
-                PreparedStatement selectStmt = conn.prepareStatement("SELECT `key`, `value` FROM `memorystore_contents` WHERE `requestid` = ?");
-                selectStmt.setString(1, requestId);
+            try (ResultSet rs = selectStmt.executeQuery()) {
+                while (rs.next()) {
+                    String key = rs.getString(1);
+                    try (InputStream in = rs.getBinaryStream(2)) {
+                        byte[] value = IOUtils.toByteArray(in);
+                        KryoSerializer serializer = new KryoSerializer(HashMap.class);
+                        Map<String, Object> valueMap = serializer.deserialize(value);
 
-                try (ResultSet rs = selectStmt.executeQuery()) {
-                    while (rs.next()) {
-                        String key = rs.getString(1);
-                        try (InputStream in = rs.getBinaryStream(2)) {
-                            byte[] value = IOUtils.toByteArray(in);
-                            KryoSerializer serializer = new KryoSerializer(HashMap.class);
-                            Map<String, Object> valueMap = serializer.deserialize(value);
-
-                            result.put(key, valueMap);
-                        }
+                        result.put(key, valueMap);
                     }
                 }
-
-                PreparedStatement deleteStmt =conn.prepareStatement("DELETE FROM `memorystore_contents` WHERE `requestid` = ?");
-                deleteStmt.setString(1, requestId);
-                deleteStmt.execute();
             }
 
-            LOG.debug("Memorystore = " + result.toString());
-
-            return result;
-        } else {
-            // JobIdが返ってこないのは異常
-            throw new RuntimeException("JobIdが取得できませんでした: " + responseBody);
+            PreparedStatement deleteStmt = conn.prepareStatement("DELETE FROM `memorystore_contents` WHERE `requestid` = ?");
+            deleteStmt.setString(1, requestId);
+            deleteStmt.execute();
         }
+
+        LOG.debug("Memorystore = " + result.toString());
+
+        return result;
     }
 
     @Override

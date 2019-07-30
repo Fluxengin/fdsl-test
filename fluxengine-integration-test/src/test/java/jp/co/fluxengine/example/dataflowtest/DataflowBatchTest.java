@@ -1,6 +1,7 @@
 package jp.co.fluxengine.example.dataflowtest;
 
 import jp.co.fluxengine.example.util.PersisterExtractor;
+import jp.co.fluxengine.example.util.Utils;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -54,11 +55,17 @@ public class DataflowBatchTest {
                 .build();
         Response response = client.newCall(request).execute();
 
-        LOG.debug("Response from servlet: " + response.body().string());
+        String responseBody = response.body().string();
+        LOG.debug("Response from servlet: " + responseBody);
         assertThat(response.isSuccessful()).isTrue();
 
         LOG.info("testRead 待機開始");
-        Thread.sleep(120000);
+        String jobId = Utils.getJobId(responseBody);
+        if (jobId == null) {
+            Thread.sleep(120000);
+        } else {
+            Utils.waitForBatchTermination(jobId, 120000);
+        }
         LOG.info("testRead 待機終了");
 
         // ジョブ実行後の状態のassertionを行う
