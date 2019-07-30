@@ -56,7 +56,7 @@ public class DataflowTest {
         extractor.publishOneTime(inputJsonString);
 
         LOG.info("testDataflow 待機開始");
-        Thread.sleep(20000);
+        Thread.sleep(30000);
         LOG.info("testDataflow 待機終了");
 
         // 結果のassertionを行う
@@ -118,7 +118,7 @@ public class DataflowTest {
 
         // Dataflowが処理完了するまで少し待つ
         LOG.info("testEffector 待機");
-        Thread.sleep(20000);
+        Thread.sleep(30000);
         LOG.info("testEffector 待機終了");
 
         changes.setEndPointNow();
