@@ -15,6 +15,10 @@ public class Utils {
     private static final Logger LOG = LogManager.getLogger(Utils.class);
 
     public static String getJobId(String servletResponse) {
+        if (servletResponse == null) {
+            return null;
+        }
+
         Matcher jobIdMatcher = Pattern.compile("JobId=(.+)").matcher(servletResponse);
 
         if (jobIdMatcher.find()) {
