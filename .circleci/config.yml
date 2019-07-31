@@ -170,7 +170,7 @@ commands:
           root: ~/state-engine
           paths:
             - .
-  test_dataflow_stream:
+  test_dataflow:
     description: "Test Dataflow stream job with designated persister db"
     parameters:
       persisterdb:
@@ -206,21 +206,8 @@ commands:
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test
             chmod +x gradlew
-            env FLUXENGINE_INTEGRATION_TEST_MODE=DATAFLOW TEST_PERSIST_USERID=S01 TEST_PERSIST_STRING=`cat ~/state-engine/test_persist_string.txt` ./gradlew test --tests jp.co.fluxengine.example.dataflowtest.DataflowTest
+            env FLUXENGINE_INTEGRATION_TEST_DATAFLOW_STREAM=true FLUXENGINE_INTEGRATION_TEST_DATAFLOW_BATCH=true TEST_PERSIST_USERID=S01 TEST_PERSIST_STRING=`cat ~/state-engine/test_persist_string.txt` ./gradlew test --tests jp.co.fluxengine.example.dataflowtest*
             popd
-      - save_cache:
-          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
-          paths:
-            - ~/.gradle
-      - run:
-          name: Copy log file
-          command: cp -f ~/fdsl-test/fluxengine-integration-test/debug.log ~/fdsl-test/fluxengine-integration-test/build/reports/tests/test/
-          when: always
-      - store_artifacts:
-          path: ~/fdsl-test/fluxengine-integration-test/build/reports/tests/test
-          destination: test
-      - store_test_results:
-          path: ~/fdsl-test/fluxengine-integration-test/build/test-results
       - run:
           name: Stop Dataflow job
           command: |
@@ -229,45 +216,9 @@ commands:
             echo "Stopping $dataflowJobId"
             gcloud dataflow jobs drain $dataflowJobId --region=asia-northeast1
             done < ~/state-engine/dataflow_job_id.txt
+            rm -f ~/state-engine/dataflow_job_id.txt
           when: always
-  test_dataflow_batch:
-    description: "Test Dataflow batch job with designated persister db"
-    parameters:
-      persisterdb:
-        type: string
-    steps:
-      - check_update:
-          dir: "fluxengine-integration-test .circleci"
-      - install_java_auth_gcp
-      - attach_workspace:
-          at: ~/state-engine
-      - edit_integration_test_conf_files
-      - run:
-          name: Edit persister db setting
-          command: |
-            sed -i -e "s/persister\.db=.*/persister.db=<< parameters.persisterdb >>/" ~/fdsl-test/fluxengine-integration-test/conf/fluxengine.properties
-      - run:
-          name: Replace jar
-          command: |
-            pushd ~/fdsl-test/fluxengine-integration-test/lib
-            rm -f fluxengine-*.jar
-            for projectDir in local-test-runner remote-test-runner event-publisher
-            do
-            cp -f ~/state-engine/fluxengine-${projectDir}/target/fluxengine-${projectDir}-*.jar ./
-            done
-            popd
-      - restore_cache:
-          keys:
-            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
-            - v1-gradle-{{ .Branch }}-
-            - v1-gradle-
-      - run:
-          name: Test Dataflow batch job
-          command: |
-            pushd ~/fdsl-test/fluxengine-integration-test
-            chmod +x gradlew
-            env FLUXENGINE_INTEGRATION_TEST_MODE=DATAFLOWBATCH ./gradlew test --tests jp.co.fluxengine.example.dataflowtest.DataflowBatchTest
-            popd
+          background: true
       - save_cache:
           key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
           paths:
@@ -281,6 +232,14 @@ commands:
           destination: test
       - store_test_results:
           path: ~/fdsl-test/fluxengine-integration-test/build/test-results
+      - run:
+          name: Wait for job termination
+          command: |
+            while [ -f ~/state-engine/dataflow_job_id.txt ]
+            do
+              sleep 3
+            done
+          when: always
 jobs:
   build_engine:
     docker:
@@ -477,14 +436,14 @@ jobs:
     steps:
       - deploy_dataflow_jobs:
           persisterdb: datastore
-  test_dataflow_stream_datastore:
+  test_dataflow_datastore:
     docker:
       - image: google/cloud-sdk:latest
         environment:
           LANG: ja_JP.UTF-8
     working_directory: ~/fdsl-test
     steps:
-      - test_dataflow_stream:
+      - test_dataflow:
           persisterdb: datastore
   deploy_batch_servlet:
     docker:
@@ -519,15 +478,6 @@ jobs:
             pushd ~/fdsl-test/fluxengine-integration-test-batch-servlet
             mvn clean package appengine:deploy
             popd
-  test_dataflow_batch_datastore:
-    docker:
-      - image: google/cloud-sdk:latest
-        environment:
-          LANG: ja_JP.UTF-8
-    working_directory: ~/fdsl-test
-    steps:
-      - test_dataflow_batch:
-          persisterdb: datastore
   deploy_dataflow_jobs_memorystore:
     docker:
       - image: google/cloud-sdk:latest
@@ -537,23 +487,14 @@ jobs:
     steps:
       - deploy_dataflow_jobs:
           persisterdb: memorystore
-  test_dataflow_stream_memorystore:
+  test_dataflow_memorystore:
     docker:
       - image: google/cloud-sdk:latest
         environment:
           LANG: ja_JP.UTF-8
     working_directory: ~/fdsl-test
     steps:
-      - test_dataflow_stream:
-          persisterdb: memorystore
-  test_dataflow_batch_memorystore:
-    docker:
-      - image: google/cloud-sdk:latest
-        environment:
-          LANG: ja_JP.UTF-8
-    working_directory: ~/fdsl-test
-    steps:
-      - test_dataflow_batch:
+      - test_dataflow:
           persisterdb: memorystore
 workflows:
   version: 2
@@ -589,15 +530,6 @@ workflows:
               only:
                 - master
                 - /.*circleci.*/
-      - test_dataflow_stream_datastore:
-          requires:
-            - deploy_dsl
-            - deploy_dataflow_jobs_datastore
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
       - deploy_batch_servlet:
           requires:
             - build_engine
@@ -606,11 +538,11 @@ workflows:
               only:
                 - master
                 - /.*circleci.*/
-      - test_dataflow_batch_datastore:
+      - test_dataflow_datastore:
           requires:
-            - deploy_batch_servlet
             - deploy_dsl
             - deploy_dataflow_jobs_datastore
+            - deploy_batch_servlet
           filters:
             branches:
               only:
@@ -618,22 +550,13 @@ workflows:
                 - /.*circleci.*/
       - deploy_dataflow_jobs_memorystore:
           requires:
-            - test_dataflow_stream_datastore
-            - test_dataflow_batch_datastore
+            - test_dataflow_datastore
           filters:
             branches:
               only:
                 - master
                 - /.*circleci.*/
-      - test_dataflow_stream_memorystore:
-          requires:
-            - deploy_dataflow_jobs_memorystore
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-      - test_dataflow_batch_memorystore:
+      - test_dataflow_memorystore:
           requires:
             - deploy_dataflow_jobs_memorystore
           filters:

@@ -15,6 +15,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -43,10 +44,18 @@ public class MemorystoreExtractEffector {
              Connection conn = CloudSqlPool.getDataSource().getConnection()) {
             byte[][] targetKeys = keys.size() == 0 ?
                     jedis.keys("*".getBytes()).toArray(new byte[0][]) :
-                    keys.stream().distinct().map(keyString -> keyString.getBytes()).toArray(size -> new byte[size][]);
+                    keys.stream().distinct().map(String::getBytes).toArray(byte[][]::new);
 
             if (targetKeys.length == 0) {
                 log.info("No key exists");
+
+                // 1件も取得できなかった場合は、エントリーがないことを示す、キーが空文字列のレコードを1件挿入する
+                PreparedStatement insertNoEntries = conn.prepareStatement("INSERT INTO `memorystore_contents` (`requestid`, `key`, `value`) VALUES (?,?,?)");
+                insertNoEntries.setString(1, requestId);
+                insertNoEntries.setString(2, "");
+                insertNoEntries.setBinaryStream(3, new ByteArrayInputStream("dummy".getBytes(StandardCharsets.UTF_8)));
+
+                insertNoEntries.execute();
                 return;
             }
 

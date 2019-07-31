@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -29,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 // 普段は実行されないようにし、
 // 環境変数"FLUXENGINE_INTEGRATION_TEST_MODE"が"DATAFLOW"のときだけ実行できるようにしている
 // CI/CDで実行されることを想定したテストクラス
-@EnabledIfEnvironmentVariable(named = "FLUXENGINE_INTEGRATION_TEST_MODE", matches = "DATAFLOW|dataflow")
+@EnabledIfEnvironmentVariable(named = "FLUXENGINE_INTEGRATION_TEST_DATAFLOW_STREAM", matches = "true|TRUE")
 public class DataflowTest {
 
     private static final Logger LOG = LogManager.getLogger(DataflowTest.class);
@@ -49,7 +50,7 @@ public class DataflowTest {
 
         // テストデータをDataflowのジョブに流す
         URL resourceURL = getClass().getResource("/dataflow_test_data.json");
-        String inputJsonString = IOUtils.toString(resourceURL, "UTF-8");
+        String inputJsonString = IOUtils.toString(resourceURL, StandardCharsets.UTF_8);
         LOG.debug("input = " + inputJsonString);
 
         LOG.info("testDataflow データ送信");
@@ -72,7 +73,7 @@ public class DataflowTest {
         LOG.info("testPersisterPut 開始");
 
         URL resourceURL = getClass().getResource("/dataflow_persister_put_data.json");
-        String inputJsonString = IOUtils.toString(resourceURL, "UTF-8");
+        String inputJsonString = IOUtils.toString(resourceURL, StandardCharsets.UTF_8);
         LOG.debug("input = " + inputJsonString);
 
         LOG.info("testPersisterPut データ送信");

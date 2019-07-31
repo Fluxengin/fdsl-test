@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 // 普段は実行されないようにし、
 // 環境変数"FLUXENGINE_INTEGRATION_TEST_MODE"が"HOUSEKEEP"のときだけ実行できるようにしている
 // CI/CDで実行されることを想定したテストクラス
-@EnabledIfEnvironmentVariable(named = "FLUXENGINE_INTEGRATION_TEST_MODE", matches = "HOUSEKEEP|housekeep")
+@EnabledIfEnvironmentVariable(named = "FLUXENGINE_INTEGRATION_TEST_HOUSEKEEP", matches = "true|TRUE")
 public class HousekeepTest {
 
     private static final Logger LOG = LogManager.getLogger();
@@ -49,6 +49,7 @@ public class HousekeepTest {
         // Housekeep実行前の状態のassetionを行う
         Map<String, Object> before = extractor.getAllAsMap();
 
+        @SuppressWarnings("unchecked")
         Map<String, Object> before1 = (Map<String, Object>) before.get("[user1]");
         assertThat(getNested(before1, Object.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算A", "value", "使用量")).isInstanceOf(Number.class);
         assertThat(getNested(before1, String.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算A", "lifetime")).isEmpty();
@@ -56,6 +57,7 @@ public class HousekeepTest {
         assertThat(getNested(before1, String.class, "value", "housekeep/様々なlifetimeで永続化#Housekeep状態A", "lifetime")).isEmpty();
         assertThat(getNested(before1, String.class, "lifetime")).isEmpty();
 
+        @SuppressWarnings("unchecked")
         Map<String, Object> before2 = (Map<String, Object>) before.get("[user2]");
         assertThat(getNested(before2, Object.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算B", "value", "使用量")).isInstanceOf(Number.class);
         assertThat(getNested(before2, String.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算B", "lifetime")).isEqualTo(todayString);
@@ -63,6 +65,7 @@ public class HousekeepTest {
         assertThat(getNested(before2, String.class, "value", "housekeep/様々なlifetimeで永続化#Housekeep状態B", "lifetime")).isEmpty();
         assertThat(getNested(before2, String.class, "lifetime")).isEmpty();
 
+        @SuppressWarnings("unchecked")
         Map<String, Object> before3 = (Map<String, Object>) before.get("[user3]");
         assertThat(getNested(before3, Object.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算C", "value", "使用量")).isInstanceOf(Number.class);
         assertThat(getNested(before3, String.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算C", "lifetime")).isEmpty();
@@ -70,6 +73,7 @@ public class HousekeepTest {
         assertThat(getNested(before3, String.class, "value", "housekeep/様々なlifetimeで永続化#Housekeep状態C", "lifetime")).isEqualTo(todayString);
         assertThat(getNested(before3, String.class, "lifetime")).isEmpty();
 
+        @SuppressWarnings("unchecked")
         Map<String, Object> before4 = (Map<String, Object>) before.get("[user4]");
         assertThat(getNested(before4, Object.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算D", "value", "使用量")).isInstanceOf(Number.class);
         assertThat(getNested(before4, String.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算D", "lifetime")).isEqualTo(todayString);
@@ -77,6 +81,7 @@ public class HousekeepTest {
         assertThat(getNested(before4, String.class, "value", "housekeep/様々なlifetimeで永続化#Housekeep状態D", "lifetime")).isEqualTo(todayString);
         assertThat(getNested(before4, String.class, "lifetime")).isEqualTo(todayString);
 
+        @SuppressWarnings("unchecked")
         Map<String, Object> before5 = (Map<String, Object>) before.get("[user5]");
         assertThat(getNested(before5, Object.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算D", "value", "使用量")).isInstanceOf(Number.class);
         assertThat(getNested(before5, String.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算D", "lifetime")).isEqualTo(todayString);
@@ -99,6 +104,7 @@ public class HousekeepTest {
         // Housekeep実行後の状態のassetionを行う
         Map<String, Object> after = extractor.getAllAsMap();
 
+        @SuppressWarnings("unchecked")
         Map<String, Object> after1 = (Map<String, Object>) after.get("[user1]");
         assertThat(getNested(after1, Object.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算A", "value", "使用量")).isInstanceOf(Number.class);
         assertThat(getNested(after1, String.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算A", "lifetime")).isEmpty();
@@ -106,6 +112,7 @@ public class HousekeepTest {
         assertThat(getNested(after1, String.class, "value", "housekeep/様々なlifetimeで永続化#Housekeep状態A", "lifetime")).isEmpty();
         assertThat(getNested(after1, String.class, "lifetime")).isEmpty();
 
+        @SuppressWarnings("unchecked")
         Map<String, Object> after2 = (Map<String, Object>) after.get("[user2]");
         assertThat(getNested(after2, Object.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算B", "value", "使用量")).isInstanceOf(Number.class);
         assertThat(getNested(after2, String.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算B", "lifetime")).isEqualTo(todayString);
@@ -113,6 +120,7 @@ public class HousekeepTest {
         assertThat(getNested(after2, String.class, "value", "housekeep/様々なlifetimeで永続化#Housekeep状態B", "lifetime")).isEmpty();
         assertThat(getNested(after2, String.class, "lifetime")).isEmpty();
 
+        @SuppressWarnings("unchecked")
         Map<String, Object> after3 = (Map<String, Object>) after.get("[user3]");
         assertThat(getNested(after3, Object.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算C", "value", "使用量")).isInstanceOf(Number.class);
         assertThat(getNested(after3, String.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算C", "lifetime")).isEmpty();
@@ -122,6 +130,7 @@ public class HousekeepTest {
 
         assertThat(after).doesNotContainKeys("[user4]");
 
+        @SuppressWarnings("unchecked")
         Map<String, Object> after5 = (Map<String, Object>) after.get("[user5]");
         assertThat(getNested(after5, Object.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算D", "value", "使用量")).isInstanceOf(Number.class);
         assertThat(getNested(after5, String.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算D", "lifetime")).isEqualTo(todayString);

@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 // 普段は実行されないようにし、
 // 環境変数"FLUXENGINE_INTEGRATION_TEST_MODE"が"DATAFLOWBATCH"のときだけ実行できるようにしている
 // CI/CDで実行されることを想定したテストクラス
-@EnabledIfEnvironmentVariable(named = "FLUXENGINE_INTEGRATION_TEST_MODE", matches = "DATAFLOWBATCH|dataflowbatch")
+@EnabledIfEnvironmentVariable(named = "FLUXENGINE_INTEGRATION_TEST_DATAFLOW_BATCH", matches = "true|TRUE")
 public class DataflowBatchTest {
 
     private static final Logger LOG = LogManager.getLogger(DataflowBatchTest.class);
