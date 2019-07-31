@@ -5,13 +5,13 @@ import jp.co.fluxengine.example.plugin.read.PublishDataReader;
 import jp.co.fluxengine.example.util.EnabledIfPersisterDbIs;
 import jp.co.fluxengine.example.util.PersisterExtractor;
 import org.apache.commons.io.IOUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.assertj.db.type.Changes;
 import org.assertj.db.type.Table;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @EnabledIfEnvironmentVariable(named = "FLUXENGINE_INTEGRATION_TEST_DATAFLOW_STREAM", matches = "true|TRUE")
 public class DataflowTest {
 
-    private static final Logger LOG = LogManager.getLogger(DataflowTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DataflowTest.class);
 
     private static PersisterExtractor extractor;
 

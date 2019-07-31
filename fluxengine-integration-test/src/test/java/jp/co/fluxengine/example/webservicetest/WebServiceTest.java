@@ -4,11 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jp.co.fluxengine.example.util.PersisterExtractor;
 import okhttp3.*;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @EnabledIfEnvironmentVariable(named = "FLUXENGINE_INTEGRATION_TEST_WEBSERVICE", matches = "true|TRUE")
 public class WebServiceTest {
 
-    private static final Logger LOG = LogManager.getLogger(WebServiceTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(WebServiceTest.class);
 
     private static PersisterExtractor extractor;
 

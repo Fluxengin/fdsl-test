@@ -4,8 +4,8 @@ import jp.co.fluxengine.example.CloudSqlPool;
 import jp.co.fluxengine.stateengine.annotation.DslName;
 import jp.co.fluxengine.stateengine.annotation.Effector;
 import jp.co.fluxengine.stateengine.annotation.Post;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Effector("effector_check/エフェクタ動作確認#DB書き込み送信")
 public class MailNotificationCloudSqlEffector {
 
-    private static final Logger log = LogManager.getLogger(MailNotificationCloudSqlEffector.class);
+    private static final Logger log = LoggerFactory.getLogger(MailNotificationCloudSqlEffector.class);
 
     @DslName("ユーザーID")
     private String userId;

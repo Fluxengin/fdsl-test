@@ -3,8 +3,8 @@ package jp.co.fluxengine.example.plugin.read;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import jp.co.fluxengine.stateengine.plugin.Fetch;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -13,7 +13,7 @@ import java.util.Map;
 
 public class PublishDataReader implements Fetch {
 
-    private static final Logger LOG = LogManager.getLogger(PublishDataReader.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PublishDataReader.class);
 
     private List<Object> cursor;
 

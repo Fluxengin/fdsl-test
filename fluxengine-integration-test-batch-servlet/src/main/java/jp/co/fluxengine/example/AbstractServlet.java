@@ -7,6 +7,8 @@ import com.google.api.services.dataflow.Dataflow;
 import com.google.api.services.dataflow.DataflowScopes;
 import com.google.api.services.dataflow.model.LaunchTemplateParameters;
 import com.google.api.services.dataflow.model.LaunchTemplateResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -19,12 +21,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public abstract class AbstractServlet extends HttpServlet {
 
-    private static final Logger log = Logger.getLogger(AbstractServlet.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(AbstractServlet.class);
 
     protected Dataflow dataflowService;
 
@@ -80,10 +80,10 @@ public abstract class AbstractServlet extends HttpServlet {
                     GoogleCredential.getApplicationDefault().createScoped(Arrays.asList(DataflowScopes.COMPUTE, DataflowScopes.CLOUD_PLATFORM, DataflowScopes.COMPUTE_READONLY, DataflowScopes.USERINFO_EMAIL))
             ).build();
         } catch (GeneralSecurityException e) {
-            log.log(Level.SEVERE, "error in init", e);
+            log.error("error in init", e);
             throw new RuntimeException(e);
         } catch (IOException e) {
-            log.log(Level.SEVERE, "error in init", e);
+            log.error("error in init", e);
             throw new UncheckedIOException(e);
         }
 
@@ -91,7 +91,7 @@ public abstract class AbstractServlet extends HttpServlet {
         try (InputStream in = new FileInputStream(jobPropFile)) {
             jobProperties.load(in);
         } catch (IOException e) {
-            log.log(Level.SEVERE, "error in init", e);
+            log.error("error in init", e);
             throw new UncheckedIOException(e);
         }
     }
