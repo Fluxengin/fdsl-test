@@ -166,7 +166,7 @@ public class DataflowTest {
         // testSubscription用のテストデータは事前に投入されているが、
         // それでも処理に時間がかかることがあるので、少し待つ
         LOG.info("testSubscription 待機");
-        Thread.sleep(10000);
+        Thread.sleep(20000);
         LOG.info("testSubscription 待機終了");
 
         Map<String, Object> result = extractor.getIdMap("[" + targetUserId + "]");

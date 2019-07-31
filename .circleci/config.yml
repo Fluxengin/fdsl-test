@@ -40,8 +40,8 @@ commands:
             then
             circleci step halt
             fi
-  install_java_auth_gcp:
-    description: "Install Java and prepare GCP"
+  prepare_gcp_and_locale:
+    description: "Prepare GCP and locale settings"
     steps:
       - run:
           name: Install Java and prepare GCP
@@ -100,7 +100,7 @@ commands:
     steps:
       - check_update:
           dir: "fluxengine-integration-test .circleci"
-      - install_java_auth_gcp
+      - prepare_gcp_and_locale
       - attach_workspace:
           at: ~/state-engine
       - run:
@@ -178,7 +178,7 @@ commands:
     steps:
       - check_update:
           dir: "fluxengine-integration-test .circleci"
-      - install_java_auth_gcp
+      - prepare_gcp_and_locale
       - attach_workspace:
           at: ~/state-engine
       - edit_integration_test_conf_files
@@ -359,7 +359,7 @@ jobs:
     steps:
       - check_update:
           dir: "fluxengine-integration-test .circleci"
-      - install_java_auth_gcp
+      - prepare_gcp_and_locale
       - attach_workspace:
           at: ~/state-engine
       - run:
@@ -454,7 +454,7 @@ jobs:
     steps:
       - check_update:
           dir: "fluxengine-integration-test .circleci"
-      - install_java_auth_gcp
+      - prepare_gcp_and_locale
       - install_maven
       - attach_workspace:
           at: ~/state-engine
