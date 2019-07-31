@@ -214,7 +214,7 @@ commands:
             while read dataflowJobId
             do
             echo "Stopping $dataflowJobId"
-            gcloud dataflow jobs drain $dataflowJobId --region=asia-northeast1
+            gcloud dataflow jobs cancel $dataflowJobId --region=asia-northeast1
             done < ~/state-engine/dataflow_job_id.txt
             rm -f ~/state-engine/dataflow_job_id.txt
           when: always
