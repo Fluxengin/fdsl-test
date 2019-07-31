@@ -226,6 +226,8 @@ class MemorystoreExtractor extends PersisterExtractor {
         // DSLのプラグインによって、MemorystoreからCloud SQLに値を移す
         String requestId = UUID.randomUUID().toString();
 
+        LOG.debug("requestId = {}, keys = {}", requestId, Arrays.toString(keys));
+
         Event inputEvent = new Event();
         inputEvent.setNamespace("memorystore/Memorystoreの内容取得");
         inputEvent.setEventName("Memorystore取得イベント");
@@ -263,6 +265,7 @@ class MemorystoreExtractor extends PersisterExtractor {
                     // ない場合はまだデータ取得が完了していないので、待つ
                     if (rs.next()) {
                         String initKey = rs.getString(1);
+                        LOG.debug("レコードあり: requestid = {}, initKey = {}", requestId, initKey);
                         // 0件の場合は、keyが空文字列のレコードが1件だけ格納されている
                         // その場合は何もせずに終了する
                         // 空文字列でない場合は、内容を取得する
@@ -286,9 +289,10 @@ class MemorystoreExtractor extends PersisterExtractor {
                             }
                         }
                         break;
+                    } else {
+                        LOG.debug("レコード無し: requestid = {}", requestId);
+                        Thread.sleep(3000);
                     }
-
-                    Thread.sleep(3000);
                 }
             }
 
