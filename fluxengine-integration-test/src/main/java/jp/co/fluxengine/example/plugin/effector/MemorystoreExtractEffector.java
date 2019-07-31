@@ -1,7 +1,6 @@
 package jp.co.fluxengine.example.plugin.effector;
 
 import com.google.api.client.util.Lists;
-import javafx.util.Pair;
 import jp.co.fluxengine.example.CloudSqlPool;
 import jp.co.fluxengine.stateengine.annotation.DslName;
 import jp.co.fluxengine.stateengine.annotation.Effector;
@@ -22,6 +21,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 
 @Effector("memorystore/Memorystoreの内容取得#Memorystore取得")
@@ -36,6 +36,38 @@ public class MemorystoreExtractEffector {
 
     @DslName("keys")
     private List<String> keys;
+
+    private static class Pair<A, B> {
+        public final A _1;
+        public final B _2;
+
+        public Pair(A _1, B _2) {
+            this._1 = _1;
+            this._2 = _2;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Pair<?, ?> pair = (Pair<?, ?>) o;
+            return Objects.equals(_1, pair._1) &&
+                    Objects.equals(_2, pair._2);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(_1, _2);
+        }
+
+        @Override
+        public String toString() {
+            return "Pair{" +
+                    "_1=" + _1 +
+                    ", _2=" + _2 +
+                    '}';
+        }
+    }
 
     @Post
     public void post() {
@@ -77,8 +109,8 @@ public class MemorystoreExtractEffector {
 
             for (int i = 0; i < data.size(); i++) {
                 Pair<String, byte[]> keyValue = data.get(i);
-                String key = keyValue.getKey();
-                byte[] value = keyValue.getValue();
+                String key = keyValue._1;
+                byte[] value = keyValue._2;
 
                 insertStmt.setString(i * 3 + 1, requestId);
                 insertStmt.setString(i * 3 + 2, key);
