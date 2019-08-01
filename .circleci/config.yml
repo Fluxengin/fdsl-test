@@ -82,7 +82,7 @@ commands:
             sed -i -e "s/\[DB_PASS\]/${DB_PASS}/g" application-jdbc.properties
             popd
   install_maven:
-    description: "Install maven into alpine"
+    description: "Install maven"
     steps:
       - run:
           name: Install maven
@@ -171,7 +171,7 @@ commands:
           paths:
             - .
   test_dataflow:
-    description: "Test Dataflow stream job with designated persister db"
+    description: "Test Dataflow jobs with designated persister db"
     parameters:
       persisterdb:
         type: string
@@ -237,7 +237,7 @@ commands:
           command: |
             while [ -f ~/state-engine/dataflow_job_id.txt ]
             do
-              sleep 3
+              sleep 2
             done
           when: always
 jobs:

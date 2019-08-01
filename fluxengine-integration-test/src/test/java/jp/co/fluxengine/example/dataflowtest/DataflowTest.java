@@ -2,7 +2,6 @@ package jp.co.fluxengine.example.dataflowtest;
 
 import jp.co.fluxengine.example.CloudSqlPool;
 import jp.co.fluxengine.example.plugin.read.PublishDataReader;
-import jp.co.fluxengine.example.util.EnabledIfPersisterDbIs;
 import jp.co.fluxengine.example.util.PersisterExtractor;
 import org.apache.commons.io.IOUtils;
 import org.assertj.db.type.Changes;
@@ -91,7 +90,6 @@ public class DataflowTest {
     }
 
     @Test
-    @EnabledIfPersisterDbIs("memorystore")
     void testEventPublisherAndTransaction() throws Exception {
         LOG.info("testEventPublisherAndTransaction 開始");
         // persisterの現在の値を取得する
