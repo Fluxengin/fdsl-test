@@ -16,7 +16,6 @@ repositories {
 
 dependencies {
     implementation fileTree(dir: 'lib', include: '*.jar')
-    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.26'
     implementation group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: '2.11.2'
     implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.11.2'
 
@@ -32,7 +31,7 @@ test {
 }
 
 group   = "jp.co.fluxengine"
-version = "1.0.9"
+version = "1.0.10"
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
