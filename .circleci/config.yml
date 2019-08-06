@@ -44,7 +44,7 @@ commands:
     description: "Prepare GCP and locale settings"
     steps:
       - run:
-          name: Install Java and prepare GCP
+          name: Prepare GCP and locale settings
           command: |
             # Create Google application credentials file and auth SDK
             echo 'export GOOGLE_APPLICATION_CREDENTIALS=~/google_application_credentials.json' >> $BASH_ENV
@@ -160,9 +160,9 @@ commands:
             chmod +x dataflow_job_publisher.sh
             # Run dataflow_job_publisher with classpath of fluxengine-datalow because it requires GCP related jars but it's not a fat jar
             # also deploy batch job
-            env CLASSPATH=~/state-engine/stateengine/target/lib/*:~/state-engine/fluxengine-dataflow/target/lib/* ./dataflow_job_publisher.sh batch conf/dataflow_job_publisher_sample.env debug &
+            env CLASSPATH=~/state-engine/fluxengine-dataflow/target/lib/* ./dataflow_job_publisher.sh batch conf/dataflow_job_publisher_sample.env debug &
             pidDeployBatch=$!
-            env CLASSPATH=~/state-engine/stateengine/target/lib/*:~/state-engine/fluxengine-dataflow/target/lib/* ./dataflow_job_publisher.sh stream conf/dataflow_job_publisher_sample.env debug | tee temp_dataflow_job_register_output.txt
+            env CLASSPATH=~/state-engine/fluxengine-dataflow/target/lib/* ./dataflow_job_publisher.sh stream conf/dataflow_job_publisher_sample.env debug | tee temp_dataflow_job_register_output.txt
             # Obtain deployed job ID in order to stop it later
             grep 'Submitted job:' temp_dataflow_job_register_output.txt | awk '{print $3}' > ~/state-engine/dataflow_job_id.txt
             wait $pidDeployBatch
