@@ -1,6 +1,5 @@
 package jp.co.fluxengine.example;
 
-import org.apache.logging.log4j.core.util.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,6 +9,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.stream.Collectors;
 
 @WebServlet(name = "FluxengineIntegrationTestEvent", value = "/fluxengine-integration-test-event")
 public class ArbitraryEventServlet extends AbstractServlet {
@@ -22,7 +22,7 @@ public class ArbitraryEventServlet extends AbstractServlet {
             return req.getParameter("events");
         } else {
             try {
-                return IOUtils.toString(req.getReader());
+                return req.getReader().lines().collect(Collectors.joining("\n"));
             } catch (IOException e) {
                 log.error("error in createEventString", e);
                 throw new UncheckedIOException(e);
