@@ -30,6 +30,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+import static jp.co.fluxengine.example.util.Utils.getNested;
+
 public abstract class PersisterExtractor {
 
     private static final Logger LOG = LoggerFactory.getLogger(PersisterExtractor.class);
@@ -63,28 +65,26 @@ public abstract class PersisterExtractor {
         return projectId;
     }
 
-    public abstract Map<String, Object> getAllAsMap() throws Exception;
+    public abstract IdToEntityMap getAll() throws Exception;
 
-    public abstract Map<String, Object> getEntriesAsMap(String[] keys) throws Exception;
+    public abstract IdToEntityMap getEntities(String[] keys) throws Exception;
 
     @SuppressWarnings("unchecked")
-    public Map<String, Object> getIdMap(String id) throws Exception {
-        return (Map<String, Object>) getEntriesAsMap(new String[]{id}).get(id);
+    public EntityMap getIdMap(String id) throws Exception {
+        return getEntities(new String[]{id}).get(id);
     }
 
     public double currentPacketUsage(String userId, String name) throws Exception {
         String todayString = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDate.now());
 
-        Map<String, Object> targetMap = getIdMap("[" + userId + "]");
-        Map<String, Object> nameMap = getPersisterMap(targetMap, name);
+        EntityMap targetMap = getIdMap("[" + userId + "]");
+        Map<String, Object> nameMap = targetMap.getPersisterMap(name);
         String lifetime = getNested(nameMap, String.class, "lifetime");
 
         return lifetime != null && lifetime.equals(todayString) ?
                 getNested(nameMap, Number.class, "value", "使用量").doubleValue() :
                 0.0;
     }
-
-    public abstract Map<String, Object> getPersisterMap(Map<String, Object> idMap, String persisterName);
 
     public void publishOneTime(String inputJsonString) throws InvocationTargetException, IllegalAccessException {
         publishOneTime.invoke(null, inputJsonString, topic);
@@ -122,19 +122,45 @@ public abstract class PersisterExtractor {
         }
     }
 
-    public static <T> T getNested(Map<String, Object> map, Class<T> resultClazz, String... paths) {
-        Object result = map;
+    public static class IdToEntityMap extends HashMap<String, EntityMap> {
+    }
 
-        for (String path : paths) {
-            if (result == null) {
-                return null;
-            }
-            @SuppressWarnings("unchecked")
-            Map<String, Object> next = (Map<String, Object>) result;
-            result = next.get(path);
+    public static abstract class EntityMap extends HashMap<String, Object> {
+        public EntityMap() {
+            super();
         }
 
-        return resultClazz.cast(result);
+        public EntityMap(Map<? extends String, ?> m) {
+            super(m);
+        }
+
+        public abstract Map<String, Object> getPersisterMap(String persisterName);
+    }
+
+    static class DatastoreEntityMap extends EntityMap {
+        public DatastoreEntityMap() {
+            super();
+        }
+
+        @Override
+        public Map<String, Object> getPersisterMap(String persisterName) {
+            return getNested(this, Map.class, "value", persisterName);
+        }
+    }
+
+    static class MemorystoreEntityMap extends EntityMap {
+        public MemorystoreEntityMap() {
+            super();
+        }
+
+        public MemorystoreEntityMap(Map<? extends String, ?> m) {
+            super(m);
+        }
+
+        @Override
+        public Map<String, Object> getPersisterMap(String persisterName) {
+            return getNested(this, Map.class, persisterName);
+        }
     }
 }
 
@@ -159,7 +185,7 @@ class DatastoreExtractor extends PersisterExtractor {
     }
 
     @Override
-    public Map<String, Object> getAllAsMap() throws Exception {
+    public IdToEntityMap getAll() throws Exception {
         File resultFile = File.createTempFile("persister", ".txt");
 
         // CloudStoreSelecterはexportEntityDataToFileを呼ぶたびにインスタンス内に結果を蓄積する
@@ -180,9 +206,9 @@ class DatastoreExtractor extends PersisterExtractor {
         List<Map<String, Object>> mapList = new ObjectMapper().readValue(resultJsonString, new TypeReference<List<Map<String, Object>>>() {
         });
 
-        Map<String, Object> result = new HashMap<>();
+        IdToEntityMap result = new IdToEntityMap();
         mapList.forEach(jsonMap -> {
-            Map<String, Object> valueMap = new HashMap<>();
+            DatastoreEntityMap valueMap = new DatastoreEntityMap();
             if (jsonMap.containsKey("lifetime")) {
                 valueMap.put("lifetime", jsonMap.get("lifetime"));
             }
@@ -196,15 +222,16 @@ class DatastoreExtractor extends PersisterExtractor {
     }
 
     @Override
-    public Map<String, Object> getEntriesAsMap(String[] keys) throws Exception {
-        // Datastoreの方は、キーを絞って取得する機能はないので、全件取得する
-        return getAllAsMap();
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public Map<String, Object> getPersisterMap(Map<String, Object> idMap, String persisterName) {
-        return getNested(idMap, Map.class, "value", persisterName);
+    public IdToEntityMap getEntities(String[] keys) throws Exception {
+        // Datastoreの方は、キーを絞って取得する機能はないので、全件取得してから絞る
+        IdToEntityMap all = getAll();
+        IdToEntityMap result = new IdToEntityMap();
+        for (String key : keys) {
+            if (all.containsKey(key)) {
+                result.put(key, all.get(key));
+            }
+        }
+        return result;
     }
 }
 
@@ -217,12 +244,12 @@ class MemorystoreExtractor extends PersisterExtractor {
     }
 
     @Override
-    public Map<String, Object> getAllAsMap() throws Exception {
-        return getEntriesAsMap(new String[]{});
+    public IdToEntityMap getAll() throws Exception {
+        return getEntities(new String[]{});
     }
 
     @Override
-    public Map<String, Object> getEntriesAsMap(String[] keys) throws Exception {
+    public IdToEntityMap getEntities(String[] keys) throws Exception {
         // DSLのプラグインによって、MemorystoreからCloud SQLに値を移す
         String requestId = UUID.randomUUID().toString();
 
@@ -252,7 +279,7 @@ class MemorystoreExtractor extends PersisterExtractor {
         // たとえ0件であっても、データがないことを示すレコードが格納されるので、
         // レコードが取得できるまでループで待てばよい
 
-        Map<String, Object> result = Maps.newHashMap();
+        IdToEntityMap result = new IdToEntityMap();
 
         // ジョブが終了するとSQLにデータが入っているので、取得する
         try (Connection conn = CloudSqlPool.getDataSource().getConnection()) {
@@ -275,7 +302,7 @@ class MemorystoreExtractor extends PersisterExtractor {
                                 KryoSerializer serializer = new KryoSerializer(HashMap.class);
                                 Map<String, Object> valueMap = serializer.deserialize(value);
 
-                                result.put(initKey, valueMap);
+                                result.put(initKey, new MemorystoreEntityMap(valueMap));
                             }
                             while (rs.next()) {
                                 String key = rs.getString(1);
@@ -284,7 +311,7 @@ class MemorystoreExtractor extends PersisterExtractor {
                                     KryoSerializer serializer = new KryoSerializer(HashMap.class);
                                     Map<String, Object> valueMap = serializer.deserialize(value);
 
-                                    result.put(key, valueMap);
+                                    result.put(key, new MemorystoreEntityMap(valueMap));
                                 }
                             }
                         }
@@ -304,11 +331,5 @@ class MemorystoreExtractor extends PersisterExtractor {
         LOG.debug("Memorystore = " + result.toString());
 
         return result;
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public Map<String, Object> getPersisterMap(Map<String, Object> idMap, String persisterName) {
-        return getNested(idMap, Map.class, persisterName);
     }
 }

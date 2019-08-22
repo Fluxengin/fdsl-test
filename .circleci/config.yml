@@ -77,9 +77,9 @@ commands:
             sed -i -e "s/\[PROJECT\]/${PROJECT}/g" ${confFile}.properties
             done
             sed -i -e "s/\[YOUR_TOPIC_NAME\]/${TOPIC}/g" publisher.properties
-            sed -i -e "s/\[CLOUD_SQL_INSTANCE_NAME\]/${CLOUD_SQL_INSTANCE_NAME}/g" application-jdbc.properties
-            sed -i -e "s/\[DB_USER\]/${DB_USER}/g" application-jdbc.properties
-            sed -i -e "s/\[DB_PASS\]/${DB_PASS}/g" application-jdbc.properties
+            sed -i -e "s/\[CLOUD_SQL_INSTANCE_NAME\]/${CLOUD_SQL_INSTANCE_NAME}/g" cloud-sql.properties
+            sed -i -e "s/\[DB_USER\]/${DB_USER}/g" cloud-sql.properties
+            sed -i -e "s/\[DB_PASS\]/${DB_PASS}/g" cloud-sql.properties
             popd
   install_maven:
     description: "Install maven"

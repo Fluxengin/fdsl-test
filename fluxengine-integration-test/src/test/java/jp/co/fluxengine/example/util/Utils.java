@@ -1,12 +1,15 @@
 package jp.co.fluxengine.example.util;
 
+import jp.co.fluxengine.example.CloudSqlPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.sql.Connection;
 import java.time.Instant;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -68,5 +71,30 @@ public class Utils {
         }
 
         LOG.warn("バッチジョブ " + batchJobId + " は、" + timeoutMillis + "ミリ秒以内に終了を確認できませんでした");
+    }
+
+    public static <T> T getNested(Map<String, Object> map, Class<T> resultClazz, String... paths) {
+        Object result = map;
+
+        for (String path : paths) {
+            if (result == null) {
+                return null;
+            }
+            @SuppressWarnings("unchecked")
+            Map<String, Object> next = (Map<String, Object>) result;
+            result = next.get(path);
+        }
+
+        return resultClazz.cast(result);
+    }
+
+    public static void withTestDb(ThrowableConsumer<Connection> testDbConsumer) throws Exception {
+        try (Connection testDbConnection = CloudSqlPool.getDataSource().getConnection()) {
+            testDbConsumer.accept(testDbConnection);
+        }
+    }
+
+    public interface ThrowableConsumer<T> {
+        void accept(T t) throws Exception;
     }
 }

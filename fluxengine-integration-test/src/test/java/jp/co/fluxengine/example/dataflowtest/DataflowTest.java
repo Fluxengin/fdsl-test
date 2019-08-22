@@ -1,9 +1,15 @@
 package jp.co.fluxengine.example.dataflowtest;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import jp.co.fluxengine.example.CloudSqlPool;
 import jp.co.fluxengine.example.plugin.read.PublishDataReader;
 import jp.co.fluxengine.example.util.PersisterExtractor;
+import jp.co.fluxengine.example.util.Utils;
+import jp.co.fluxengine.stateengine.model.datom.Event;
+import jp.co.fluxengine.stateengine.util.JacksonUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.assertj.db.type.Changes;
 import org.assertj.db.type.Table;
 import org.junit.jupiter.api.BeforeAll;
@@ -15,14 +21,19 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.sql.PreparedStatement;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static jp.co.fluxengine.example.util.PersisterExtractor.getClassLoaderFromLib;
-import static jp.co.fluxengine.example.util.PersisterExtractor.getNested;
+import static jp.co.fluxengine.example.util.Utils.getNested;
 import static org.assertj.core.api.Assertions.assertThat;
 
 // このクラスは、Dataflowのジョブにデータを投入するので、
@@ -60,9 +71,9 @@ public class DataflowTest {
         LOG.info("testDataflow 待機終了");
 
         // 結果のassertionを行う
-        Map<String, Object> result = extractor.getIdMap("[uid12345]");
-        assertThat(getNested(extractor.getPersisterMap(result, "persister/パケット積算データ#パケット積算データ"), Number.class, "value", "使用量").doubleValue()).isEqualTo(usageBefore + 500);
-        assertThat(getNested(extractor.getPersisterMap(result, "rule/パケット積算#状態遷移"), String.class, "value", "currentState")).isEqualTo("s2");
+        PersisterExtractor.EntityMap result = extractor.getIdMap("[uid12345]");
+        assertThat(getNested(result.getPersisterMap("persister/パケット積算データ#パケット積算データ"), Number.class, "value", "使用量").doubleValue()).isEqualTo(usageBefore + 500);
+        assertThat(getNested(result.getPersisterMap("rule/パケット積算#状態遷移"), String.class, "value", "currentState")).isEqualTo("s2");
 
         LOG.info("testDataflow 終了");
     }
@@ -167,10 +178,149 @@ public class DataflowTest {
         Thread.sleep(30000);
         LOG.info("testSubscription 待機終了");
 
-        Map<String, Object> result = extractor.getIdMap("[" + targetUserId + "]");
-        assertThat(getNested(extractor.getPersisterMap(result, "subscription/イベントの文字列をそのまま永続化#Subscriptionイベント永続化"), String.class, "value", "文字列")).isEqualTo(targetString);
+        PersisterExtractor.EntityMap result = extractor.getIdMap("[" + targetUserId + "]");
+        assertThat(getNested(result.getPersisterMap("subscription/イベントの文字列をそのまま永続化#Subscriptionイベント永続化"), String.class, "value", "文字列")).isEqualTo(targetString);
 
         LOG.info("testSubscription 終了");
     }
 
+    @Test
+    void testGetMySQL() throws Exception {
+        LOG.info("testGetMySQL 開始");
+
+        // テストデータのINSERT
+        String testId = UUID.randomUUID().toString();
+
+        Utils.withTestDb(testDbConnection -> {
+            PreparedStatement insertTestRecords = testDbConnection.prepareStatement(
+                    "INSERT INTO getmysql_test(test_id, id, bit_field, int_field, double_field, decimal_field, datetime_field, timestamp_field, varchar_field) " +
+                            "VALUES " + StringUtils.repeat("(?,?,?,?,?,?,?,?,?)", ",", 7)
+            );
+
+            for (int i = 0; i < 7; i++) {
+                insertTestRecords.setString(i * 9 + 1, testId);
+                insertTestRecords.setLong(i * 9 + 2, i);
+                insertTestRecords.setBoolean(i * 9 + 3, i % 2 == 0);
+                insertTestRecords.setInt(i * 9 + 4, i + 1);
+                insertTestRecords.setDouble(i * 9 + 5, i / 10.0);
+                insertTestRecords.setBigDecimal(i * 9 + 6, new BigDecimal("100.00" + i));
+                insertTestRecords.setTimestamp(i * 9 + 7, Timestamp.valueOf(String.format("2019-08-01 %1$02d:%1$02d:%1$02d", i)));
+                insertTestRecords.setTimestamp(i * 9 + 8, Timestamp.valueOf(String.format("2019-08-02 %1$02d:%1$02d:%1$02d", i)));
+                insertTestRecords.setString(i * 9 + 9, "test string " + i);
+            }
+
+            insertTestRecords.execute();
+        });
+
+        // 1回のイベント発行で、同じイベントは1つしか含められない
+        // 「getMySQLイベント属性あり」を2回発行したいので、2回発行する
+        List<Event> eventList1 = Lists.newArrayList();
+        eventList1.add(createGetMySQLEvent(testId));
+        eventList1.add(createGetMySQLEventWithAttributes(testId, 20, "getMySQL_条件分岐あり_20"));
+        List<Event> eventList2 = Lists.newArrayList();
+        eventList2.add(createGetMySQLEventWithAttributes(testId, 60, "getMySQL_条件分岐あり_60"));
+
+        LOG.info("testGetMySQL データ送信");
+        extractor.publishOneTime(JacksonUtils.writeValueAsString(eventList1));
+        extractor.publishOneTime(JacksonUtils.writeValueAsString(eventList2));
+
+        LOG.info("testGetMySQL 待機開始");
+        Thread.sleep(30000);
+        LOG.info("testGetMySQL 待機終了");
+
+        PersisterExtractor.IdToEntityMap resultMap = extractor.getEntities(new String[]{
+                "[getMySQL_条件分岐なしの単一属性]",
+                "[getMySQL_条件分岐なしの複数属性]",
+                "[getMySQL_条件分岐あり_20]",
+                "[getMySQL_条件分岐あり_60]",
+                "[getMySQL_param1つのSQL]",
+                "[getMySQL_paramなしのSQL]",
+                "[getMySQL_パラメタのあるvariant]"
+        });
+
+        Map<String, Object> noBranchOneAttribute = resultMap.get("[getMySQL_条件分岐なしの単一属性]").getPersisterMap("mysql/getMySQL#条件分岐なしの単一属性persister");
+        assertThat(getNested(noBranchOneAttribute, String.class, "value", "value_string")).isEqualTo("test string 0");
+
+        Map<String, Object> noBranchMultipleAttributes = resultMap.get("[getMySQL_条件分岐なしの複数属性]").getPersisterMap("mysql/getMySQL#条件分岐なしの複数属性persister");
+        assertThat(getNested(noBranchMultipleAttributes, Boolean.class, "value", "bit_field")).isFalse();
+        assertThat(getNested(noBranchMultipleAttributes, Number.class, "value", "int_field")).isEqualTo(2);
+        assertThat(getNested(noBranchMultipleAttributes, Number.class, "value", "double_field")).isEqualTo(0.1);
+        assertThat(getNested(noBranchMultipleAttributes, Number.class, "value", "decimal_field")).isEqualTo(new BigDecimal("100.001"));
+        assertThat(getNested(noBranchMultipleAttributes, Timestamp.class, "value", "datetime_field")).isEqualTo(Timestamp.valueOf("2019-08-01 01:01:01"));
+        assertThat(getNested(noBranchMultipleAttributes, Timestamp.class, "value", "timestamp_field")).isEqualTo(Timestamp.valueOf("2019-08-02 01:01:01"));
+        assertThat(getNested(noBranchMultipleAttributes, String.class, "value", "varchar_field")).isEqualTo("test string 1");
+
+        PersisterExtractor.EntityMap branch20 = resultMap.get("[getMySQL_条件分岐あり_20]");
+        Map<String, Object> branch20NoAttribute = branch20.getPersisterMap("mysql/getMySQL#条件分岐ありの単一属性persister");
+        assertThat(getNested(branch20NoAttribute, Number.class, "value", "value_number")).isEqualTo(4);
+
+        Map<String, Object> branch20MultipleAttributes = branch20.getPersisterMap("mysql/getMySQL#条件分岐ありの複数属性persister");
+        assertThat(getNested(branch20MultipleAttributes, Boolean.class, "value", "bit_field")).isTrue();
+        assertThat(getNested(branch20MultipleAttributes, Number.class, "value", "int_field")).isEqualTo(5);
+        assertThat(getNested(branch20MultipleAttributes, Number.class, "value", "double_field")).isEqualTo(0.4);
+        assertThat(getNested(branch20MultipleAttributes, Number.class, "value", "decimal_field")).isEqualTo(new BigDecimal("100.004"));
+        assertThat(getNested(branch20MultipleAttributes, Timestamp.class, "value", "datetime_field")).isEqualTo(Timestamp.valueOf("2019-08-01 04:04:04"));
+        assertThat(getNested(branch20MultipleAttributes, Timestamp.class, "value", "timestamp_field")).isEqualTo(Timestamp.valueOf("2019-08-02 04:04:04"));
+        assertThat(getNested(branch20MultipleAttributes, String.class, "value", "varchar_field")).isEqualTo("test string 4");
+
+        PersisterExtractor.EntityMap branch60 = resultMap.get("[getMySQL_条件分岐あり_60]");
+        Map<String, Object> branch60NoAttribute = branch60.getPersisterMap("mysql/getMySQL#条件分岐ありの単一属性persister");
+        assertThat(getNested(branch60NoAttribute, Number.class, "value", "value_number")).isEqualTo(3);
+
+        Map<String, Object> branch60MultipleAttributes = branch60.getPersisterMap("mysql/getMySQL#条件分岐ありの複数属性persister");
+        assertThat(getNested(branch60MultipleAttributes, Boolean.class, "value", "bit_field")).isFalse();
+        assertThat(getNested(branch60MultipleAttributes, Number.class, "value", "int_field")).isEqualTo(6);
+        assertThat(getNested(branch60MultipleAttributes, Number.class, "value", "double_field")).isEqualTo(0.5);
+        assertThat(getNested(branch60MultipleAttributes, Number.class, "value", "decimal_field")).isEqualTo(new BigDecimal("100.005"));
+        assertThat(getNested(branch60MultipleAttributes, Timestamp.class, "value", "datetime_field")).isEqualTo(Timestamp.valueOf("2019-08-01 05:05:05"));
+        assertThat(getNested(branch60MultipleAttributes, Timestamp.class, "value", "timestamp_field")).isEqualTo(Timestamp.valueOf("2019-08-02 05:05:05"));
+        assertThat(getNested(branch60MultipleAttributes, String.class, "value", "varchar_field")).isEqualTo("test string 5");
+
+        Map<String, Object> oneParam = resultMap.get("[getMySQL_param1つのSQL]").getPersisterMap("mysql/getMySQL#param1つのSQLpersister");
+        assertThat(getNested(oneParam, Boolean.class, "value", "bit_field")).isTrue();
+        assertThat(getNested(oneParam, Number.class, "value", "int_field")).isEqualTo(1);
+        assertThat(getNested(oneParam, Number.class, "value", "double_field")).isEqualTo(0.0);
+        assertThat(getNested(oneParam, Number.class, "value", "decimal_field")).isEqualTo(new BigDecimal("100.000"));
+        assertThat(getNested(oneParam, Timestamp.class, "value", "datetime_field")).isEqualTo(Timestamp.valueOf("2019-08-01 00:00:00"));
+        assertThat(getNested(oneParam, Timestamp.class, "value", "timestamp_field")).isEqualTo(Timestamp.valueOf("2019-08-02 00:00:00"));
+        assertThat(getNested(oneParam, String.class, "value", "varchar_field")).isEqualTo("test string 0");
+
+        Map<String, Object> noParam = resultMap.get("[getMySQL_paramなしのSQL]").getPersisterMap("mysql/getMySQL#paramなしのSQLpersister");
+        assertThat(getNested(noParam, String.class, "value", "value_string")).isEqualTo("no param test string");
+
+        Map<String, Object> parameterizedVariant = resultMap.get("[getMySQL_パラメタのあるvariant]").getPersisterMap("mysql/getMySQL#パラメタのあるvariantpersister");
+        assertThat(getNested(parameterizedVariant, String.class, "value", "value_string")).isEqualTo("test string 6");
+
+        LOG.info("testGetMySQL 終了");
+    }
+
+    private Event createGetMySQLEvent(String testId) {
+        Event result = new Event();
+
+        result.setNamespace("mysql/getMySQL");
+        result.setEventName("getMySQLイベント");
+        result.setCreateTime(LocalDateTime.now());
+
+        Map<String, Object> propertyMap = Maps.newHashMap();
+        propertyMap.put("test_id", testId);
+        result.setProperty(propertyMap);
+
+        return result;
+    }
+
+    private Event createGetMySQLEventWithAttributes(String testId, int value, String persistId) {
+        Event result = new Event();
+
+        result.setNamespace("mysql/getMySQL");
+        result.setEventName("getMySQLイベント属性あり");
+        result.setCreateTime(LocalDateTime.now());
+
+        Map<String, Object> propertyMap = Maps.newHashMap();
+        propertyMap.put("test_id", testId);
+        propertyMap.put("value", value);
+        propertyMap.put("persist_id", persistId);
+        result.setProperty(propertyMap);
+
+        return result;
+    }
 }
