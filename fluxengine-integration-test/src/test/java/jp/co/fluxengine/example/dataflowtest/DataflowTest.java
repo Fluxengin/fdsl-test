@@ -26,6 +26,7 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -212,22 +213,28 @@ public class DataflowTest {
             }
 
             insertTestRecords.execute();
+
+            PreparedStatement selectCountOfRecords = testDbConnection.prepareStatement("SELECT COUNT(*) FROM getmysql_test WHERE test_id = ?");
+            selectCountOfRecords.setString(1, testIdForMySQL);
+            try (ResultSet countResult = selectCountOfRecords.executeQuery()) {
+                while (countResult.next()) {
+                    LOG.debug("test_id = {} のレコードが {} 件あります", testIdForMySQL, countResult.getInt(1));
+                }
+            }
         });
 
-        // 1回のイベント発行で、同じイベントは1つしか含められない
-        // 「getMySQLイベント属性あり」を2回発行したいので、2回発行する
-        List<Event> eventList1 = Lists.newArrayList();
-        eventList1.add(createGetMySQLEvent(testIdForMySQL));
-        eventList1.add(createGetMySQLEventWithAttributes(testIdForMySQL, 20, "getMySQL_条件分岐あり_20"));
-        List<Event> eventList2 = Lists.newArrayList();
-        eventList2.add(createGetMySQLEventWithAttributes(testIdForMySQL, 60, "getMySQL_条件分岐あり_60"));
+        // できるだけテストを行うようにするため、3つのイベントをバラバラに投げる
+        List<Event> eventList1 = Lists.newArrayList(createGetMySQLEvent(testIdForMySQL));
+        List<Event> eventList2 = Lists.newArrayList(createGetMySQLEventWithAttributes(testIdForMySQL, 20, "getMySQL_条件分岐あり_20"));
+        List<Event> eventList3 = Lists.newArrayList(createGetMySQLEventWithAttributes(testIdForMySQL, 60, "getMySQL_条件分岐あり_60"));
 
         LOG.info("testGetMySQL データ送信");
         extractor.publishOneTime(JacksonUtils.writeValueAsString(eventList1));
         extractor.publishOneTime(JacksonUtils.writeValueAsString(eventList2));
+        extractor.publishOneTime(JacksonUtils.writeValueAsString(eventList3));
 
         LOG.info("testGetMySQL 待機開始");
-        Thread.sleep(30000);
+        Thread.sleep(40000);
         LOG.info("testGetMySQL 待機終了");
 
         PersisterExtractor.IdToEntityMap resultMap = extractor.getEntities(new String[]{
