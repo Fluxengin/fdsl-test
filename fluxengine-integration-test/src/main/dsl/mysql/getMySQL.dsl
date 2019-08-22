@@ -156,6 +156,7 @@ persist param1つのSQLpersister:
 
 string paramなしのSQL:
   sql: mysql/getMySQL_0param.sql
+  params:
   cache: off
 
 persister paramなしのSQLpersister:
