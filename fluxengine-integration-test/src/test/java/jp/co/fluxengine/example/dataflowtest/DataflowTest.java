@@ -12,6 +12,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.assertj.db.type.Changes;
 import org.assertj.db.type.Table;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -47,9 +48,12 @@ public class DataflowTest {
 
     private static PersisterExtractor extractor;
 
+    private static String testIdForMySQL;
+
     @BeforeAll
-    static void setup() throws NoSuchMethodException, IOException, InstantiationException, IllegalAccessException, InvocationTargetException, ClassNotFoundException {
+    static void before() throws NoSuchMethodException, IOException, InstantiationException, IllegalAccessException, InvocationTargetException, ClassNotFoundException {
         extractor = PersisterExtractor.getInstance();
+        testIdForMySQL = UUID.randomUUID().toString();
     }
 
     @Test
@@ -189,8 +193,6 @@ public class DataflowTest {
         LOG.info("testGetMySQL 開始");
 
         // テストデータのINSERT
-        String testId = UUID.randomUUID().toString();
-
         Utils.withTestDb(testDbConnection -> {
             PreparedStatement insertTestRecords = testDbConnection.prepareStatement(
                     "INSERT INTO getmysql_test(test_id, id, bit_field, int_field, double_field, decimal_field, datetime_field, timestamp_field, varchar_field) " +
@@ -198,7 +200,7 @@ public class DataflowTest {
             );
 
             for (int i = 0; i < 7; i++) {
-                insertTestRecords.setString(i * 9 + 1, testId);
+                insertTestRecords.setString(i * 9 + 1, testIdForMySQL);
                 insertTestRecords.setLong(i * 9 + 2, i);
                 insertTestRecords.setBoolean(i * 9 + 3, i % 2 == 0);
                 insertTestRecords.setInt(i * 9 + 4, i + 1);
@@ -215,10 +217,10 @@ public class DataflowTest {
         // 1回のイベント発行で、同じイベントは1つしか含められない
         // 「getMySQLイベント属性あり」を2回発行したいので、2回発行する
         List<Event> eventList1 = Lists.newArrayList();
-        eventList1.add(createGetMySQLEvent(testId));
-        eventList1.add(createGetMySQLEventWithAttributes(testId, 20, "getMySQL_条件分岐あり_20"));
+        eventList1.add(createGetMySQLEvent(testIdForMySQL));
+        eventList1.add(createGetMySQLEventWithAttributes(testIdForMySQL, 20, "getMySQL_条件分岐あり_20"));
         List<Event> eventList2 = Lists.newArrayList();
-        eventList2.add(createGetMySQLEventWithAttributes(testId, 60, "getMySQL_条件分岐あり_60"));
+        eventList2.add(createGetMySQLEventWithAttributes(testIdForMySQL, 60, "getMySQL_条件分岐あり_60"));
 
         LOG.info("testGetMySQL データ送信");
         extractor.publishOneTime(JacksonUtils.writeValueAsString(eventList1));
@@ -322,5 +324,16 @@ public class DataflowTest {
         result.setProperty(propertyMap);
 
         return result;
+    }
+
+    @AfterAll
+    static void after() throws Exception {
+        Utils.withTestDb(testDbConnection -> {
+            PreparedStatement deleteTestRecords = testDbConnection.prepareStatement(
+                    "DELETE FROM getmysql_test WHERE test_id = ?"
+            );
+            deleteTestRecords.setString(1, testIdForMySQL);
+            deleteTestRecords.execute();
+        });
     }
 }

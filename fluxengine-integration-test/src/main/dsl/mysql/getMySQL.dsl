@@ -167,7 +167,7 @@ persist paramなしのSQLpersister:
   value_string: paramなしのSQL
   watch(getMySQLイベント):
 
-import パラメタのあるvariant<getMySQLイベント.test_id, 6>: パラメタのあるvariant
+import パラメタのあるvariant<getMySQLイベント.test_id, 6>: mysql/パラメタのあるvariant
 
 persister パラメタのあるvariantpersister:
   value_string: string
