@@ -426,7 +426,7 @@ jobs:
             VERSION=`ls lib/fluxengine-core-*.jar | sed -e 's/^.*fluxengine-core-\([0-9]\+\).*\.jar/\1/'`
             EFFECTIVE_DATE=`date +"%Y%m%d"`
             # Run regisdsl with classpath of fluxengine-dsl-register because fluxengine-dsl-register requires GCP related jars but it's not a fat jar
-            env CLASSPATH=~/state-engine/fluxengine-dsl-register/target/lib/* ./regisdsl.sh ${VERSION} ${EFFECTIVE_DATE} | tee temp_dsl_register_output.txt
+            env CLASSPATH=~/state-engine/fluxengine-dsl-register/target/lib/* ./regisdsl.sh ${VERSION} ${EFFECTIVE_DATE} 2>&1 | tee temp_dsl_register_output.txt
             ! grep 'Exception:' temp_dsl_register_output.txt > /dev/null
             popd
   deploy_dataflow_jobs_datastore:
