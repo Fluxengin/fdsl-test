@@ -7,7 +7,7 @@ event getMySQLイベント属性あり:
   persist_id: string
 
 string 条件分岐なしの単一属性:
-  sql: getMySQL_string.sql
+  sql: mysql/getMySQL_string.sql
   params:
     test_id<varchar>: getMySQLイベント.test_id
     id<bigint>: 0
@@ -30,7 +30,7 @@ struct 条件分岐なしの複数属性:
   datetime_field: datetime
   timestamp_field: datetime
   varchar_field: string
-  sql: getMySQL_struct.sql
+  sql: mysql/getMySQL_struct.sql
   params:
     test_id<varchar>: getMySQLイベント.test_id
     id<bigint>: 1
@@ -59,12 +59,12 @@ persist 条件分岐なしの複数属性persister:
 
 number 条件分岐ありの単一属性:
   getMySQLイベント属性あり.value >= 50:
-    sql: getMySQL_number.sql
+    sql: mysql/getMySQL_number.sql
     params:
       test_id<varchar>: getMySQLイベント属性あり.test_id
       id<bigint>: 2
   else:
-    sql: getMySQL_number.sql
+    sql: mysql/getMySQL_number.sql
     params:
       test_id<varchar>: getMySQLイベント属性あり.test_id
       id<bigint>: 3
@@ -88,12 +88,12 @@ struct 条件分岐ありの複数属性:
   timestamp_field: datetime
   varchar_field: string
   getMySQLイベント属性あり.value < 50:
-    sql: getMySQL_struct.sql
+    sql: mysql/getMySQL_struct.sql
     params:
       test_id<varchar>: getMySQLイベント属性あり.test_id
       id<bigint>: 4
   else:
-    sql: getMySQL_struct.sql
+    sql: mysql/getMySQL_struct.sql
     params:
       test_id<varchar>: getMySQLイベント属性あり.test_id
       id<bigint>: 5
@@ -128,7 +128,7 @@ struct param1つのSQL:
   datetime_field: datetime
   timestamp_field: datetime
   varchar_field: string
-  sql: getMySQL_1param.sql
+  sql: mysql/getMySQL_1param.sql
   params:
     test_id<varchar>: getMySQLイベント.test_id
   cache: off
@@ -155,7 +155,7 @@ persist param1つのSQLpersister:
   watch(getMySQLイベント):
 
 string paramなしのSQL:
-  sql: getMySQL_0param.sql
+  sql: mysql/getMySQL_0param.sql
   cache: off
 
 persister paramなしのSQLpersister:
