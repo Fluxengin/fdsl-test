@@ -25,6 +25,7 @@ import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -286,7 +287,10 @@ class MemorystoreExtractor extends PersisterExtractor {
             PreparedStatement selectStmt = conn.prepareStatement("SELECT `key`, `value` FROM `memorystore_contents` WHERE `requestid` = ?");
             selectStmt.setString(1, requestId);
 
-            while (true) {
+            // タイムアウトを5分とする
+            Instant timeout = Instant.now().plusSeconds(300);
+
+            while (Instant.now().isBefore(timeout)) {
                 try (ResultSet rs = selectStmt.executeQuery()) {
                     // レコードがある場合、データを取得して終了する
                     // ない場合はまだデータ取得が完了していないので、待つ

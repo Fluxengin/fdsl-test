@@ -93,7 +93,7 @@ public class MemorystoreExtractEffector {
                 byte[] value = values.get(i);
 
                 if (value != null) {
-                    String key = new String(targetKeys[i]);
+                    String key = new String(targetKeys[i], StandardCharsets.UTF_8);
                     data.add(new Pair<>(key, value));
                 }
             }
