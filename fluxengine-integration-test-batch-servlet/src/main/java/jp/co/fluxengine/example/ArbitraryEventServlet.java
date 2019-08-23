@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @WebServlet(name = "FluxengineIntegrationTestEvent", value = "/fluxengine-integration-test-event")
@@ -34,7 +35,9 @@ public class ArbitraryEventServlet extends AbstractServlet {
 
     @Override
     protected String getJobName(HttpServletRequest req) {
-        return "integrationTestEvent-" + LocalDateTime.now().format(formatter);
+        // 秒まで同じリクエストが複数来た時も、ジョブ名が一意になるよう、ランダムなUUIDを加える
+        // (名前が同じジョブを作ることはできないため)
+        return "integrationTestEvent-" + LocalDateTime.now().format(formatter) + "-" + UUID.randomUUID().toString().replace("-", "");
     }
 
 }
