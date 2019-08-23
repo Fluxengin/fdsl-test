@@ -515,6 +515,7 @@ workflows:
             branches:
               only:
                 - master
+                - /.*circleci.*/
       - deploy_dsl:
           requires:
             - build_engine
@@ -530,6 +531,7 @@ workflows:
             branches:
               only:
                 - master
+                - /.*circleci.*/
       - deploy_batch_servlet:
           requires:
             - build_engine
@@ -547,6 +549,7 @@ workflows:
             branches:
               only:
                 - master
+                - /.*circleci.*/
       - deploy_dataflow_jobs_memorystore:
           requires:
             - test_dataflow_datastore

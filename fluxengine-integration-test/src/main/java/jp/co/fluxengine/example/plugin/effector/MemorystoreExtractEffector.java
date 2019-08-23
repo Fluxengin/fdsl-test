@@ -76,8 +76,8 @@ public class MemorystoreExtractEffector {
         try (Jedis jedis = pool.getResource();
              Connection conn = CloudSqlPool.getDataSource().getConnection()) {
             byte[][] targetKeys = keys.size() == 0 ?
-                    jedis.keys("*".getBytes()).toArray(new byte[0][]) :
-                    keys.stream().distinct().map(String::getBytes).toArray(byte[][]::new);
+                    jedis.keys("*".getBytes(StandardCharsets.UTF_8)).toArray(new byte[0][]) :
+                    keys.stream().distinct().map(key -> key.getBytes(StandardCharsets.UTF_8)).toArray(byte[][]::new);
 
             if (targetKeys.length == 0) {
                 log.info("No key exists");
