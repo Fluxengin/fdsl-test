@@ -283,7 +283,7 @@ public class DataflowTest {
         assertThat(getNested(branch60MultipleAttributes, Number.class, "value", "double_field")).isEqualTo(0.5);
         assertThat(getNested(branch60MultipleAttributes, Number.class, "value", "decimal_field").doubleValue()).isEqualTo(100.005);
         assertThat(getNested(branch60MultipleAttributes, Object.class, "value", "datetime_field")).isIn("2019-08-01T05:05:05", LocalDateTime.parse("2019-08-01T05:05:05"));
-        assertThat(getNested(branch60MultipleAttributes, Object.class, "value", "timestamp_field")).isIn("2019-08-02T05:05:05", LocalDateTime.parse("2019-08-01T05:05:05"));
+        assertThat(getNested(branch60MultipleAttributes, Object.class, "value", "timestamp_field")).isIn("2019-08-02T05:05:05", LocalDateTime.parse("2019-08-02T05:05:05"));
         assertThat(getNested(branch60MultipleAttributes, String.class, "value", "varchar_field")).isEqualTo("test string 5");
 
         Map<String, Object> oneParam = resultMap.get("[getMySQL_param1つのSQL]").getPersisterMap("mysql/getMySQL#param1つのSQLpersister");
