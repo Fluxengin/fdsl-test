@@ -5,6 +5,7 @@ import jp.co.fluxengine.example.CloudSqlPool;
 import jp.co.fluxengine.stateengine.annotation.DslName;
 import jp.co.fluxengine.stateengine.annotation.Effector;
 import jp.co.fluxengine.stateengine.annotation.Post;
+import jp.co.fluxengine.stateengine.util.Serializer.KryoSerializer;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,9 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Objects;
-import java.util.Properties;
+import java.util.*;
 
 @Effector("memorystore/Memorystoreの内容取得#Memorystore取得")
 public class MemorystoreExtractEffector {
@@ -111,6 +110,12 @@ public class MemorystoreExtractEffector {
                 Pair<String, byte[]> keyValue = data.get(i);
                 String key = keyValue._1;
                 byte[] value = keyValue._2;
+
+                if (log.isDebugEnabled()) {
+                    KryoSerializer serializer = new KryoSerializer(HashMap.class);
+                    Map<String, Object> valueMap = serializer.deserialize(value);
+                    log.debug("inserting requestid = {}, key = {}, value = {}", requestId, key, valueMap == null ? "null" : valueMap.toString());
+                }
 
                 insertStmt.setString(i * 3 + 1, requestId);
                 insertStmt.setString(i * 3 + 2, key);
