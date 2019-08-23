@@ -255,8 +255,8 @@ public class DataflowTest {
         assertThat(getNested(noBranchMultipleAttributes, Number.class, "value", "int_field")).isEqualTo(2);
         assertThat(getNested(noBranchMultipleAttributes, Number.class, "value", "double_field")).isEqualTo(0.1);
         assertThat(getNested(noBranchMultipleAttributes, Number.class, "value", "decimal_field").doubleValue()).isEqualTo(100.001);
-        assertThat(getNested(noBranchMultipleAttributes, Timestamp.class, "value", "datetime_field")).isEqualTo(Timestamp.valueOf("2019-08-01 01:01:01"));
-        assertThat(getNested(noBranchMultipleAttributes, Timestamp.class, "value", "timestamp_field")).isEqualTo(Timestamp.valueOf("2019-08-02 01:01:01"));
+        assertThat(getNested(noBranchMultipleAttributes, String.class, "value", "datetime_field")).isEqualTo("2019-08-01T01:01:01");
+        assertThat(getNested(noBranchMultipleAttributes, String.class, "value", "timestamp_field")).isEqualTo("2019-08-02T01:01:01");
         assertThat(getNested(noBranchMultipleAttributes, String.class, "value", "varchar_field")).isEqualTo("test string 1");
 
         PersisterExtractor.EntityMap branch20 = resultMap.get("[getMySQL_条件分岐あり_20]");
@@ -268,8 +268,8 @@ public class DataflowTest {
         assertThat(getNested(branch20MultipleAttributes, Number.class, "value", "int_field")).isEqualTo(5);
         assertThat(getNested(branch20MultipleAttributes, Number.class, "value", "double_field")).isEqualTo(0.4);
         assertThat(getNested(branch20MultipleAttributes, Number.class, "value", "decimal_field").doubleValue()).isEqualTo(100.004);
-        assertThat(getNested(branch20MultipleAttributes, Timestamp.class, "value", "datetime_field")).isEqualTo(Timestamp.valueOf("2019-08-01 04:04:04"));
-        assertThat(getNested(branch20MultipleAttributes, Timestamp.class, "value", "timestamp_field")).isEqualTo(Timestamp.valueOf("2019-08-02 04:04:04"));
+        assertThat(getNested(branch20MultipleAttributes, String.class, "value", "datetime_field")).isEqualTo("2019-08-01T04:04:04");
+        assertThat(getNested(branch20MultipleAttributes, String.class, "value", "timestamp_field")).isEqualTo("2019-08-02T04:04:04");
         assertThat(getNested(branch20MultipleAttributes, String.class, "value", "varchar_field")).isEqualTo("test string 4");
 
         PersisterExtractor.EntityMap branch60 = resultMap.get("[getMySQL_条件分岐あり_60]");
@@ -281,8 +281,8 @@ public class DataflowTest {
         assertThat(getNested(branch60MultipleAttributes, Number.class, "value", "int_field")).isEqualTo(6);
         assertThat(getNested(branch60MultipleAttributes, Number.class, "value", "double_field")).isEqualTo(0.5);
         assertThat(getNested(branch60MultipleAttributes, Number.class, "value", "decimal_field").doubleValue()).isEqualTo(100.005);
-        assertThat(getNested(branch60MultipleAttributes, Timestamp.class, "value", "datetime_field")).isEqualTo(Timestamp.valueOf("2019-08-01 05:05:05"));
-        assertThat(getNested(branch60MultipleAttributes, Timestamp.class, "value", "timestamp_field")).isEqualTo(Timestamp.valueOf("2019-08-02 05:05:05"));
+        assertThat(getNested(branch60MultipleAttributes, String.class, "value", "datetime_field")).isEqualTo("2019-08-01T05:05:05");
+        assertThat(getNested(branch60MultipleAttributes, String.class, "value", "timestamp_field")).isEqualTo("2019-08-02T05:05:05");
         assertThat(getNested(branch60MultipleAttributes, String.class, "value", "varchar_field")).isEqualTo("test string 5");
 
         Map<String, Object> oneParam = resultMap.get("[getMySQL_param1つのSQL]").getPersisterMap("mysql/getMySQL#param1つのSQLpersister");
@@ -290,8 +290,8 @@ public class DataflowTest {
         assertThat(getNested(oneParam, Number.class, "value", "int_field")).isEqualTo(1);
         assertThat(getNested(oneParam, Number.class, "value", "double_field")).isEqualTo(0.0);
         assertThat(getNested(oneParam, Number.class, "value", "decimal_field").doubleValue()).isEqualTo(100.000);
-        assertThat(getNested(oneParam, Timestamp.class, "value", "datetime_field")).isEqualTo(Timestamp.valueOf("2019-08-01 00:00:00"));
-        assertThat(getNested(oneParam, Timestamp.class, "value", "timestamp_field")).isEqualTo(Timestamp.valueOf("2019-08-02 00:00:00"));
+        assertThat(getNested(oneParam, String.class, "value", "datetime_field")).isEqualTo("2019-08-01T00:00:00");
+        assertThat(getNested(oneParam, String.class, "value", "timestamp_field")).isEqualTo("2019-08-02T00:00:00");
         assertThat(getNested(oneParam, String.class, "value", "varchar_field")).isEqualTo("test string 0");
 
         Map<String, Object> noParam = resultMap.get("[getMySQL_paramなしのSQL]").getPersisterMap("mysql/getMySQL#paramなしのSQLpersister");
