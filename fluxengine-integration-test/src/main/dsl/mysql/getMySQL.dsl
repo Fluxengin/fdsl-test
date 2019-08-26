@@ -178,3 +178,32 @@ persister パラメタのあるvariantpersister:
 persist パラメタのあるvariantpersister:
   value_string: パラメタのあるvariant
   watch(getMySQLイベント):
+
+string キャッシュON:
+  sql: mysql/cache_on.sql
+  params:
+  cache: today()
+
+persister キャッシュONpersister:
+  value_string: string
+  persist(getMySQLイベント属性あり.persist_id):
+    lifetime: today()
+
+persist キャッシュONpersister:
+  value_string: キャッシュON
+  watch(getMySQLイベント属性あり):
+
+string キャッシュOFF:
+  sql: mysql/cache_off.sql
+  params:
+  cache: off
+
+persister キャッシュOFFpersister:
+  value_string: string
+  persist(getMySQLイベント属性あり.persist_id):
+    lifetime: today()
+
+persist キャッシュOFFpersister:
+  value_string: キャッシュOFF
+  watch(getMySQLイベント属性あり):
+

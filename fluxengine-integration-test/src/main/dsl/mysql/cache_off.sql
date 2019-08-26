@@ -1,0 +1,1 @@
+SELECT CONCAT('cacheoff', CEIL(RAND() * 100))

@@ -1,0 +1,1 @@
+SELECT CONCAT('cacheon', CEIL(RAND() * 100))

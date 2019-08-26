@@ -301,6 +301,17 @@ public class DataflowTest {
         Map<String, Object> parameterizedVariant = resultMap.get("[getMySQL_パラメタのあるvariant]").getPersisterMap("mysql/getMySQL#パラメタのあるvariantpersister");
         assertThat(getNested(parameterizedVariant, String.class, "value", "value_string")).isEqualTo("test string 6");
 
+        Map<String, Object> branch20CacheOn = branch20.getPersisterMap("mysql/getMySQL#キャッシュONpersister");
+        String branch20CacheOnValue = getNested(branch20CacheOn, String.class, "value", "value_string");
+        Map<String, Object> branch60CacheOn = branch60.getPersisterMap("mysql/getMySQL#キャッシュONpersister");
+        String branch60CacheOnValue = getNested(branch60CacheOn, String.class, "value", "value_string");
+        Map<String, Object> branch20CacheOff = branch20.getPersisterMap("mysql/getMySQL#キャッシュOFFpersister");
+        String branch20CacheOffValue = getNested(branch20CacheOff, String.class, "value", "value_string");
+        Map<String, Object> branch60CacheOff = branch60.getPersisterMap("mysql/getMySQL#キャッシュOFFpersister");
+        String branch60CacheOffValue = getNested(branch60CacheOff, String.class, "value", "value_string");
+        assertThat(branch20CacheOnValue).isEqualTo(branch60CacheOnValue);
+        assertThat(branch20CacheOffValue).isNotEqualTo(branch60CacheOffValue);
+
         LOG.info("testGetMySQL 終了");
     }
 
