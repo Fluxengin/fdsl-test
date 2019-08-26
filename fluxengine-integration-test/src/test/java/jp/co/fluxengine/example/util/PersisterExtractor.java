@@ -78,8 +78,8 @@ public abstract class PersisterExtractor {
     public double currentPacketUsage(String userId, String name) throws Exception {
         String todayString = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDate.now());
 
-        EntityMap targetMap = getIdMap("[" + userId + "]");
-        Map<String, Object> nameMap = targetMap.getPersisterMap(name);
+        EntityMap idMap = getIdMap("[" + userId + "]");
+        Map<String, Object> nameMap = idMap == null ? null : idMap.getPersisterMap(name);
         String lifetime = getNested(nameMap, String.class, "lifetime");
 
         return lifetime != null && lifetime.equals(todayString) ?
