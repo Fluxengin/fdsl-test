@@ -1,1 +1,1 @@
-SELECT CONCAT('cacheoff', CEIL(RAND() * 100))
+SELECT CONCAT('cacheoff', RAND())
