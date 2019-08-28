@@ -1,5 +1,7 @@
 package jp.co.fluxengine.example;
 
+import java.io.File;
+
 import jp.co.fluxengine.apptest.DslPath;
 import jp.co.fluxengine.apptest.DslPathResolver;
 import jp.co.fluxengine.apptest.TestResult;
@@ -56,9 +58,9 @@ public class InternalTestProject {
         @DslPath("effector/normal")
         void testEffector(String dslPath) {
             assertThat(testDslAndGetResults(dslPath)).hasSize(6)
-                    .contains(new TestResult("rule\\パケット積算.dsl", "test 1 通常積算", false))
-                    .contains(new TestResult("rule\\パケット積算.dsl", "test 2 上限超過", false))
-                    .filteredOn(testResult -> !testResult.testFileName.equals("rule\\パケット積算.dsl"))
+                    .contains(new TestResult("rule" + File.separator + "パケット積算.dsl", "test 1 通常積算", false))
+                    .contains(new TestResult("rule" + File.separator + "パケット積算.dsl", "test 2 上限超過", false))
+                    .filteredOn(testResult -> !testResult.testFileName.equals("rule" + File.separator + "パケット積算.dsl"))
                     .allMatch(TestResult::isSucceeded);
         }
 
