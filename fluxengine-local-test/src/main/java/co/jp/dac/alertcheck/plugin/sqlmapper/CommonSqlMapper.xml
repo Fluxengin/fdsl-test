@@ -1,0 +1,185 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="co.jp.dac.alertcheck.plugin.sqlmapper.CommonSqlMapper">
+
+	<!--チェック項目マスタから全体チェックフラグを取得-->
+	<select id="getAllCheckFlag" parameterType="int" resultType="java.lang.String">
+    	SELECT
+    		all_account_check_flag
+    	FROM
+    	    <!-- チェック項目 -->
+    		check_item
+    	WHERE
+			<!-- チェック項目ID -->
+    		id = #{checkNo}
+	</select>
+
+	<!--配信媒体.媒体名を取得-->
+	<select id="getMediaName" parameterType="int" resultType="java.lang.String">
+		SELECT
+			dm.dlvr_media_nm                    <!-- 配信媒体名 -->
+			<!-- チェック項目詳細設定 -->
+		FROM check_item ci
+			<!-- チェック項目･媒体別ネットワークリレーション -->
+		JOIN check_item_media_network cimn
+			<!-- チェック項目ID -->
+			ON ci.id = cimn.check_item_id
+			<!-- 媒体ネットワーク -->
+		JOIN media_network mn
+			<!-- 媒体ネットワークSEQ -->
+			ON mn.id = cimn.media_network_id
+			<!-- 配信媒体 -->
+		JOIN dlvr_media dm
+			<!-- 配信媒体SEQ -->
+			ON dm.id = mn.id
+		WHERE
+			<!-- チェック項目ID -->
+			ci.id = #{checkNo}
+	</select>
+
+	<!--チェック項目マスタからGorin種類 を取得 -->
+	<select id="getGorinKind" resultType="String" parameterType="java.util.HashMap">
+		SELECT
+			gorin_yahoo_core_flag      <!-- Gorin-YahooCoreフラグ -->
+		FROM
+			<!-- チェック項目 -->
+			check_item
+		WHERE
+			<!-- チェック項目ID -->
+			id = #{checkNo}
+	</select>
+
+	<!-- GorinYahooCore期間からGori情報を取得する -->
+	<select id="getTermJudgment" resultType="java.util.HashMap">
+		SELECT gycc.year,
+			   gycc.from,
+			   gycc.to
+		 FROM
+			<!-- GorinYahooCore期間-->
+			gorin_yahoo_core_calendar gycc
+		WHERE gycc.year = #{year}
+			<if test="gorinCoreKind != null">
+			  AND gycc.gorin_yahoo_core_flag = #{gorinCoreKind}
+			</if>
+	</select>
+
+<!-- 通知メッセージ.通知メッセージ内容を取得する -->
+	<select id="getNotifiyMsg" parameterType="int" resultType="java.lang.String">
+    	SELECT
+    		n.noti_msg          <!-- 通知メッセージ内容 -->
+		FROM noti_msg n
+			<!-- チェック項目 -->
+			JOIN check_item c
+				<!-- チェック項目ID -->
+				ON n.id = c.noti_msg_id
+		 WHERE
+			<!-- チェック項目ID -->
+		 	c.id = #{checkNo}
+    </select>
+
+	<!--アカウント-->
+	<select id="getAccount" resultType="java.util.HashMap">
+		SELECT
+			ac.id as account_seq,               <!-- アカウント･アカウントSEQ -->
+		    adc.id as adComponent_seq,          <!-- 広告コンポーネント･広告コンポーネントSEQ -->
+			adc.ad_cpnt_nm as adComponentName,  <!-- 広告コンポーネント･広告コンポーネント名 -->
+		    ad.id as adProject_seq,             <!-- 広告案件･広告案件SEQ -->
+		    cisd.upper_limit_threshold,         <!-- チェック項目詳細設定･上限閾値 -->
+		    cisd.lower_limit_threshold,         <!-- チェック項目詳細設定･下限閾値 -->
+		    cisd.upper_limit_threshold_rate,    <!-- チェック項目詳細設定･上限閾値率 -->
+		    cisd.lower_limit_threshold_rate,    <!-- チェック項目詳細設定･下限閾値率 -->
+		    cisd.data_reference_period          <!-- チェック項目詳細設定･参照期間 -->
+		<!-- アカウント -->
+		FROM acnt ac
+			<!-- アカウント･チェック項目詳細設定 -->
+			JOIN account_check_item_setting_detail acisd
+				<!-- アカウント･アカウントSEQ = アカウント･チェック項目詳細設定･アカウントSEQ -->
+				ON ac.id = acisd.acnt_id
+			<!-- チェック項目詳細設定 -->
+			JOIN check_item_setting_detail cisd
+				<!-- アカウント･アカウントSEQ = アカウント･チェック項目詳細設定･チェック項目詳細設定SEQ -->
+				ON cisd.id = acisd.check_item_setting_detail_id
+			<!-- 広告コンポーネント -->
+			JOIN ad_cpnt adc
+				<!-- アカウント･広告コンポーネントSEQ = 広告コンポーネント･広告コンポーネントSEQ -->
+				ON ac.ad_cpnt_id = adc.id
+			<!-- 広告案件 -->
+			JOIN ad_mttr ad
+				<!-- 広告案件･広告コンポーネントSEQ = 広告コンポーネント･広告コンポーネントSEQ -->
+				ON ad.ad_cpnt_id = adc.id
+		WHERE
+			<!-- チェック項目詳細設定･チェック項目ID = ? -->
+			cisd.check_item_id = #{checkNo}
+			<!-- パラメーター･アカウントID != null -->
+			<if test="accountId != null">
+				AND ac.id = #{accountId}
+			</if>
+	</select>
+
+	<!-- 全体のアラートチェック処理（媒体名持つ） -->
+	<select id="getCrewCheckDetail" resultType="java.util.HashMap" >
+		SELECT
+			data_reference_period,        <!-- 参照期間 -->
+			lower_limit_threshold_rate,   <!-- 下限閾値率 -->
+			upper_limit_threshold_rate,   <!-- 上限閾値率 -->
+			lower_limit_threshold,        <!-- 下限閾値 -->
+			upper_limit_threshold         <!-- 上限閾値 -->
+		FROM
+			<!-- チェック項目 -->
+			check_item
+		WHERE
+			<!-- チェック項目ID -->
+			id = #{checkNo}
+	</select>
+
+	<select id="getCrewCheckAdvertising" resultType="java.util.HashMap" >
+		SELECT
+			project.id as adProject_seq,  				<!-- 広告案件･広告案件SEQ -->
+			component.ad_cpnt_nm as adComponentName,    <!-- 広告コンポーネント･広告コンポーネント名 -->
+			component.id AS adComponent_seq,
+			account.id as account_Seq
+		FROM
+			<!-- アカウント -->
+			acnt account
+			<!-- 配信媒体 -->
+			JOIN dlvr_media media
+				<!-- 配信媒体SEQ -->
+				ON account.dlvr_media_id = media.id
+			<!-- 広告案件 -->
+			JOIN ad_mttr project
+				<!-- アカウント･広告案件SEQ = 広告案件･広告案件SEQ -->
+				ON account.ad_mttr_id = project.id
+			<!-- 広告コンポーネント -->
+			JOIN ad_cpnt component
+				<!-- 広告コンポーネント･広告コンポーネントSEQ = 広告案件･広告コンポーネントSEQ -->
+				ON component.id = project.ad_cpnt_id
+		WHERE
+			<!-- 広告コンポーネント･広告コンポーネント型コード -->
+			component.ad_cpnt_typ_id = #{componentTypeId}
+			<!-- 広告コンポーネント･広告コンポーネントSEQ -->
+			AND component.ad_cpnt_id = #{componentId}
+			<!-- 配信媒体･配信媒体名 -->
+			AND media.dlvr_media_nm = #{mediaName}
+	</select>
+
+	<select id="getMonthBudget" resultType="java.util.HashMap" >
+		SELECT #{media},
+               #{accountId},
+			   mc.月額の予算 as monthBudget
+		FROM acnt ac
+			JOIN dlvr_media dm
+				ON ac.dlvr_media_id = dm.id
+			JOIN ad_cpnt adc
+				ON ac.ad_cpnt_id = adc.id
+			JOIN media_input_bdgt mb
+				ON adc.media_input_bdgt_id = mb.id
+			JOIN 月別予算 mc
+				ON mb.abst_bdgt_id = mc.id
+		WHERE adc.id = #{accountId}
+			AND adc.ad_cpnt_typ_id = #{componentTypeId}
+			AND dm.dlvr_media_nm = #{media}
+			AND mc.年月 = #{execMonth}
+	</select>
+</mapper>

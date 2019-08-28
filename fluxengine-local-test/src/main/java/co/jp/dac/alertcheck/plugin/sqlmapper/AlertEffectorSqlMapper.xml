@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="co.jp.dac.alertcheck.plugin.sqlmapper.AlertEffectorSqlMapper">
+
+    <select id="addAlertMsg" parameterType="java.util.HashMap">
+    	INSERT INTO CHECK_RESULTS
+    		 (acnt_id,
+			  campaign_id,
+			  ad_group_id,
+			  checked_date_time,
+			  alert_message,
+			  check_item_id,
+			  ctgr_grp_id,
+			  srt,
+			  ctgr_lyr_no,
+			  ad_id,
+			  time_value_id,
+              date_value_id,
+              keyword_id,
+              deleteFlag,
+              createdBy,
+              updatedBy
+			  )
+    	VALUES
+			 (
+			 #{accountId},
+			 #{campaignId},
+			 #{adGroupId},
+    		 #{checkedDateTime},
+    		 #{alertMessage},
+    		 #{checkItemId},
+    		 #{categoryGroupId},
+    		 #{categorySort},
+    		 #{kategoryNo},
+    		 #{adId},
+    		 #{timeThresholdId},
+    		 #{dayThresholdId},
+    		 #{keywordId},
+    		 0,
+    		 0,
+    		 0
+    		 )
+	</select>
+</mapper>
