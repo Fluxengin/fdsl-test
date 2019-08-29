@@ -24,6 +24,7 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -244,30 +245,29 @@ class MemorystoreExtractor extends PersisterExtractor {
         super();
     }
 
-    private static void execComputeEngineCommand(String command) throws IOException, InterruptedException {
-        Process process = new ProcessBuilder("gcloud", "compute", "ssh", "ci@memorystore-access", "--command=\"" + command + "\"", "--zone=" + COMPUTE_ENGINE_ZONE)
-                .redirectErrorStream(true)
-                .start();
+    private static void execCommand(String... command) throws InterruptedException, IOException {
+        Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
 
-        int exitCode = process.waitFor();
+        boolean terminatedSuccessfully = process.waitFor(2, TimeUnit.MINUTES);
 
-        if (exitCode != 0) {
+        if (terminatedSuccessfully) {
+            if (process.exitValue() != 0) {
+                String output = IOUtils.toString(process.getInputStream(), StandardCharsets.UTF_8);
+                throw new RuntimeException(Arrays.toString(command) + " の実行中にエラーが発生しました:\n" + output);
+            }
+        } else {
+            process.destroy();
             String output = IOUtils.toString(process.getInputStream(), StandardCharsets.UTF_8);
-            throw new RuntimeException(command + "の実行中にエラーが発生しました:\n" + output);
+            throw new RuntimeException(Arrays.toString(command) + " がタイムアウトになりました:\n" + output);
         }
     }
 
+    private static void execComputeEngineCommand(String command) throws IOException, InterruptedException {
+        execCommand("gcloud", "compute", "ssh", "ci@memorystore-access", "--command=\"" + command + "\"", "--force-key-file-overwrite", "--zone=" + COMPUTE_ENGINE_ZONE);
+    }
+
     private static void downloadComputeEngineFile(String src, String dst) throws IOException, InterruptedException {
-        Process process = new ProcessBuilder("gcloud", "compute", "scp", "ci@memorystore-access:" + src, dst, "--zone=" + COMPUTE_ENGINE_ZONE)
-                .redirectErrorStream(true)
-                .start();
-
-        int exitCode = process.waitFor();
-
-        if (exitCode != 0) {
-            String output = IOUtils.toString(process.getInputStream(), StandardCharsets.UTF_8);
-            throw new RuntimeException(src + "の実行中にエラーが発生しました:\n" + output);
-        }
+        execCommand("gcloud", "compute", "scp", "ci@memorystore-access:" + src, dst, "--force-key-file-overwrite", "--zone=" + COMPUTE_ENGINE_ZONE);
     }
 
     @Override

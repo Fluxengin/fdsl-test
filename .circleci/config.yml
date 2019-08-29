@@ -104,13 +104,13 @@ commands:
             if [ "<< parameters.persisterdb >>" = "memorystore" ]; then
               MEMORYSTORE_UTILS_DIRECTORY=memoryStoreUtils`date '+%Y%m%d%H%M%S'`
               echo -n $MEMORYSTORE_UTILS_DIRECTORY > ~/state-engine/memorystore_utils_directory.txt
-              gcloud compute ssh ci@memorystore-access --command="sudo apt-get install -y openjdk-8-jre" --zone=${COMPUTE_ENGINE_ZONE} &
+              gcloud compute ssh ci@memorystore-access --command="sudo apt-get install -y openjdk-8-jre" --force-key-file-overwrite --zone=${COMPUTE_ENGINE_ZONE} &
               pidInstallJava=$!
-              gcloud compute ssh ci@memorystore-access --command="mkdir -p ~/${MEMORYSTORE_UTILS_DIRECTORY}/lib" --zone=${COMPUTE_ENGINE_ZONE}
-              gcloud compute scp ~/state-engine/fluxengine-remote-test-runner/target/fluxengine-remote-test-runner-*.jar ci@memorystore-access:~/${MEMORYSTORE_UTILS_DIRECTORY}/lib --zone=${COMPUTE_ENGINE_ZONE} &
+              gcloud compute ssh ci@memorystore-access --command="mkdir -p ~/${MEMORYSTORE_UTILS_DIRECTORY}/lib" --force-key-file-overwrite --zone=${COMPUTE_ENGINE_ZONE}
+              gcloud compute scp ~/state-engine/fluxengine-remote-test-runner/target/fluxengine-remote-test-runner-*.jar ci@memorystore-access:~/${MEMORYSTORE_UTILS_DIRECTORY}/lib --force-key-file-overwrite --zone=${COMPUTE_ENGINE_ZONE} &
               pidUploadJar=$!
-              gcloud compute scp ~/state-engine/fluxengine-remote-test-runner/tools/memoryStoreUtils/* ci@memorystore-access:~/${MEMORYSTORE_UTILS_DIRECTORY} --zone=${COMPUTE_ENGINE_ZONE}
-              gcloud compute ssh ci@memorystore-access --command="chmod +x ~/${MEMORYSTORE_UTILS_DIRECTORY}/*.sh" --zone=${COMPUTE_ENGINE_ZONE}
+              gcloud compute scp ~/state-engine/fluxengine-remote-test-runner/tools/memoryStoreUtils/* ci@memorystore-access:~/${MEMORYSTORE_UTILS_DIRECTORY} --force-key-file-overwrite --zone=${COMPUTE_ENGINE_ZONE}
+              gcloud compute ssh ci@memorystore-access --command="chmod +x ~/${MEMORYSTORE_UTILS_DIRECTORY}/*.sh" --force-key-file-overwrite --zone=${COMPUTE_ENGINE_ZONE}
               wait $pidInstallJava $pidUploadJar
             else
               echo "Skip this step"
@@ -235,7 +235,7 @@ commands:
           name: Delete Memorystore tools
           command: |
             if [ "<< parameters.persisterdb >>" = "memorystore" ]; then
-              gcloud compute ssh ci@memorystore-access --command="rm -rf ~/${MEMORYSTORE_UTILS_DIRECTORY}" --zone=${COMPUTE_ENGINE_ZONE}
+              gcloud compute ssh ci@memorystore-access --command="rm -rf ~/${MEMORYSTORE_UTILS_DIRECTORY}" --force-key-file-overwrite --zone=${COMPUTE_ENGINE_ZONE}
             else
               echo "Skip this step"
             fi
