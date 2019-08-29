@@ -17,28 +17,24 @@ commands:
       - run:
           name: Skip job if no update under the directory
           command: |
-            if [ $CIRCLE_BRANCH = "master" ]
-            then
-            DIFF_TARGET="HEAD^ HEAD"
+            if [ $CIRCLE_BRANCH = "master" ]; then
+              DIFF_TARGET="HEAD^ HEAD"
             else
-            DIFF_TARGET="origin/master"
+              DIFF_TARGET="origin/master"
             fi
             DIFF_EXISTS=false
-            for targetDir in << parameters.dir >>
-            do
-            DIFF_FILES=`git diff ${DIFF_TARGET} --name-only --relative=${targetDir} | wc -l`
-            if [ $DIFF_FILES -eq 0 ]
-            then
-            echo "There is no update under ${targetDir}"
-            else
-            echo "There is update under ${targetDir}"
-            DIFF_EXISTS=true
-            break
-            fi
+            for targetDir in << parameters.dir >>; do
+              DIFF_FILES=`git diff ${DIFF_TARGET} --name-only --relative=${targetDir} | wc -l`
+              if [ $DIFF_FILES -eq 0 ]; then
+                echo "There is no update under ${targetDir}"
+              else
+                echo "There is update under ${targetDir}"
+                DIFF_EXISTS=true
+                break
+              fi
             done
-            if ! $DIFF_EXISTS
-            then
-            circleci step halt
+            if ! $DIFF_EXISTS; then
+              circleci step halt
             fi
   prepare_gcp_and_locale:
     description: "Prepare GCP and locale settings"
@@ -72,9 +68,8 @@ commands:
             sed -i -e "s/\[YOUR_BUCKET_NAME\]/${BUCKET}/g" dataflow_job_publisher_sample.env
             sed -i -e "s/\[PROJECT\]/${PROJECT}/g" dataflow_job_publisher_sample.env
             sed -i -e "s/\[YOUR_SUBSCRIPTION_NAME\]/${SUBSCRIPTION}/g" dataflow_job_publisher_sample.env
-            for confFile in dslDataStore effectorDataStore illegalEventDataStore persisterDataStore publisher
-            do
-            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" ${confFile}.properties
+            for confFile in dslDataStore effectorDataStore illegalEventDataStore persisterDataStore publisher; do
+              sed -i -e "s/\[PROJECT\]/${PROJECT}/g" ${confFile}.properties
             done
             sed -i -e "s/\[YOUR_TOPIC_NAME\]/${TOPIC}/g" publisher.properties
             sed -i -e "s/\[CLOUD_SQL_INSTANCE_NAME\]/${CLOUD_SQL_INSTANCE_NAME}/g" cloud-sql.properties
@@ -103,6 +98,24 @@ commands:
       - prepare_gcp_and_locale
       - attach_workspace:
           at: ~/state-engine
+      - run:
+          name: Upload Memorystore tools
+          command: |
+            if [ "<< parameters.persisterdb >>" = "memorystore" ]; then
+              MEMORYSTORE_UTILS_DIRECTORY=memoryStoreUtils`date '+%Y%m%d%H%M%S'`
+              echo -n $MEMORYSTORE_UTILS_DIRECTORY > ~/state-engine/memorystore_utils_directory.txt
+              gcloud compute ssh ci@memorystore-access --command="sudo apt-get install -y openjdk-8-jre" --zone=${COMPUTE_ENGINE_ZONE} &
+              pidInstallJava=$!
+              gcloud compute ssh ci@memorystore-access --command="mkdir -p ~/${MEMORYSTORE_UTILS_DIRECTORY}/lib" --zone=${COMPUTE_ENGINE_ZONE}
+              gcloud compute scp ~/state-engine/fluxengine-remote-test-runner/target/fluxengine-remote-test-runner-*.jar ci@memorystore-access:~/${MEMORYSTORE_UTILS_DIRECTORY}/lib --zone=${COMPUTE_ENGINE_ZONE} &
+              pidUploadJar=$!
+              gcloud compute scp ~/state-engine/fluxengine-remote-test-runner/tools/memoryStoreUtils/* ci@memorystore-access:~/${MEMORYSTORE_UTILS_DIRECTORY} --zone=${COMPUTE_ENGINE_ZONE}
+              gcloud compute ssh ci@memorystore-access --command="chmod +x ~/${MEMORYSTORE_UTILS_DIRECTORY}/*.sh" --zone=${COMPUTE_ENGINE_ZONE}
+              wait $pidInstallJava $pidUploadJar
+            else
+              echo "Skip this step"
+            fi
+          background: true
       - run:
           name: Publish event before deployment
           command: |
@@ -188,6 +201,15 @@ commands:
           command: |
             sed -i -e "s/persister\.db=.*/persister.db=<< parameters.persisterdb >>/" ~/fdsl-test/fluxengine-integration-test/conf/fluxengine.properties
       - run:
+          name: Set environment variables
+          command: |
+            if [ "<< parameters.persisterdb >>" = "memorystore" ]; then
+              MEMORYSTORE_UTILS_DIRECTORY=`cat ~/state-engine/memorystore_utils_directory.txt`
+              echo "export MEMORYSTORE_UTILS_DIRECTORY=${MEMORYSTORE_UTILS_DIRECTORY}" >> $BASH_ENV
+            else
+              echo "Skip this step"
+            fi
+      - run:
           name: Replace jar
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test/lib
@@ -209,6 +231,16 @@ commands:
             chmod +x gradlew
             env FLUXENGINE_INTEGRATION_TEST_DATAFLOW_STREAM=true FLUXENGINE_INTEGRATION_TEST_DATAFLOW_BATCH=true TEST_PERSIST_USERID=S01 TEST_PERSIST_STRING=`cat ~/state-engine/test_persist_string.txt` ./gradlew test --tests jp.co.fluxengine.example.dataflowtest*
             popd
+      - run:
+          name: Delete Memorystore tools
+          command: |
+            if [ "<< parameters.persisterdb >>" = "memorystore" ]; then
+              gcloud compute ssh ci@memorystore-access --command="rm -rf ~/${MEMORYSTORE_UTILS_DIRECTORY}" --zone=${COMPUTE_ENGINE_ZONE}
+            else
+              echo "Skip this step"
+            fi
+          when: always
+          background: true
       - run:
           name: Stop Dataflow job
           command: |

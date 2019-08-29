@@ -2,12 +2,6 @@ package jp.co.fluxengine.example.util;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.client.util.Lists;
-import com.google.common.collect.Maps;
-import jp.co.fluxengine.example.CloudSqlPool;
-import jp.co.fluxengine.stateengine.model.datom.Event;
-import jp.co.fluxengine.stateengine.util.JacksonUtils;
-import jp.co.fluxengine.stateengine.util.Serializer.KryoSerializer;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -16,20 +10,22 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.time.Instant;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static jp.co.fluxengine.example.util.Utils.getNested;
 
@@ -240,99 +236,110 @@ class MemorystoreExtractor extends PersisterExtractor {
 
     private static final Logger LOG = LoggerFactory.getLogger(MemorystoreExtractor.class);
 
+    private static final String COMPUTE_ENGINE_ZONE = System.getenv("COMPUTE_ENGINE_ZONE");
+
+    private static final String MEMORYSTORE_UTILS_DIRECTORY = System.getenv("MEMORYSTORE_UTILS_DIRECTORY");
+
     protected MemorystoreExtractor() throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, IOException {
         super();
     }
 
+    private static void execComputeEngineCommand(String command) throws IOException, InterruptedException {
+        Process process = new ProcessBuilder("gcloud", "compute", "ssh", "ci@memorystore-access", "--command=\"" + command + "\"", "--zone=" + COMPUTE_ENGINE_ZONE)
+                .redirectErrorStream(true)
+                .start();
+
+        int exitCode = process.waitFor();
+
+        if (exitCode != 0) {
+            String output = IOUtils.toString(process.getInputStream(), StandardCharsets.UTF_8);
+            throw new RuntimeException(command + "の実行中にエラーが発生しました:\n" + output);
+        }
+    }
+
+    private static void downloadComputeEngineFile(String src, String dst) throws IOException, InterruptedException {
+        Process process = new ProcessBuilder("gcloud", "compute", "scp", "ci@memorystore-access:" + src, dst, "--zone=" + COMPUTE_ENGINE_ZONE)
+                .redirectErrorStream(true)
+                .start();
+
+        int exitCode = process.waitFor();
+
+        if (exitCode != 0) {
+            String output = IOUtils.toString(process.getInputStream(), StandardCharsets.UTF_8);
+            throw new RuntimeException(src + "の実行中にエラーが発生しました:\n" + output);
+        }
+    }
+
     @Override
     public IdToEntityMap getAll() throws Exception {
-        return getEntities(new String[]{});
+        Path tempFile = Files.createTempFile(Paths.get("."), "memorystore_temp", ".txt");
+        String tempFileName = tempFile.getFileName().toString();
+        execComputeEngineCommand("cd ~/" + MEMORYSTORE_UTILS_DIRECTORY + " && ./queryAll.sh " + tempFileName);
+        downloadComputeEngineFile("~/" + MEMORYSTORE_UTILS_DIRECTORY + "/" + tempFileName, ".");
+
+        IdToEntityMap result = fileToMap(tempFile);
+
+        Files.deleteIfExists(tempFile);
+
+        return result;
+    }
+
+    private static final Pattern KEY_VALUE_PATTERN = Pattern.compile("^key=(.*?),value=(.*)$");
+
+    private static IdToEntityMap fileToMap(Path file) throws IOException {
+        IdToEntityMap result = new IdToEntityMap();
+
+        Files.readAllLines(file, StandardCharsets.UTF_8).forEach(line -> {
+            Matcher matcher = KEY_VALUE_PATTERN.matcher(line);
+            if (matcher.find()) {
+                String id = matcher.group(1);
+                String valueString = matcher.group(2);
+                try {
+                    EntityMap valueMap = new ObjectMapper().readValue(valueString, new TypeReference<EntityMap>() {
+                    });
+                    result.put(id, valueMap);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+        });
+
+        return result;
     }
 
     @Override
     public IdToEntityMap getEntities(String[] keys) throws Exception {
-        // DSLのプラグインによって、MemorystoreからCloud SQLに値を移す
-        String requestId = UUID.randomUUID().toString();
+        IdToEntityMap result;
 
-        LOG.debug("requestId = {}, keys = {}", requestId, Arrays.toString(keys));
+        switch (keys.length) {
+            case 0:
+                result = new IdToEntityMap();
+                break;
+            case 1:
+                Path tempFile = Files.createTempFile(Paths.get("."), "memorystore_temp", ".txt");
+                String tempFileName = tempFile.getFileName().toString();
+                execComputeEngineCommand("cd ~/" + MEMORYSTORE_UTILS_DIRECTORY + " && ./queryKey.sh " + tempFileName + " " + keys[0].replaceAll("^\\[(.*)\\]$", "$1"));
+                downloadComputeEngineFile("~/" + MEMORYSTORE_UTILS_DIRECTORY + "/" + tempFileName, ".");
 
-        Event inputEvent = new Event();
-        inputEvent.setNamespace("memorystore/Memorystoreの内容取得");
-        inputEvent.setEventName("Memorystore取得イベント");
-        inputEvent.setCreateTime(LocalDateTime.now());
-        Map<String, Object> propertyMap = Maps.newHashMap();
-        propertyMap.put("requestid", requestId);
-        propertyMap.put("keys", (keys == null || keys.length == 0) ?
-                Lists.newArrayList() :
-                Arrays.asList(keys));
-        inputEvent.setProperty(propertyMap);
-        List<Event> eventList = Lists.newArrayList();
-        eventList.add(inputEvent);
+                result = fileToMap(tempFile);
 
-        String inputJsonString = JacksonUtils.writeValueAsString(eventList);
-        // Streamジョブが動いている前提で、イベントを発行する
-        publishOneTime(inputJsonString);
+                Files.deleteIfExists(tempFile);
 
-        // すぐに処理されないはずなので、少し待つ
-        Thread.sleep(5000);
-
-        // Memorystoreのデータが取得されると、SQLにデータが格納される
-        // たとえ0件であっても、データがないことを示すレコードが格納されるので、
-        // レコードが取得できるまでループで待てばよい
-
-        IdToEntityMap result = new IdToEntityMap();
-
-        // ジョブが終了するとSQLにデータが入っているので、取得する
-        try (Connection conn = CloudSqlPool.getDataSource().getConnection()) {
-            PreparedStatement selectStmt = conn.prepareStatement("SELECT `key`, `value` FROM `memorystore_contents` WHERE `requestid` = ?");
-            selectStmt.setString(1, requestId);
-
-            // タイムアウトを5分とする
-            Instant timeout = Instant.now().plusSeconds(300);
-
-            while (Instant.now().isBefore(timeout)) {
-                try (ResultSet rs = selectStmt.executeQuery()) {
-                    // レコードがある場合、データを取得して終了する
-                    // ない場合はまだデータ取得が完了していないので、待つ
-                    if (rs.next()) {
-                        String initKey = rs.getString(1);
-                        LOG.debug("レコードあり: requestid = {}, initKey = {}", requestId, initKey);
-                        // 0件の場合は、keyが空文字列のレコードが1件だけ格納されている
-                        // その場合は何もせずに終了する
-                        // 空文字列でない場合は、内容を取得する
-                        if (!initKey.isEmpty()) {
-                            try (InputStream in = rs.getBinaryStream(2)) {
-                                byte[] value = IOUtils.toByteArray(in);
-                                KryoSerializer serializer = new KryoSerializer(HashMap.class);
-                                Map<String, Object> valueMap = serializer.deserialize(value);
-
-                                result.put(initKey, new MemorystoreEntityMap(valueMap));
-                            }
-                            while (rs.next()) {
-                                String key = rs.getString(1);
-                                try (InputStream in = rs.getBinaryStream(2)) {
-                                    byte[] value = IOUtils.toByteArray(in);
-                                    KryoSerializer serializer = new KryoSerializer(HashMap.class);
-                                    Map<String, Object> valueMap = serializer.deserialize(value);
-
-                                    result.put(key, new MemorystoreEntityMap(valueMap));
-                                }
-                            }
-                        }
-                        break;
-                    } else {
-                        LOG.debug("レコード無し: requestid = {}", requestId);
-                        Thread.sleep(3000);
+                break;
+            default:
+                // 全件取得してから絞る
+                IdToEntityMap all = getAll();
+                result = new IdToEntityMap();
+                for (String key : keys) {
+                    if (all.containsKey(key)) {
+                        result.put(key, all.get(key));
                     }
                 }
-            }
 
-            PreparedStatement deleteStmt = conn.prepareStatement("DELETE FROM `memorystore_contents` WHERE `requestid` = ?");
-            deleteStmt.setString(1, requestId);
-            deleteStmt.execute();
+                break;
         }
 
-        LOG.debug("Memorystore = " + result.toString());
+        LOG.debug("Memorystore = {}", result.toString());
 
         return result;
     }
