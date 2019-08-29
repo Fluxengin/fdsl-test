@@ -541,7 +541,7 @@ workflows:
                 - master
                 - /.*circleci.*/
             tags:
-              only: /^ci_.*/
+              only: /^ci.*/
       - test_fdsl:
           requires:
             - build_engine
@@ -551,7 +551,7 @@ workflows:
                 - master
                 - /.*circleci.*/
             tags:
-              only: /^ci_.*/
+              only: /^ci.*/
       - deploy_dsl:
           requires:
             - build_engine
@@ -561,7 +561,7 @@ workflows:
                 - master
                 - /.*circleci.*/
             tags:
-              only: /^ci_.*/
+              only: /^ci.*/
       - deploy_dataflow_jobs_datastore:
           requires:
             - build_engine
@@ -571,7 +571,7 @@ workflows:
                 - master
                 - /.*circleci.*/
             tags:
-              only: /^ci_.*/
+              only: /^ci.*/
       - deploy_batch_servlet:
           requires:
             - build_engine
@@ -581,7 +581,7 @@ workflows:
                 - master
                 - /.*circleci.*/
             tags:
-              only: /^ci_.*/
+              only: /^ci.*/
       - test_dataflow_datastore:
           requires:
             - deploy_dsl
@@ -593,7 +593,7 @@ workflows:
                 - master
                 - /.*circleci.*/
             tags:
-              only: /^ci_.*/
+              only: /^ci.*/
       - deploy_dataflow_jobs_memorystore:
           requires:
             - test_dataflow_datastore
@@ -603,7 +603,7 @@ workflows:
                 - master
                 - /.*circleci.*/
             tags:
-              only: /^ci_.*/
+              only: /^ci.*/
       - test_dataflow_memorystore:
           requires:
             - deploy_dataflow_jobs_memorystore
@@ -613,4 +613,4 @@ workflows:
                 - master
                 - /.*circleci.*/
             tags:
-              only: /^ci_.*/
+              only: /^ci.*/
