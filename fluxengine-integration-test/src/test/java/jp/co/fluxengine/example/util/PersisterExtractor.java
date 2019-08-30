@@ -80,7 +80,8 @@ public abstract class PersisterExtractor {
 
         EntityMap idMap = getIdMap("[" + userId + "]");
         Map<String, Object> nameMap = idMap == null ? null : idMap.getPersisterMap(name);
-        String lifetime = getNested(nameMap, String.class, "lifetime");
+        // DatastoreはString, MemorystoreはLocalDateであるため、Objectで受けとってtoStringする
+        String lifetime = getNested(nameMap, Object.class, "lifetime").toString();
 
         return lifetime != null && lifetime.equals(todayString) ?
                 getNested(nameMap, Number.class, "value", "使用量").doubleValue() :
