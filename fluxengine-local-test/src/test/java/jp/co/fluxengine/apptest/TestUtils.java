@@ -3,13 +3,12 @@ package jp.co.fluxengine.apptest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import jp.co.fluxengine.stateengine.test.TestDsl;
+import org.assertj.core.api.Condition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.charset.Charset;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
@@ -93,7 +92,7 @@ public class TestUtils {
     public static <R> R withResultStream(String folderPath, Function<Stream<TestResult>, R> body) {
         try (Stream<String> stream = Files
                 .lines(OUT_ROOT.toPath().resolve(folderPath).resolve("test-result.json"),
-                        Charset.forName("UTF-8"))) {
+                        StandardCharsets.UTF_8)) {
             Stream<TestResult> results = stream.map(line -> {
                 ObjectMapper mapper = new ObjectMapper();
 
@@ -111,7 +110,7 @@ public class TestUtils {
 
     public static List<String> getLog(String dslPath) {
         try {
-            List<String> lines = Files.readAllLines(LOG_FILE.toPath(), Charset.forName("UTF-8"));
+            List<String> lines = Files.readAllLines(LOG_FILE.toPath(), StandardCharsets.UTF_8);
             for (int startIndex = 0; startIndex < lines.size(); startIndex++) {
                 if (lines.get(startIndex).contains("INFO  テストを開始します: " + dslPath)) {
                     for (int endIndex = startIndex + 1; endIndex < lines.size(); endIndex++) {
@@ -126,5 +125,49 @@ public class TestUtils {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    public static Condition<Throwable> hasStackTraceContaining(String contents) {
+        return new Condition<Throwable>("StackTrace has \"" + contents + "\"") {
+
+            private String stackTrace = null;
+
+            @Override
+            public boolean matches(Throwable value) {
+                StringWriter stringWriter = new StringWriter();
+                PrintWriter printWriter = new PrintWriter(stringWriter);
+                value.printStackTrace(printWriter);
+                printWriter.close();
+                stackTrace = stringWriter.toString();
+                return stackTrace.contains(contents);
+            }
+
+            @Override
+            public String toString() {
+                return stackTrace == null ?
+                        super.toString() :
+                        String.format("\"%s\" should be included in <%s>", contents, stackTrace);
+            }
+        };
+    }
+
+    public static Condition<Throwable> hasMessageContaining(String contents) {
+        return new Condition<Throwable>("Message has \"" + contents + "\"") {
+
+            private String message = null;
+
+            @Override
+            public boolean matches(Throwable value) {
+                message = value.getMessage();
+                return message != null && message.contains(contents);
+            }
+
+            @Override
+            public String toString() {
+                return message == null ?
+                        super.toString() :
+                        String.format("\"%s\" should be included in <%s>", contents, message);
+            }
+        };
     }
 }

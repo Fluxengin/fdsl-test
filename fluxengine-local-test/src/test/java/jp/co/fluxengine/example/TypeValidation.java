@@ -1,21 +1,15 @@
 package jp.co.fluxengine.example;
 
-import static jp.co.fluxengine.apptest.TestUtils.testDsl;
-import static jp.co.fluxengine.apptest.TestUtils.testDslAndGetResults;
-import static org.assertj.core.api.Assertions.anyOf;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import jp.co.fluxengine.apptest.DslPath;
 import jp.co.fluxengine.apptest.DslPathResolver;
 import jp.co.fluxengine.apptest.TestResult;
 import jp.co.fluxengine.stateengine.exceptions.DslParserException;
-import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
+import static jp.co.fluxengine.apptest.TestUtils.*;
+import static org.assertj.core.api.Assertions.*;
 
 @ExtendWith(DslPathResolver.class)
 @DslPath("dsl/junit/01_パーサ/03_型の検証")
@@ -68,29 +62,6 @@ public class TypeValidation {
       }).isInstanceOf(DslParserException.class)
           .is(anyOf(hasStackTraceContaining("「export n1」の型が不明です。"),
               hasStackTraceContaining("「export n2」の型が不明です。")));
-    }
-
-    private Condition<Throwable> hasStackTraceContaining(String contents) {
-      return new Condition<Throwable>("StackTrace has \"" + contents + "\"") {
-
-        private String stackTrace = null;
-
-        @Override
-        public boolean matches(Throwable value) {
-          StringWriter stringWriter = new StringWriter();
-          PrintWriter printWriter = new PrintWriter(stringWriter);
-          value.printStackTrace(printWriter);
-          printWriter.close();
-          stackTrace = stringWriter.toString();
-          return stackTrace.contains(contents);
-        }
-
-        @Override
-        public String toString() {
-          return stackTrace == null ? super.toString()
-              : "\"" + contents + "\" should be included in <" + stackTrace + ">";
-        }
-      };
     }
   }
 

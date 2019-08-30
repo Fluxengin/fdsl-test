@@ -1,7 +1,5 @@
 package jp.co.fluxengine.example;
 
-import java.io.File;
-
 import jp.co.fluxengine.apptest.DslPath;
 import jp.co.fluxengine.apptest.DslPathResolver;
 import jp.co.fluxengine.apptest.TestResult;
@@ -10,10 +8,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import static jp.co.fluxengine.apptest.TestUtils.testDsl;
-import static jp.co.fluxengine.apptest.TestUtils.testDslAndGetResults;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import java.io.File;
+
+import static jp.co.fluxengine.apptest.TestUtils.*;
+import static org.assertj.core.api.Assertions.*;
 
 @ExtendWith(DslPathResolver.class)
 @DslPath("dsl/junit/InternalTestProjectの移行")
@@ -24,9 +22,14 @@ public class InternalTestProject {
     void testBugfix(String dslPath) {
         assertThatThrownBy(() -> testDsl(dslPath))
                 .isInstanceOf(DslParserException.class)
-                .hasMessageContaining("file1.dslロード失敗しました。")
-                .hasStackTraceContaining("while scanning a quoted scalar")
-                .hasStackTraceContaining("export string s: \"string");
+                .is(anyOf(
+                        hasMessageContaining("「file2.dsl」においてduplicate key: 「import s: file1」が定義されています。"),
+                        allOf(
+                                hasMessageContaining("file1.dslロード失敗しました。"),
+                                hasStackTraceContaining("while scanning a quoted scalar"),
+                                hasStackTraceContaining("export string s: \"string")
+                        )
+                ));
     }
 
     @Nested
