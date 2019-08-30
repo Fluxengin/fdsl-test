@@ -226,6 +226,8 @@ public class DataflowTest {
         // できるだけテストを行うようにするため、3つのイベントをバラバラに投げる
         List<Event> eventList1 = Lists.newArrayList(createGetMySQLEvent(testIdForMySQL));
         List<Event> eventList2 = Lists.newArrayList(createGetMySQLEventWithAttributes(testIdForMySQL, 20, "getMySQL_条件分岐あり_20"));
+        // キャッシュONのテストのために、バリアントのキャッシュが作られるまで待つ
+        Thread.sleep(30000);
         List<Event> eventList3 = Lists.newArrayList(createGetMySQLEventWithAttributes(testIdForMySQL, 60, "getMySQL_条件分岐あり_60"));
 
         LOG.info("testGetMySQL データ送信");
