@@ -480,6 +480,33 @@ jobs:
             pushd ~/fdsl-test/fluxengine-integration-test-batch-servlet
             mvn clean package appengine:deploy
             popd
+  post_housekeep_test_data:
+    docker:
+      - image: google/cloud-sdk:latest
+        environment:
+          LANG: ja_JP.UTF-8
+    working_directory: ~/fdsl-test
+    steps:
+      - check_update:
+          dir: "fluxengine-integration-test .circleci"
+      - run:
+          name: Set locale
+          command: |
+            apt update
+            apt install -y locales
+            sed -i -e "s/# ja_JP\.UTF-8 UTF-8/ja_JP.UTF-8 UTF-8/" /etc/locale.gen
+            locale-gen
+            update-locale LANG=ja_JP.UTF-8
+      - run:
+          name: Post housekeep test data through batch servlet
+          command: |
+            mkdir ~/curl
+            TODAY_STRING=`date "+%Y-%m-%d"`
+            TOMORROW_STRING=`date "+%Y-%m-%d" -d '1 days'`
+            curl -H 'Content-Type:application/json' -d "[{\"eventName\":\"Housekeepパケット使用A\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user1\",\"使用量\":500}},{\"eventName\":\"Housekeepパケット使用B\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user2\",\"使用量\":500,\"期限1\":\"${TODAY_STRING}\"}},{\"eventName\":\"Housekeepパケット使用C\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user3\",\"使用量\":500,\"期限2\":\"${TODAY_STRING}\"}},{\"eventName\":\"Housekeepパケット使用D\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user5\",\"使用量\":500,\"期限1\":\"${TODAY_STRING}\",\"期限2\":\"${TOMORROW_STRING}\"}}]" https://${PROJECT}.appspot.com/fluxengine-integration-test-event &
+            pidPostHousekeepEvent=$!
+            curl -H 'Content-Type:application/json' -d "[{\"eventName\":\"Housekeepパケット使用D\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user4\",\"使用量\":500,\"期限1\":\"${TODAY_STRING}\",\"期限2\":\"${TODAY_STRING}\"}}]" https://${PROJECT}.appspot.com/fluxengine-integration-test-event
+            wait $pidPostHousekeepEvent
   deploy_dataflow_jobs_memorystore:
     docker:
       - image: google/cloud-sdk:latest
@@ -498,6 +525,93 @@ jobs:
     steps:
       - test_dataflow:
           persisterdb: memorystore
+  test_housekeep:
+    docker:
+      - image: google/cloud-sdk:latest
+        environment:
+          LANG: ja_JP.UTF-8
+    working_directory: ~/fdsl-test
+    steps:
+      - check_update:
+          dir: "fluxengine-integration-test .circleci"
+      - prepare_gcp_and_locale
+      - attach_workspace:
+          at: ~/state-engine
+      - install_maven
+      - run:
+          name: Edit Housekeep conf files
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test-housekeep
+            sed -i -e "s/\[YOUR_BUCKET_NAME\]/${BUCKET}/g" fluxengine_housekeep.env
+            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" src/main/resources/persisterDataStore.properties
+            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" src/main/webapp/WEB-INF/housekeepJob.properties
+            sed -i -e "s/\[YOUR_BUCKET_NAME\]/${BUCKET}/g" src/main/webapp/WEB-INF/housekeepJob.properties
+            popd
+      - run:
+          name: Copy Housekeep conf files
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test-housekeep
+            cp -rf src/main/resources conf
+            popd
+      - run:
+          name: Replace jar
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test-housekeep
+            rm -f lib/fluxengine-*.jar
+            cp -f ~/state-engine/fluxengine-dataflow-housekeep/target/fluxengine-dataflow-housekeep-*.jar lib/
+            cp -f ~/state-engine/fluxengine-dataflow-housekeep-servlet/target/fluxengine-dataflow-housekeep-servlet-*.jar src/main/webapp/WEB-INF/lib/
+            popd
+      - run:
+          name: Deploy Housekeep batch job
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test-housekeep
+            chmod +x fluxengine_housekeep.sh
+            ./fluxengine_housekeep.sh $(pwd)/fluxengine_housekeep.env
+            popd
+          background: true
+      - run:
+          name: Deploy Housekeep servlet
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test-housekeep
+            mvn clean package appengine:deploy
+            popd
+      - edit_integration_test_conf_files
+      - run:
+          name: Replace jar
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test/lib
+            rm -f fluxengine-*.jar
+            for projectDir in local-test-runner remote-test-runner event-publisher
+            do
+            cp -f ~/state-engine/fluxengine-${projectDir}/target/fluxengine-${projectDir}-*.jar ./
+            done
+            popd
+      - restore_cache:
+          keys:
+            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
+            - v1-gradle-{{ .Branch }}-
+            - v1-gradle-
+      - run:
+          name: Test Housekeep
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test
+            chmod +x gradlew
+            env FLUXENGINE_INTEGRATION_TEST_HOUSEKEEP=true ./gradlew test --tests jp.co.fluxengine.example.housekeeptest.HousekeepTest
+            popd
+      - save_cache:
+          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
+          paths:
+            - ~/.gradle
+      - run:
+          name: Copy log file
+          command: |
+            cp -f ~/fdsl-test/fluxengine-integration-test/debug.log ~/fdsl-test/fluxengine-integration-test/build/reports/tests/test/
+          when: always
+      - store_artifacts:
+          path: ~/fdsl-test/fluxengine-integration-test/build/reports/tests/test
+          destination: test
+      - store_test_results:
+          path: ~/fdsl-test/fluxengine-integration-test/build/test-results
 workflows:
   version: 2
   deploy_dsl_test:
@@ -508,6 +622,9 @@ workflows:
               only:
                 - master
                 - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
       - test_fdsl:
           requires:
             - build_engine
@@ -516,6 +633,9 @@ workflows:
               only:
                 - master
                 - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
       - deploy_dsl:
           requires:
             - build_engine
@@ -524,6 +644,9 @@ workflows:
               only:
                 - master
                 - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
       - deploy_dataflow_jobs_datastore:
           requires:
             - build_engine
@@ -532,6 +655,9 @@ workflows:
               only:
                 - master
                 - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
       - deploy_batch_servlet:
           requires:
             - build_engine
@@ -540,6 +666,9 @@ workflows:
               only:
                 - master
                 - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
       - test_dataflow_datastore:
           requires:
             - deploy_dsl
@@ -550,14 +679,34 @@ workflows:
               only:
                 - master
                 - /.*circleci.*/
-      - deploy_dataflow_jobs_memorystore:
+            tags:
+              only:
+                - /^ci.*/
+      - post_housekeep_test_data:
           requires:
-            - test_dataflow_datastore
+            - deploy_dsl
+            - deploy_dataflow_jobs_datastore
+            - deploy_batch_servlet
           filters:
             branches:
               only:
                 - master
                 - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - deploy_dataflow_jobs_memorystore:
+          requires:
+            - test_dataflow_datastore
+            - post_housekeep_test_data
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
       - test_dataflow_memorystore:
           requires:
             - deploy_dataflow_jobs_memorystore
@@ -566,3 +715,18 @@ workflows:
               only:
                 - master
                 - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - test_housekeep:
+          # test_housekeep deploys servlet, so don't run this concurrently with dataflow or webservice test
+          requires:
+            - test_dataflow_memorystore
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
