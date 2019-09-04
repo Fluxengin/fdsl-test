@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 // このクラスは、Datastoreを変更するので、
 // 普段は実行されないようにし、
-// 環境変数"FLUXENGINE_INTEGRATION_TEST_MODE"が"HOUSEKEEP"のときだけ実行できるようにしている
+// 環境変数"FLUXENGINE_INTEGRATION_TEST_HOUSEKEEP"が"true"のときだけ実行できるようにしている
 // CI/CDで実行されることを想定したテストクラス
 @EnabledIfEnvironmentVariable(named = "FLUXENGINE_INTEGRATION_TEST_HOUSEKEEP", matches = "true|TRUE")
 public class HousekeepTest {

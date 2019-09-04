@@ -1,6 +1,10 @@
 package jp.co.fluxengine.example.util;
 
+import com.google.common.collect.Maps;
 import jp.co.fluxengine.example.CloudSqlPool;
+import jp.co.fluxengine.stateengine.model.datom.Event;
+import jp.co.fluxengine.stateengine.util.JacksonUtils;
+import org.assertj.core.util.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,6 +13,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -97,4 +103,24 @@ public class Utils {
     public interface ThrowableConsumer<T> {
         void accept(T t) throws Exception;
     }
+
+    public static String createEventString(String eventName, String namespace, Map<String, Object> propertyMap) {
+        Event event = new Event();
+        event.setCreateTime(LocalDateTime.now());
+        event.setEventName(eventName);
+        event.setNamespace(namespace);
+        event.setProperty(propertyMap);
+
+        List<Event> list = Lists.newArrayList(event);
+
+        return JacksonUtils.writeValueAsString(list);
+    }
+
+    public static String createEventString(String eventName, String namespace, String propertyKey, Object propertyValue) {
+        Map<String, Object> propertyMap = Maps.newHashMap();
+        propertyMap.put(propertyKey, propertyValue);
+
+        return createEventString(eventName, namespace, propertyMap);
+    }
+
 }

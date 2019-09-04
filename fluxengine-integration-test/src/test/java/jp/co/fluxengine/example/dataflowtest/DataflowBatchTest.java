@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 // このクラスは、Dataflowのジョブ(バッチタイプ)にデータを投入するので、
 // 普段は実行されないようにし、
-// 環境変数"FLUXENGINE_INTEGRATION_TEST_MODE"が"DATAFLOWBATCH"のときだけ実行できるようにしている
+// 環境変数"FLUXENGINE_INTEGRATION_TEST_DATAFLOW_BATCH"が"true"のときだけ実行できるようにしている
 // CI/CDで実行されることを想定したテストクラス
 @EnabledIfEnvironmentVariable(named = "FLUXENGINE_INTEGRATION_TEST_DATAFLOW_BATCH", matches = "true|TRUE")
 public class DataflowBatchTest {

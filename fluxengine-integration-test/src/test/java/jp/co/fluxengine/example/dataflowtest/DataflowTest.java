@@ -40,7 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 // このクラスは、Dataflowのジョブにデータを投入するので、
 // 普段は実行されないようにし、
-// 環境変数"FLUXENGINE_INTEGRATION_TEST_MODE"が"DATAFLOW"のときだけ実行できるようにしている
+// 環境変数"FLUXENGINE_INTEGRATION_TEST_DATAFLOW_STREAM"が"true"のときだけ実行できるようにしている
 // CI/CDで実行されることを想定したテストクラス
 @EnabledIfEnvironmentVariable(named = "FLUXENGINE_INTEGRATION_TEST_DATAFLOW_STREAM", matches = "true|TRUE")
 public class DataflowTest {

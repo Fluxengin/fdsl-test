@@ -92,6 +92,98 @@ commands:
             curl https://www-us.apache.org/dist/maven/maven-3/3.6.1/binaries/apache-maven-3.6.1-bin.tar.gz | tar xzvf -
             echo 'export PATH=$PATH:~/maven/apache-maven-3.6.1/bin' >> $BASH_ENV
             popd
+  register_dsl:
+    description: "Register FDSL"
+    parameters:
+      dsldirectory:
+        type: string
+      dslversion:
+        type: integer
+      cleandsl:
+        type: boolean
+        default: false
+    steps:
+      - check_update:
+          dir: "fluxengine-integration-test .circleci"
+      - prepare_gcp_and_locale
+      - attach_workspace:
+          at: ~/state-engine
+      - run:
+          name: Replace jar
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test/lib
+            rm -f fluxengine-*.jar
+            for projectDir in local-test-runner remote-test-runner event-publisher
+            do
+            cp -f ~/state-engine/fluxengine-${projectDir}/target/fluxengine-${projectDir}-*.jar ./
+            done
+            popd
+      - restore_cache:
+          keys:
+            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
+            - v1-gradle-{{ .Branch }}-
+            - v1-gradle-
+      - run:
+          name: Clean DSL
+          command: |
+            if << parameters.cleandsl >>; then
+              pushd ~/fdsl-test/fluxengine-dsl-cleaner
+              chmod +x gradlew
+              ./gradlew run
+              popd
+            else
+              echo "No need to clean DSL"
+            fi
+      - run:
+          name: Build integration test
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test
+            chmod +x gradlew
+            ./gradlew build copyDependencies -x test
+            popd
+      - save_cache:
+          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
+          paths:
+            - ~/.gradle
+      - run:
+          name: Edit conf
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test/conf
+            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" dslDataStore.properties
+            echo $FLUXENGINE_LICENSE_ENCODED | base64 -d > license.lic
+            popd
+      - run:
+          name: Move DSL
+          command: |
+            mv -f ~/fdsl-test/fluxengine-integration-test/src/main/<< parameters.dsldirectory >> ~/fdsl-test/fluxengine-integration-test/dsl
+      - run:
+          name: Copy jar
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test/lib
+            # Copy integration test jar
+            cp -f ../build/libs/fluxengine-integration-test-*.jar ./
+            # Copy core jar
+            cp -f ~/state-engine/stateengine/target/fluxengine-core-*.jar ./
+            rm -f fluxengine-core-*-tests.jar
+            # Copy other jars
+            for libname in dsl-register parser persist-manager
+            do
+            cp -f ~/state-engine/fluxengine-${libname}/target/fluxengine-${libname}-*.jar ./
+            done
+            popd
+      - run:
+          name: Register DSL
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test
+            cp -f ~/state-engine/fluxengine-dsl-register/tools/gcp/regisdsl.sh ./
+            chmod +x regisdsl.sh
+            mkdir -p out
+            mkdir -p log
+            EFFECTIVE_DATE=`date +"%Y%m%d"`
+            # Run regisdsl with classpath of fluxengine-dsl-register because fluxengine-dsl-register requires GCP related jars but it's not a fat jar
+            env CLASSPATH=~/state-engine/fluxengine-dsl-register/target/lib/* ./regisdsl.sh << parameters.dslversion>> ${EFFECTIVE_DATE} 2>&1 | tee temp_dsl_register_output.txt
+            ! grep 'Exception:' temp_dsl_register_output.txt > /dev/null
+            popd
   deploy_dataflow_jobs:
     description: "Deploy Dataflow jobs with designated persister db"
     parameters:
@@ -133,7 +225,7 @@ commands:
             popd
       - restore_cache:
           keys:
-            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
+            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
             - v1-gradle-{{ .Branch }}-
             - v1-gradle-
       - run:
@@ -145,7 +237,7 @@ commands:
             cp -f build/libs/fluxengine-integration-test-*.jar lib/
             popd
       - save_cache:
-          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
+          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
           paths:
             - ~/.gradle
       - run:
@@ -199,7 +291,7 @@ commands:
             popd
       - restore_cache:
           keys:
-            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
+            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
             - v1-gradle-{{ .Branch }}-
             - v1-gradle-
       - run:
@@ -221,7 +313,7 @@ commands:
           when: always
           background: true
       - save_cache:
-          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
+          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
           paths:
             - ~/.gradle
       - run:
@@ -241,6 +333,57 @@ commands:
               sleep 2
             done
           when: always
+  test_dsl_replacement:
+    description: "Test FDSL replacement"
+    parameters:
+      variablename:
+        type: string
+    steps:
+      - check_update:
+          dir: "fluxengine-integration-test .circleci"
+      - prepare_gcp_and_locale
+      - attach_workspace:
+          at: ~/state-engine
+      - edit_integration_test_conf_files
+      - run:
+          name: Edit persister db setting
+          command: |
+            sed -i -e "s/persister\.db=.*/persister.db=datastore/" ~/fdsl-test/fluxengine-integration-test/conf/fluxengine.properties
+      - run:
+          name: Replace jar
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test/lib
+            rm -f fluxengine-*.jar
+            for projectDir in local-test-runner remote-test-runner event-publisher
+            do
+            cp -f ~/state-engine/fluxengine-${projectDir}/target/fluxengine-${projectDir}-*.jar ./
+            done
+            popd
+      - restore_cache:
+          keys:
+            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
+            - v1-gradle-{{ .Branch }}-
+            - v1-gradle-
+      - run:
+          name: Test Dataflow job
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test
+            chmod +x gradlew
+            env << parameters.variablename >>=true ./gradlew test --tests jp.co.fluxengine.example.dslreplacementtest*
+            popd
+      - save_cache:
+          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
+          paths:
+            - ~/.gradle
+      - run:
+          name: Copy log file
+          command: cp -f ~/fdsl-test/fluxengine-integration-test/debug.log ~/fdsl-test/fluxengine-integration-test/build/reports/tests/test/
+          when: always
+      - store_artifacts:
+          path: ~/fdsl-test/fluxengine-integration-test/build/reports/tests/test
+          destination: test
+      - store_test_results:
+          path: ~/fdsl-test/fluxengine-integration-test/build/test-results
 jobs:
   build_engine:
     docker:
@@ -254,7 +397,7 @@ jobs:
             mkdir -p ~/.ssh
             echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
             pushd ~/
-            git clone git@github.com:Fluxengin/state-engine.git
+            git clone -b feature-1.0.11 git@github.com:Fluxengin/state-engine.git
             popd
       - restore_cache:
           keys:
@@ -327,7 +470,7 @@ jobs:
             cp -f ~/state-engine/fluxengine-local-test-runner/target/fluxengine-local-test-runner-*.jar ~/fdsl-test/fluxengine-local-test/lib/
       - restore_cache:
           keys:
-            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
+            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
             - v1-gradle-{{ .Branch }}-
             - v1-gradle-
       - run:
@@ -343,7 +486,7 @@ jobs:
           command: cp -f ~/fdsl-test/fluxengine-local-test/debug.log ~/fdsl-test/fluxengine-local-test/build/reports/tests/test/
           when: always
       - save_cache:
-          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
+          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
           paths:
             - ~/.gradle
       - store_artifacts:
@@ -351,84 +494,17 @@ jobs:
           destination: test
       - store_test_results:
           path: ~/fdsl-test/fluxengine-local-test/build/test-results
-  deploy_dsl:
+  register_main_dsl:
     docker:
       - image: google/cloud-sdk:latest
         environment:
           LANG: ja_JP.UTF-8
     working_directory: ~/fdsl-test
     steps:
-      - check_update:
-          dir: "fluxengine-integration-test .circleci"
-      - prepare_gcp_and_locale
-      - attach_workspace:
-          at: ~/state-engine
-      - run:
-          name: Replace jar
-          command: |
-            pushd ~/fdsl-test/fluxengine-integration-test/lib
-            rm -f fluxengine-*.jar
-            for projectDir in local-test-runner remote-test-runner event-publisher
-            do
-            cp -f ~/state-engine/fluxengine-${projectDir}/target/fluxengine-${projectDir}-*.jar ./
-            done
-            popd
-      - restore_cache:
-          keys:
-            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
-            - v1-gradle-{{ .Branch }}-
-            - v1-gradle-
-      - run:
-          name: Build integration test
-          command: |
-            pushd ~/fdsl-test/fluxengine-integration-test
-            chmod +x gradlew
-            ./gradlew build copyDependencies -x test
-            popd
-      - save_cache:
-          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
-          paths:
-            - ~/.gradle
-      - run:
-          name: Edit conf
-          command: |
-            pushd ~/fdsl-test/fluxengine-integration-test/conf
-            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" dslDataStore.properties
-            echo $FLUXENGINE_LICENSE_ENCODED | base64 -d > license.lic
-            popd
-      - run:
-          name: Move DSL
-          command: |
-            mv -f ~/fdsl-test/fluxengine-integration-test/src/main/dsl ~/fdsl-test/fluxengine-integration-test/
-      - run:
-          name: Copy jar
-          command: |
-            pushd ~/fdsl-test/fluxengine-integration-test/lib
-            # Copy integration test jar
-            cp -f ../build/libs/fluxengine-integration-test-*.jar ./
-            # Copy core jar
-            cp -f ~/state-engine/stateengine/target/fluxengine-core-*.jar ./
-            rm -f fluxengine-core-*-tests.jar
-            # Copy other jars
-            for libname in dsl-register parser persist-manager
-            do
-            cp -f ~/state-engine/fluxengine-${libname}/target/fluxengine-${libname}-*.jar ./
-            done
-            popd
-      - run:
-          name: Register DSL
-          command: |
-            pushd ~/fdsl-test/fluxengine-integration-test
-            cp -f ~/state-engine/fluxengine-dsl-register/tools/gcp/regisdsl.sh ./
-            chmod +x regisdsl.sh
-            mkdir -p out
-            mkdir -p log
-            VERSION=`ls lib/fluxengine-core-*.jar | sed -e 's/^.*fluxengine-core-\([0-9]\+\).*\.jar/\1/'`
-            EFFECTIVE_DATE=`date +"%Y%m%d"`
-            # Run regisdsl with classpath of fluxengine-dsl-register because fluxengine-dsl-register requires GCP related jars but it's not a fat jar
-            env CLASSPATH=~/state-engine/fluxengine-dsl-register/target/lib/* ./regisdsl.sh ${VERSION} ${EFFECTIVE_DATE} 2>&1 | tee temp_dsl_register_output.txt
-            ! grep 'Exception:' temp_dsl_register_output.txt > /dev/null
-            popd
+      - register_dsl:
+          dsldirectory: "dsl"
+          dslversion: 1
+          cleandsl: true
   deploy_dataflow_jobs_datastore:
     docker:
       - image: google/cloud-sdk:latest
@@ -588,7 +664,7 @@ jobs:
             popd
       - restore_cache:
           keys:
-            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
+            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
             - v1-gradle-{{ .Branch }}-
             - v1-gradle-
       - run:
@@ -599,7 +675,7 @@ jobs:
             env FLUXENGINE_INTEGRATION_TEST_HOUSEKEEP=true ./gradlew test --tests jp.co.fluxengine.example.housekeeptest.HousekeepTest
             popd
       - save_cache:
-          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}
+          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
           paths:
             - ~/.gradle
       - run:
@@ -612,6 +688,67 @@ jobs:
           destination: test
       - store_test_results:
           path: ~/fdsl-test/fluxengine-integration-test/build/test-results
+  register_dsl_before:
+    docker:
+      - image: google/cloud-sdk:latest
+        environment:
+          LANG: ja_JP.UTF-8
+    working_directory: ~/fdsl-test
+    steps:
+      - register_dsl:
+          dsldirectory: "dsl_before"
+          dslversion: 2
+  test_dsl_before:
+    docker:
+      - image: google/cloud-sdk:latest
+        environment:
+          LANG: ja_JP.UTF-8
+    working_directory: ~/fdsl-test
+    steps:
+      - test_dsl_replacement:
+          variablename: "FLUXENGINE_INTEGRATION_TEST_DSL_REPLACEMENT_BEFORE"
+      - run:
+          name: Stop Dataflow job
+          command: |
+            while read dataflowJobId; do
+              echo "Stopping $dataflowJobId"
+              gcloud dataflow jobs cancel $dataflowJobId --region=asia-northeast1
+            done < ~/state-engine/dataflow_job_id.txt
+            rm -f ~/state-engine/dataflow_job_id.txt
+          when: on_fail
+  register_dsl_after:
+    docker:
+      - image: google/cloud-sdk:latest
+        environment:
+          LANG: ja_JP.UTF-8
+    working_directory: ~/fdsl-test
+    steps:
+      - register_dsl:
+          dsldirectory: "dsl_after"
+          dslversion: 3
+      - run:
+          name: Wait for job to read new FDSL
+          command: |
+            sleep 60
+          when: on_success
+  test_dsl_after:
+    docker:
+      - image: google/cloud-sdk:latest
+        environment:
+          LANG: ja_JP.UTF-8
+    working_directory: ~/fdsl-test
+    steps:
+      - test_dsl_replacement:
+          variablename: "FLUXENGINE_INTEGRATION_TEST_DSL_REPLACEMENT_AFTER"
+      - run:
+          name: Stop Dataflow job
+          command: |
+            while read dataflowJobId; do
+              echo "Stopping $dataflowJobId"
+              gcloud dataflow jobs cancel $dataflowJobId --region=asia-northeast1
+            done < ~/state-engine/dataflow_job_id.txt
+            rm -f ~/state-engine/dataflow_job_id.txt
+          when: always
 workflows:
   version: 2
   deploy_dsl_test:
@@ -636,7 +773,7 @@ workflows:
             tags:
               only:
                 - /^ci.*/
-      - deploy_dsl:
+      - register_main_dsl:
           requires:
             - build_engine
           filters:
@@ -648,6 +785,7 @@ workflows:
               only:
                 - /^ci.*/
       - deploy_dataflow_jobs_datastore:
+          name: deploy_dataflow_jobs_datastore_main
           requires:
             - build_engine
           filters:
@@ -671,8 +809,8 @@ workflows:
                 - /^ci.*/
       - test_dataflow_datastore:
           requires:
-            - deploy_dsl
-            - deploy_dataflow_jobs_datastore
+            - register_main_dsl
+            - deploy_dataflow_jobs_datastore_main
             - deploy_batch_servlet
           filters:
             branches:
@@ -684,8 +822,8 @@ workflows:
                 - /^ci.*/
       - post_housekeep_test_data:
           requires:
-            - deploy_dsl
-            - deploy_dataflow_jobs_datastore
+            - register_main_dsl
+            - deploy_dataflow_jobs_datastore_main
             - deploy_batch_servlet
           filters:
             branches:
@@ -722,6 +860,63 @@ workflows:
           # test_housekeep deploys servlet, so don't run this concurrently with dataflow or webservice test
           requires:
             - test_dataflow_memorystore
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - deploy_dataflow_jobs_datastore:
+          name: deploy_dataflow_jobs_datastore_dsl_replacement_test
+          requires:
+            - test_housekeep
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - register_dsl_before:
+          requires:
+            - test_housekeep
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - test_dsl_before:
+          requires:
+            - deploy_dataflow_jobs_datastore_dsl_replacement_test
+            - register_dsl_before
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - register_dsl_after:
+          requires:
+            - test_dsl_before
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - test_dsl_after:
+          requires:
+            - register_dsl_after
           filters:
             branches:
               only:

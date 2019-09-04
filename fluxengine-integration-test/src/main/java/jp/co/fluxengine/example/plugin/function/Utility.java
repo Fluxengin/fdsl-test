@@ -25,6 +25,11 @@ public class Utility {
         return "ユーザー定義 文字列連結２【" + str1 + ":" + str2 + "】";
     }
 
+    @DslName("concat")
+    public static String concat(String str1, String str2) {
+        return str1 + str2;
+    }
+
     @DslName("フォーマット")
     public static String format(String format, String param) {
         return format.replace("{0}", param);
