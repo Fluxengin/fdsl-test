@@ -73,7 +73,7 @@ public class DslReplacementAfterTest {
 
         Map<String, Object> increasedExpired = entity.getPersisterMap("persister項目の変更#項目変更の検証_増加_期限切れ");
         assertThat(Utils.getNested(increasedExpired, String.class, "value", "s1")).isEqualTo("_after");
-        assertThat(Utils.getNested(increasedExpired, Number.class, "value", "n1").intValue()).isEqualTo(1);
+        assertThat(Utils.getNested(increasedExpired, Number.class, "value", "n1")).isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(1));
 
         Map<String, Object> decreasedExpired = entity.getPersisterMap("persister項目の変更#項目変更の検証_減少_期限切れ");
         assertThat(Utils.getNested(decreasedExpired, String.class, "value", "s2")).isEqualTo("_after");
@@ -106,7 +106,7 @@ public class DslReplacementAfterTest {
 
         Map<String, Object> notExpired = entity.getPersisterMap("persister型変更#型変更の検証_期限内");
         // ランタイムエラーとなるので、前のデータがそのまま残っているはず
-        assertThat(Utils.getNested(notExpired, String.class, "value", "contents2")).matches("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}");
+        assertThat(Utils.getNested(notExpired, String.class, "value", "contents2")).matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?");
 
         Map<String, Object> calculatable = entity.getPersisterMap("persister型変更#型変更の検証_計算可能1");
         assertThat(Utils.getNested(calculatable, Number.class, "value", "contents3")).isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(369));
