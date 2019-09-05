@@ -123,17 +123,16 @@ commands:
             - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
             - v1-gradle-{{ .Branch }}-
             - v1-gradle-
-      - run:
-          name: Clean DSL
-          command: |
-            if << parameters.cleandsl >>; then
-              pushd ~/fdsl-test/fluxengine-dsl-cleaner
-              chmod +x gradlew
-              ./gradlew run
-              popd
-            else
-              echo "No need to clean DSL"
-            fi
+      - when:
+          condition: << parameters.cleandsl >>
+          steps:
+            - run:
+                name: Clean DSL
+                command: |
+                  pushd ~/fdsl-test/fluxengine-dsl-cleaner
+                  chmod +x gradlew
+                  ./gradlew run
+                  popd
       - run:
           name: Build integration test
           command: |
@@ -397,7 +396,7 @@ jobs:
             mkdir -p ~/.ssh
             echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
             pushd ~/
-            git clone -b feature-1.0.11-dsl_replacement-debug git@github.com:Fluxengin/state-engine.git
+            git clone -b feature-1.0.11 git@github.com:Fluxengin/state-engine.git
             popd
       - restore_cache:
           keys:
