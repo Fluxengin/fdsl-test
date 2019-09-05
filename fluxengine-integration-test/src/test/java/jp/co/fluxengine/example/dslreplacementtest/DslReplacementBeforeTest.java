@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -97,8 +99,9 @@ public class DslReplacementBeforeTest {
         Map<String, Object> expired = entity.getPersisterMap("persister型変更#型変更の検証_期限切れ");
         assertThat(Utils.getNested(expired, String.class, "value", "contents1")).isEqualTo("型変更の検証_期限切れ_before");
 
+        String todayString = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDate.now());
         Map<String, Object> notExpired = entity.getPersisterMap("persister型変更#型変更の検証_期限内");
-        assertThat(Utils.getNested(notExpired, String.class, "value", "contents2")).matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?");
+        assertThat(Utils.getNested(notExpired, String.class, "value", "contents2")).isEqualTo(todayString);
 
         Map<String, Object> calculatable = entity.getPersisterMap("persister型変更#型変更の検証_計算可能1");
         assertThat(Utils.getNested(calculatable, String.class, "value", "contents3")).isEqualTo("123");

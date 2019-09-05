@@ -4,9 +4,7 @@ persister 型変更の検証_期限切れ:
     lifetime: now()
 
 persister 型変更の検証_期限内:
-  contents2:
-    string_value: string
-    number_value: number
+  contents2: string
   persist("persister型変更の検証"):
     lifetime: today()
 
@@ -29,13 +27,10 @@ persist 型変更の検証_期限切れ:
   contents1: n1
   watch(型変更の検証イベント):
 
-string s2: ユーティリティ.concat(型変更の検証_期限内.contents2.string_value, "after")
-number n2: 型変更の検証_期限内.contents2.number_value + 2
+string s2: ユーティリティ.concat(型変更の検証_期限内.contents2, "_after")
 
 persist 型変更の検証_期限内:
-  contents2:
-    string_value: s2
-    number_value: n2
+  contents2: s2
   watch(型変更の検証イベント2):
 
 number n3: 型変更の検証_計算可能1.contents3 * 3

@@ -114,9 +114,9 @@ public class DslReplacementAfterTest {
         Map<String, Object> expired = entity.getPersisterMap("persister型変更#型変更の検証_期限切れ");
         assertThat(Utils.getNested(expired, Number.class, "value", "contents1")).isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(1));
 
+        String todayString = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDate.now());
         Map<String, Object> notExpired = entity.getPersisterMap("persister型変更#型変更の検証_期限内");
-        // ランタイムエラーとなるので、前のデータがそのまま残っているはず
-        assertThat(Utils.getNested(notExpired, String.class, "value", "contents2")).matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?");
+        assertThat(Utils.getNested(notExpired, String.class, "value", "contents2")).isEqualTo(todayString + "_after");
 
         Map<String, Object> calculatable = entity.getPersisterMap("persister型変更#型変更の検証_計算可能1");
         assertThat(Utils.getNested(calculatable, Number.class, "value", "contents3")).isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(369));

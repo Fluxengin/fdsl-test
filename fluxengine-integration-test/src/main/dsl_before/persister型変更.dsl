@@ -4,7 +4,7 @@ persister 型変更の検証_期限切れ:
     lifetime: now()
 
 persister 型変更の検証_期限内:
-  contents2: datetime
+  contents2: date
   persist("persister型変更の検証"):
     lifetime: today()
 
@@ -21,7 +21,7 @@ persist 型変更の検証_期限切れ:
   watch(型変更の検証イベント):
 
 persist 型変更の検証_期限内:
-  contents2: now()
+  contents2: today()
   watch(型変更の検証イベント):
 
 persist 型変更の検証_計算可能1:
