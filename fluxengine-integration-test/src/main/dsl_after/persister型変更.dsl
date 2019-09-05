@@ -18,6 +18,11 @@ persister 型変更の検証_計算可能1:
 event 型変更の検証イベント:
   dummy: string
 
+# 型変更の検証_期限内は実行時エラーになるはずなので、
+# 他の処理を巻き添えにしないために、イベントを分ける
+event 型変更の検証イベント2:
+  dummy: string
+
 number n1: 型変更の検証_期限切れ.contents1 + 1
 
 persist 型変更の検証_期限切れ:
@@ -31,7 +36,7 @@ persist 型変更の検証_期限内:
   contents2:
     string_value: s2
     number_value: n2
-  watch(型変更の検証イベント):
+  watch(型変更の検証イベント2):
 
 number n3: 型変更の検証_計算可能1.contents3 * 3
 

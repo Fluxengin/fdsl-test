@@ -77,6 +77,7 @@ public class DslReplacementAfterTest {
 
         Map<String, Object> decreasedExpired = entity.getPersisterMap("persister項目の変更#項目変更の検証_減少_期限切れ");
         assertThat(Utils.getNested(decreasedExpired, String.class, "value", "s2")).isEqualTo("_after");
+        @SuppressWarnings("unchecked")
         Map<String, Object> s2Map = (Map<String, Object>) decreasedExpired.get("value");
         assertThat(s2Map).doesNotContainKeys("n2");
 
@@ -86,6 +87,7 @@ public class DslReplacementAfterTest {
 
         Map<String, Object> decreasedNotExpired = entity.getPersisterMap("persister項目の変更#項目変更の検証_減少_期限内");
         assertThat(Utils.getNested(decreasedNotExpired, String.class, "value", "s4")).isEqualTo("項目変更の検証_減少_期限内_before_after");
+        @SuppressWarnings("unchecked")
         Map<String, Object> s4Map = (Map<String, Object>) decreasedNotExpired.get("value");
         assertThat(s4Map).doesNotContainKey("n4");
     }
@@ -94,6 +96,8 @@ public class DslReplacementAfterTest {
     void testPersisterTypes() throws Exception {
         String eventString = Utils.createEventString("型変更の検証イベント", "persister型変更", "dummy", "dummy");
         extractor.publishOneTime(eventString);
+        String eventString2 = Utils.createEventString("型変更の検証イベント2", "persister型変更", "dummy", "dummy");
+        extractor.publishOneTime(eventString2);
 
         LOG.info("testPersisterTypes 待機");
         Thread.sleep(30000);
