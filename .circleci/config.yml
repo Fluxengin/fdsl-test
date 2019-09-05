@@ -397,7 +397,7 @@ jobs:
             mkdir -p ~/.ssh
             echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
             pushd ~/
-            git clone -b feature-1.0.11 git@github.com:Fluxengin/state-engine.git
+            git clone -b feature-1.0.11-dsl_replacement-debug git@github.com:Fluxengin/state-engine.git
             popd
       - restore_cache:
           keys:
@@ -729,6 +729,7 @@ jobs:
       - run:
           name: Wait for job to read new FDSL
           command: |
+            echo "dsl_after registered at $(date +'%Y/%m/%d %H:%M:%S')"
             sleep 60
           when: on_success
   test_dsl_after:
@@ -751,7 +752,7 @@ jobs:
           when: always
 workflows:
   version: 2
-  deploy_dsl_test:
+  temp_test:
     jobs:
       - build_engine:
           filters:
@@ -762,116 +763,9 @@ workflows:
             tags:
               only:
                 - /^ci.*/
-      - test_fdsl:
-          requires:
-            - build_engine
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
-      - register_main_dsl:
-          requires:
-            - build_engine
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
       - deploy_dataflow_jobs_datastore:
-          name: deploy_dataflow_jobs_datastore_main
           requires:
             - build_engine
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
-      - deploy_batch_servlet:
-          requires:
-            - build_engine
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
-      - test_dataflow_datastore:
-          requires:
-            - register_main_dsl
-            - deploy_dataflow_jobs_datastore_main
-            - deploy_batch_servlet
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
-      - post_housekeep_test_data:
-          requires:
-            - register_main_dsl
-            - deploy_dataflow_jobs_datastore_main
-            - deploy_batch_servlet
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
-      - deploy_dataflow_jobs_memorystore:
-          requires:
-            - test_dataflow_datastore
-            - post_housekeep_test_data
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
-      - test_dataflow_memorystore:
-          requires:
-            - deploy_dataflow_jobs_memorystore
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
-      - test_housekeep:
-          # test_housekeep deploys servlet, so don't run this concurrently with dataflow or webservice test
-          requires:
-            - test_dataflow_memorystore
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
-      - deploy_dataflow_jobs_datastore:
-          name: deploy_dataflow_jobs_datastore_dsl_replacement_test
-          requires:
-            - test_housekeep
           filters:
             branches:
               only:
@@ -882,7 +776,7 @@ workflows:
                 - /^ci.*/
       - register_dsl_before:
           requires:
-            - test_housekeep
+            - build_engine
           filters:
             branches:
               only:
@@ -893,7 +787,7 @@ workflows:
                 - /^ci.*/
       - test_dsl_before:
           requires:
-            - deploy_dataflow_jobs_datastore_dsl_replacement_test
+            - deploy_dataflow_jobs_datastore
             - register_dsl_before
           filters:
             branches:
@@ -925,3 +819,177 @@ workflows:
             tags:
               only:
                 - /^ci.*/
+#  deploy_dsl_test:
+#    jobs:
+#      - build_engine:
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
+#      - test_fdsl:
+#          requires:
+#            - build_engine
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
+#      - register_main_dsl:
+#          requires:
+#            - build_engine
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
+#      - deploy_dataflow_jobs_datastore:
+#          name: deploy_dataflow_jobs_datastore_main
+#          requires:
+#            - build_engine
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
+#      - deploy_batch_servlet:
+#          requires:
+#            - build_engine
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
+#      - test_dataflow_datastore:
+#          requires:
+#            - register_main_dsl
+#            - deploy_dataflow_jobs_datastore_main
+#            - deploy_batch_servlet
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
+#      - post_housekeep_test_data:
+#          requires:
+#            - register_main_dsl
+#            - deploy_dataflow_jobs_datastore_main
+#            - deploy_batch_servlet
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
+#      - deploy_dataflow_jobs_memorystore:
+#          requires:
+#            - test_dataflow_datastore
+#            - post_housekeep_test_data
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
+#      - test_dataflow_memorystore:
+#          requires:
+#            - deploy_dataflow_jobs_memorystore
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
+#      - test_housekeep:
+#          # test_housekeep deploys servlet, so don't run this concurrently with dataflow or webservice test
+#          requires:
+#            - test_dataflow_memorystore
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
+#      - deploy_dataflow_jobs_datastore:
+#          name: deploy_dataflow_jobs_datastore_dsl_replacement_test
+#          requires:
+#            - test_housekeep
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
+#      - register_dsl_before:
+#          requires:
+#            - test_housekeep
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
+#      - test_dsl_before:
+#          requires:
+#            - deploy_dataflow_jobs_datastore_dsl_replacement_test
+#            - register_dsl_before
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
+#      - register_dsl_after:
+#          requires:
+#            - test_dsl_before
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
+#      - test_dsl_after:
+#          requires:
+#            - register_dsl_after
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
