@@ -698,6 +698,7 @@ jobs:
       - register_dsl:
           dsldirectory: "dsl_before"
           dslversion: 2
+          cleandsl: true # for debugging
   test_dsl_before:
     docker:
       - image: google/cloud-sdk:latest
