@@ -2,6 +2,7 @@ package jp.co.fluxengine.example.plugin.function;
 
 import jp.co.fluxengine.stateengine.annotation.DslName;
 import jp.co.fluxengine.stateengine.annotation.Function;
+import org.apache.commons.lang.ObjectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,8 +27,8 @@ public class Utility {
     }
 
     @DslName("concat")
-    public static String concat(String str1, String str2) {
-        return str1 + str2;
+    public static String concat(Object str1, Object str2) {
+        return ObjectUtils.toString(str1) + ObjectUtils.toString(str2);
     }
 
     @DslName("フォーマット")
