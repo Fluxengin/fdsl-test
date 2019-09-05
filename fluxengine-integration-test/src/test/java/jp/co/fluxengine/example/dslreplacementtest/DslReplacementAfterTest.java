@@ -62,6 +62,9 @@ public class DslReplacementAfterTest {
 
     @Test
     void testPersisterAttributes() throws Exception {
+        // 複数のイベントを同時に投入すると、バージョンアップ前のDSLで処理されてしまう？
+        Thread.sleep(5000);
+
         String eventString = Utils.createEventString("項目変更の検証イベント", "persister項目の変更", "dummy", "dummy");
         extractor.publishOneTime(eventString);
 
@@ -94,6 +97,9 @@ public class DslReplacementAfterTest {
 
     @Test
     void testPersisterTypes() throws Exception {
+        // 複数のイベントを同時に投入すると、バージョンアップ前のDSLで処理されてしまう？
+        Thread.sleep(5000);
+
         String eventString = Utils.createEventString("型変更の検証イベント", "persister型変更", "dummy", "dummy");
         extractor.publishOneTime(eventString);
         String eventString2 = Utils.createEventString("型変更の検証イベント2", "persister型変更", "dummy", "dummy");
