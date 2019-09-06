@@ -665,10 +665,8 @@ jobs:
       - run:
           name: Replace jar
           command: |
-            pushd ~/fdsl-test/fluxengine-integration-test-housekeep
-            rm -f lib/fluxengine-*.jar
-            cp -f ~/state-engine/fluxengine-dataflow-housekeep/target/fluxengine-dataflow-housekeep-*.jar lib/
-            cp -f ~/state-engine/fluxengine-dataflow-housekeep-servlet/target/fluxengine-dataflow-housekeep-servlet-*.jar src/main/webapp/WEB-INF/lib/
+            pushd ~/fdsl-test/fluxengine-integration-test-housekeep/src/main/webapp/WEB-INF/lib
+            cp -f ~/state-engine/fluxengine-dataflow-housekeep-servlet/target/fluxengine-dataflow-housekeep-servlet-*.jar ./
             popd
       - run:
           name: Deploy Housekeep batch job
