@@ -120,9 +120,9 @@ commands:
             popd
       - restore_cache:
           keys:
-            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
-            - v1-gradle-{{ .Branch }}-
-            - v1-gradle-
+            - v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
+            - v2-gradle-{{ .Branch }}-
+            - v2-gradle-
       - when:
           condition: << parameters.cleandsl >>
           steps:
@@ -141,7 +141,7 @@ commands:
             ./gradlew build copyDependencies -x test
             popd
       - save_cache:
-          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
+          key: v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
           paths:
             - ~/.gradle
       - run:
@@ -224,9 +224,9 @@ commands:
             popd
       - restore_cache:
           keys:
-            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
-            - v1-gradle-{{ .Branch }}-
-            - v1-gradle-
+            - v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
+            - v2-gradle-{{ .Branch }}-
+            - v2-gradle-
       - run:
           name: Build integration test
           command: |
@@ -236,7 +236,7 @@ commands:
             cp -f build/libs/fluxengine-integration-test-*.jar lib/
             popd
       - save_cache:
-          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
+          key: v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
           paths:
             - ~/.gradle
       - run:
@@ -290,9 +290,9 @@ commands:
             popd
       - restore_cache:
           keys:
-            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
-            - v1-gradle-{{ .Branch }}-
-            - v1-gradle-
+            - v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
+            - v2-gradle-{{ .Branch }}-
+            - v2-gradle-
       - run:
           name: Test Dataflow job
           command: |
@@ -312,7 +312,7 @@ commands:
           when: always
           background: true
       - save_cache:
-          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
+          key: v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
           paths:
             - ~/.gradle
       - run:
@@ -360,9 +360,9 @@ commands:
             popd
       - restore_cache:
           keys:
-            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
-            - v1-gradle-{{ .Branch }}-
-            - v1-gradle-
+            - v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
+            - v2-gradle-{{ .Branch }}-
+            - v2-gradle-
       - run:
           name: Test Dataflow job
           command: |
@@ -371,7 +371,7 @@ commands:
             env << parameters.variablename >>=true ./gradlew test --tests jp.co.fluxengine.example.dslreplacementtest*
             popd
       - save_cache:
-          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
+          key: v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
           paths:
             - ~/.gradle
       - run:
@@ -401,9 +401,9 @@ jobs:
             popd
       - restore_cache:
           keys:
-            - v1-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
-            - v1-m2-{{ .Branch }}-
-            - v1-m2-
+            - v2-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
+            - v2-m2-{{ .Branch }}-
+            - v2-m2-
       - run:
           name: Build state-engine
           command: |
@@ -411,17 +411,6 @@ jobs:
             function buildEngine() {
               pushd ~/state-engine/$1
               mvn clean install -U > ~/logs/$1.log
-              popd
-            }
-            function buildAndInstall() {
-              pushd ~/state-engine/$1
-              mvn clean install -U > ~/logs/$1.log
-              pushd ~/state-engine/$1/target
-              JARFILENAME=$(ls $1-*.jar)
-              JARVERSION=$(echo $JARFILENAME | sed "s/$1-\(.*\)\.jar/\1/")
-              echo "mvn install:install-file -Dfile=$JARFILENAME -DgroupId=jp.co.fluxengine -DartifactId=$1 -Dversion=$JARVERSION -Dpackaging=jar"
-              mvn install:install-file -Dfile=$JARFILENAME -DgroupId=jp.co.fluxengine -DartifactId=$1 -Dversion=$JARVERSION -Dpackaging=jar
-              popd
               popd
             }
             buildEngine fluxengine-dataflow-housekeep-servlet &
@@ -433,7 +422,7 @@ jobs:
             pidDslRegister=$!
             buildEngine fluxengine-event-publisher &
             pidEventPublisher=$!
-            buildAndInstall fluxengine-dataflow-batch-servlet &
+            buildEngine fluxengine-dataflow-batch-servlet &
             pidDataflowBatchServlet=$!
             {
               buildEngine fluxengine-parser
@@ -448,13 +437,13 @@ jobs:
             wait $pidDslLoader
             buildEngine fluxengine-remote-test-runner &
             pidRemoteTestRunner=$!
-            buildAndInstall fluxengine-dataflow-housekeep &
+            buildEngine fluxengine-dataflow-housekeep &
             pidDataflowHousekeep=$!
             wait $pidCloudSql
             buildEngine fluxengine-dataflow
             wait $pidDataflowHousekeepServlet $pidDslRegister $pidEventPublisher $pidDataflowBatchServlet $pidLocalTestRunner $pidRemoteTestRunner $pidDataflowHousekeep
       - save_cache:
-          key: v1-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
+          key: v2-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
           paths:
             - ~/.m2
       - store_artifacts:
@@ -481,9 +470,9 @@ jobs:
             cp -f ~/state-engine/fluxengine-local-test-runner/target/fluxengine-local-test-runner-*.jar ~/fdsl-test/fluxengine-local-test/lib/
       - restore_cache:
           keys:
-            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
-            - v1-gradle-{{ .Branch }}-
-            - v1-gradle-
+            - v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
+            - v2-gradle-{{ .Branch }}-
+            - v2-gradle-
       - run:
           name: Run test
           command: |
@@ -497,7 +486,7 @@ jobs:
           command: cp -f ~/fdsl-test/fluxengine-local-test/debug.log ~/fdsl-test/fluxengine-local-test/build/reports/tests/test/
           when: always
       - save_cache:
-          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
+          key: v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
           paths:
             - ~/.gradle
       - store_artifacts:
@@ -591,9 +580,9 @@ jobs:
             popd
       - restore_cache:
           keys:
-            - v1-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
-            - v1-m2-{{ .Branch }}-
-            - v1-m2-
+            - v2-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
+            - v2-m2-{{ .Branch }}-
+            - v2-m2-
       - run:
           name: Deploy batch servlet
           command: |
@@ -691,9 +680,9 @@ jobs:
           background: true
       - restore_cache:
           keys:
-            - v1-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
-            - v1-m2-{{ .Branch }}-
-            - v1-m2-
+            - v2-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
+            - v2-m2-{{ .Branch }}-
+            - v2-m2-
       - run:
           name: Deploy Housekeep servlet
           command: |
@@ -713,9 +702,9 @@ jobs:
             popd
       - restore_cache:
           keys:
-            - v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
-            - v1-gradle-{{ .Branch }}-
-            - v1-gradle-
+            - v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
+            - v2-gradle-{{ .Branch }}-
+            - v2-gradle-
       - run:
           name: Test Housekeep
           command: |
@@ -724,7 +713,7 @@ jobs:
             env FLUXENGINE_INTEGRATION_TEST_HOUSEKEEP=true ./gradlew test --tests jp.co.fluxengine.example.housekeeptest.HousekeepTest
             popd
       - save_cache:
-          key: v1-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
+          key: v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
           paths:
             - ~/.gradle
       - run:
