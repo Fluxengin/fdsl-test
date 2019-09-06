@@ -387,6 +387,7 @@ jobs:
   build_engine:
     docker:
       - image: circleci/openjdk:8-jdk
+        user: root
     steps:
       - check_update:
           dir: "fluxengine-local-test fluxengine-integration-test .circleci"
