@@ -396,7 +396,7 @@ jobs:
             mkdir -p ~/.ssh
             echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
             pushd ~/
-            git clone -b feature-1.0.11 git@github.com:Fluxengin/state-engine.git
+            git clone -b feature-1.0.11-dsl_replacement-debug_refresh git@github.com:Fluxengin/state-engine.git
             popd
       - restore_cache:
           keys:
