@@ -673,7 +673,7 @@ jobs:
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test-housekeep
             chmod +x fluxengine_housekeep.sh
-            ./fluxengine_housekeep.sh $(pwd)/fluxengine_housekeep.env
+            env CLASSPATH=$(ls ~/state-engine/fluxengine-dataflow-housekeep/target/fluxengine-dataflow-housekeep-*.jar) ./fluxengine_housekeep.sh $(pwd)/fluxengine_housekeep.env
             popd
           background: true
       - restore_cache:
