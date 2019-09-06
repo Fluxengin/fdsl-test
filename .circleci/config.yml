@@ -413,6 +413,17 @@ jobs:
               mvn clean install -U > ~/logs/$1.log
               popd
             }
+            function buildAndInstall() {
+              pushd ~/state-engine/$1
+              mvn clean install -U > ~/logs/$1.log
+              pushd ~/state-engine/$1/target
+              JARFILENAME=$(ls $1-*.jar)
+              JARVERSION=$(echo $JARFILENAME | sed "s/$1-\(.*\)\.jar/\1/")
+              echo "mvn install:install-file -Dfile=$JARFILENAME -DgroupId=jp.co.fluxengine -DartifactId=$1 -Dversion=$JARVERSION -Dpackaging=jar"
+              mvn install:install-file -Dfile=$JARFILENAME -DgroupId=jp.co.fluxengine -DartifactId=$1 -Dversion=$JARVERSION -Dpackaging=jar
+              popd
+              popd
+            }
             buildEngine fluxengine-dataflow-housekeep-servlet &
             pidDataflowHousekeepServlet=$!
 
@@ -422,7 +433,7 @@ jobs:
             pidDslRegister=$!
             buildEngine fluxengine-event-publisher &
             pidEventPublisher=$!
-            buildEngine fluxengine-dataflow-batch-servlet &
+            buildAndInstall fluxengine-dataflow-batch-servlet &
             pidDataflowBatchServlet=$!
             {
               buildEngine fluxengine-parser
@@ -437,7 +448,7 @@ jobs:
             wait $pidDslLoader
             buildEngine fluxengine-remote-test-runner &
             pidRemoteTestRunner=$!
-            buildEngine fluxengine-dataflow-housekeep &
+            buildAndInstall fluxengine-dataflow-housekeep &
             pidDataflowHousekeep=$!
             wait $pidCloudSql
             buildEngine fluxengine-dataflow
