@@ -11,7 +11,7 @@
 
     <groupId>jp.co.fluxengine</groupId>
     <artifactId>fluxengine-integration-test-housekeep</artifactId>
-    <version>1.0.10</version>
+    <version>1.0.11</version>
 
     <!-- [START properties] -->
     <properties>
@@ -21,7 +21,6 @@
             for your application -->
         <failOnMissingWebXml>false</failOnMissingWebXml>
         <!-- [END_EXCLUDE] -->
-        <fluxengine.version>1.0.10</fluxengine.version>
     </properties>
     <!-- [END properties] -->
 
@@ -88,9 +87,7 @@
         <dependency>
             <groupId>jp.co.fluxengine</groupId>
             <artifactId>fluxengine-dataflow-housekeep</artifactId>
-            <version>${fluxengine.version}</version>
-            <scope>system</scope>
-            <systemPath>${basedir}/lib/fluxengine-dataflow-housekeep-${fluxengine.version}.jar</systemPath>
+            <version>[1.0.10,]</version>
         </dependency>
 
     </dependencies>

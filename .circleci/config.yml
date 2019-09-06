@@ -400,7 +400,7 @@ jobs:
             popd
       - restore_cache:
           keys:
-            - v1-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-web-service/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
+            - v1-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
             - v1-m2-{{ .Branch }}-
             - v1-m2-
       - run:
@@ -442,7 +442,7 @@ jobs:
             buildEngine fluxengine-dataflow
             wait $pidDataflowHousekeepServlet $pidDslRegister $pidEventPublisher $pidDataflowBatchServlet $pidLocalTestRunner $pidRemoteTestRunner $pidDataflowHousekeep
       - save_cache:
-          key: v1-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-web-service/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
+          key: v1-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
           paths:
             - ~/.m2
       - store_artifacts:
@@ -549,6 +549,11 @@ jobs:
             rm -f fluxengine-*.jar
             cp -f ~/state-engine/fluxengine-dataflow-batch-servlet/target/fluxengine-dataflow-batch-servlet-*.jar ./
             popd
+      - restore_cache:
+          keys:
+            - v1-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
+            - v1-m2-{{ .Branch }}-
+            - v1-m2-
       - run:
           name: Deploy batch servlet
           command: |
@@ -644,6 +649,11 @@ jobs:
             ./fluxengine_housekeep.sh $(pwd)/fluxengine_housekeep.env
             popd
           background: true
+      - restore_cache:
+          keys:
+            - v1-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
+            - v1-m2-{{ .Branch }}-
+            - v1-m2-
       - run:
           name: Deploy Housekeep servlet
           command: |
