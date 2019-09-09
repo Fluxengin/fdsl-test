@@ -17,28 +17,24 @@ commands:
       - run:
           name: Skip job if no update under the directory
           command: |
-            if [ $CIRCLE_BRANCH = "master" ]
-            then
-            DIFF_TARGET="HEAD^ HEAD"
+            if [ $CIRCLE_BRANCH = "master" ]; then
+              DIFF_TARGET="HEAD^ HEAD"
             else
-            DIFF_TARGET="origin/master"
+              DIFF_TARGET="origin/master"
             fi
             DIFF_EXISTS=false
-            for targetDir in << parameters.dir >>
-            do
-            DIFF_FILES=`git diff ${DIFF_TARGET} --name-only --relative=${targetDir} | wc -l`
-            if [ $DIFF_FILES -eq 0 ]
-            then
-            echo "There is no update under ${targetDir}"
-            else
-            echo "There is update under ${targetDir}"
-            DIFF_EXISTS=true
-            break
-            fi
+            for targetDir in << parameters.dir >>; do
+              DIFF_FILES=`git diff ${DIFF_TARGET} --name-only --relative=${targetDir} | wc -l`
+              if [ $DIFF_FILES -eq 0 ]; then
+                echo "There is no update under ${targetDir}"
+              else
+                echo "There is update under ${targetDir}"
+                DIFF_EXISTS=true
+                break
+              fi
             done
-            if ! $DIFF_EXISTS
-            then
-            circleci step halt
+            if ! $DIFF_EXISTS; then
+              circleci step halt
             fi
   prepare_gcp_and_locale:
     description: "Prepare GCP and locale settings"
@@ -499,64 +495,6 @@ jobs:
           destination: test
       - store_test_results:
           path: ~/fdsl-test/fluxengine-local-test/build/test-results
-  register_main_dsl:
-    docker:
-      - image: google/cloud-sdk:latest
-        environment:
-          LANG: ja_JP.UTF-8
-    working_directory: ~/fdsl-test
-    steps:
-      - register_dsl:
-          dsldirectory: "dsl"
-          dslversion: 1
-          cleandsl: true
-  post_dataflow_test_data:
-    docker:
-      - image: google/cloud-sdk:latest
-        environment:
-          LANG: ja_JP.UTF-8
-    working_directory: ~/fdsl-test
-    steps:
-      - check_update:
-          dir: "fluxengine-integration-test .circleci"
-      - prepare_gcp_and_locale
-      - attach_workspace:
-          at: ~/state-engine
-      - run:
-          name: Publish event before deployment
-          command: |
-            # Empty subscription
-            gcloud pubsub subscriptions pull projects/${PROJECT}/subscriptions/${SUBSCRIPTION} --limit=1000 --auto-ack
-            # Publish event
-            # Temporarily disable pipefail because "cat /dev/urandom" raises it
-            set +o pipefail
-            TEST_PERSIST_STRING=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -1 | tr -d '\n'`
-            set -o pipefail
-            echo -n $TEST_PERSIST_STRING > ~/state-engine/test_persist_string.txt
-            gcloud pubsub topics publish projects/${PROJECT}/topics/${TOPIC} --message="[{\"eventName\":\"Subscriptionイベント\",\"namespace\":\"subscription/イベントの文字列をそのまま永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"S01\",\"文字列\":\"${TEST_PERSIST_STRING}\"}}]"
-      - persist_to_workspace:
-          root: ~/state-engine
-          paths:
-            - .
-  deploy_dataflow_jobs_datastore:
-    docker:
-      - image: google/cloud-sdk:latest
-        environment:
-          LANG: ja_JP.UTF-8
-    working_directory: ~/fdsl-test
-    steps:
-      - deploy_dataflow_jobs:
-          persisterdb: datastore
-          presubmitevent: true
-  test_dataflow_datastore:
-    docker:
-      - image: google/cloud-sdk:latest
-        environment:
-          LANG: ja_JP.UTF-8
-    working_directory: ~/fdsl-test
-    steps:
-      - test_dataflow:
-          persisterdb: datastore
   deploy_batch_servlet:
     docker:
       - image: google/cloud-sdk:latest
@@ -595,6 +533,36 @@ jobs:
             pushd ~/fdsl-test/fluxengine-integration-test-batch-servlet
             mvn clean package appengine:deploy
             popd
+  register_main_dsl:
+    docker:
+      - image: google/cloud-sdk:latest
+        environment:
+          LANG: ja_JP.UTF-8
+    working_directory: ~/fdsl-test
+    steps:
+      - register_dsl:
+          dsldirectory: "dsl"
+          dslversion: 1
+          cleandsl: true
+  deploy_dataflow_jobs_datastore:
+    docker:
+      - image: google/cloud-sdk:latest
+        environment:
+          LANG: ja_JP.UTF-8
+    working_directory: ~/fdsl-test
+    steps:
+      - deploy_dataflow_jobs:
+          persisterdb: datastore
+          presubmitevent: true
+  test_dataflow_datastore:
+    docker:
+      - image: google/cloud-sdk:latest
+        environment:
+          LANG: ja_JP.UTF-8
+    working_directory: ~/fdsl-test
+    steps:
+      - test_dataflow:
+          persisterdb: datastore
   post_housekeep_test_data:
     docker:
       - image: google/cloud-sdk:latest
@@ -830,7 +798,7 @@ workflows:
             tags:
               only:
                 - /^ci.*/
-      - register_main_dsl:
+      - deploy_batch_servlet:
           requires:
             - build_engine
           filters:
@@ -841,8 +809,7 @@ workflows:
             tags:
               only:
                 - /^ci.*/
-      - post_dataflow_test_data:
-          name: post_dataflow_test_data_datastore
+      - register_main_dsl:
           requires:
             - build_engine
           filters:
@@ -855,17 +822,6 @@ workflows:
                 - /^ci.*/
       - deploy_dataflow_jobs_datastore:
           requires:
-            - post_dataflow_test_data_datastore
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
-      - deploy_batch_servlet:
-          requires:
             - build_engine
           filters:
             branches:
@@ -877,9 +833,9 @@ workflows:
                 - /^ci.*/
       - test_dataflow_datastore:
           requires:
+            - deploy_batch_servlet
             - register_main_dsl
             - deploy_dataflow_jobs_datastore
-            - deploy_batch_servlet
           filters:
             branches:
               only:
@@ -890,21 +846,9 @@ workflows:
                 - /^ci.*/
       - post_housekeep_test_data:
           requires:
+            - deploy_batch_servlet
             - register_main_dsl
             - deploy_dataflow_jobs_datastore
-            - deploy_batch_servlet
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
-      - post_dataflow_test_data:
-          name: post_dataflow_test_data_memorystore
-          requires:
-            - test_dataflow_datastore
           filters:
             branches:
               only:
@@ -915,7 +859,7 @@ workflows:
                 - /^ci.*/
       - deploy_dataflow_jobs_memorystore:
           requires:
-            - post_dataflow_test_data_memorystore
+            - test_dataflow_datastore
             - post_housekeep_test_data
           filters:
             branches:
