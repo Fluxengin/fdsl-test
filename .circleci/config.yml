@@ -188,25 +188,30 @@ commands:
     parameters:
       persisterdb:
         type: string
+      presubmitevent:
+        type: boolean
     steps:
       - check_update:
           dir: "fluxengine-integration-test .circleci"
       - prepare_gcp_and_locale
       - attach_workspace:
           at: ~/state-engine
-      - run:
-          name: Publish event before deployment
-          command: |
-            # Empty subscription
-            gcloud pubsub subscriptions pull projects/${PROJECT}/subscriptions/${SUBSCRIPTION} --limit=1000 --auto-ack
-            # Publish event
-            # Temporarily disable pipefail because "cat /dev/urandom" raises it
-            set +o pipefail
-            TEST_PERSIST_STRING=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -1 | tr -d '\n'`
-            set -o pipefail
-            echo -n $TEST_PERSIST_STRING > ~/state-engine/test_persist_string.txt
-            gcloud pubsub topics publish projects/${PROJECT}/topics/${TOPIC} --message="[{\"eventName\":\"Subscriptionイベント\",\"namespace\":\"subscription/イベントの文字列をそのまま永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"S01\",\"文字列\":\"${TEST_PERSIST_STRING}\"}}]"
-          background: true
+      - when:
+          condition: << parameters.presubmitevent >>
+          steps:
+            - run:
+                name: Publish event before deployment
+                command: |
+                  # Empty subscription
+                  gcloud pubsub subscriptions pull projects/${PROJECT}/subscriptions/${SUBSCRIPTION} --limit=1000 --auto-ack
+                  # Publish event
+                  # Temporarily disable pipefail because "cat /dev/urandom" raises it
+                  set +o pipefail
+                  TEST_PERSIST_STRING=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -1 | tr -d '\n'`
+                  set -o pipefail
+                  echo -n $TEST_PERSIST_STRING > ~/state-engine/test_persist_string.txt
+                  gcloud pubsub topics publish projects/${PROJECT}/topics/${TOPIC} --message="[{\"eventName\":\"Subscriptionイベント\",\"namespace\":\"subscription/イベントの文字列をそのまま永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"S01\",\"文字列\":\"${TEST_PERSIST_STRING}\"}}]"
+                background: true
       - edit_integration_test_conf_files
       - run:
           name: Edit persister db setting
@@ -542,6 +547,7 @@ jobs:
     steps:
       - deploy_dataflow_jobs:
           persisterdb: datastore
+          presubmitevent: true
   test_dataflow_datastore:
     docker:
       - image: google/cloud-sdk:latest
@@ -625,6 +631,7 @@ jobs:
     steps:
       - deploy_dataflow_jobs:
           persisterdb: memorystore
+          presubmitevent: true
   test_dataflow_memorystore:
     docker:
       - image: google/cloud-sdk:latest
@@ -727,6 +734,16 @@ jobs:
           destination: test
       - store_test_results:
           path: ~/fdsl-test/fluxengine-integration-test/build/test-results
+  deploy_dataflow_jobs_dsl_replacement:
+    docker:
+      - image: google/cloud-sdk:latest
+        environment:
+          LANG: ja_JP.UTF-8
+    working_directory: ~/fdsl-test
+    steps:
+      - deploy_dataflow_jobs:
+          persisterdb: datastore
+          presubmitevent: false
   register_dsl_before:
     docker:
       - image: google/cloud-sdk:latest
@@ -837,7 +854,6 @@ workflows:
               only:
                 - /^ci.*/
       - deploy_dataflow_jobs_datastore:
-          name: deploy_dataflow_jobs_datastore_main
           requires:
             - post_dataflow_test_data_datastore
           filters:
@@ -862,7 +878,7 @@ workflows:
       - test_dataflow_datastore:
           requires:
             - register_main_dsl
-            - deploy_dataflow_jobs_datastore_main
+            - deploy_dataflow_jobs_datastore
             - deploy_batch_servlet
           filters:
             branches:
@@ -875,7 +891,7 @@ workflows:
       - post_housekeep_test_data:
           requires:
             - register_main_dsl
-            - deploy_dataflow_jobs_datastore_main
+            - deploy_dataflow_jobs_datastore
             - deploy_batch_servlet
           filters:
             branches:
@@ -932,8 +948,7 @@ workflows:
             tags:
               only:
                 - /^ci.*/
-      - deploy_dataflow_jobs_datastore:
-          name: deploy_dataflow_jobs_datastore_dsl_replacement_test
+      - deploy_dataflow_jobs_dsl_replacement:
           requires:
             - test_housekeep
           filters:
@@ -957,7 +972,7 @@ workflows:
                 - /^ci.*/
       - test_dsl_before:
           requires:
-            - deploy_dataflow_jobs_datastore_dsl_replacement_test
+            - deploy_dataflow_jobs_dsl_replacement
             - register_dsl_before
           filters:
             branches:
