@@ -5,7 +5,23 @@
 # TOPIC: Pub/Sub topic name to use for deployment
 # SUBSCRIPTION: Pub/Sub subscription name for dataflow to use for deployment
 # FLUXENGINE_LICENSE_ENCODED: base64-encoded Fluxengine license file
+# CLOUD_SQL_INSTANCE_NAME: Cloud SQL instance name to store effector result and memorystore data
+# DB_USER: Username for Cloud SQL
+# DB_PASS: Password for Cloud SQL
 version: 2.1
+executors:
+  my-java:
+    docker:
+      - image: circleci/openjdk:8-jdk
+        user: root
+    working_directory: ~/fdsl-test
+  my-gcp:
+    docker:
+      - image: google/cloud-sdk:latest
+        user: root
+        environment:
+          LANG: ja_JP.UTF-8
+    working_directory: ~/fdsl-test
 commands:
   check_update:
     description: "Check whether there is update under designated directory"
@@ -386,9 +402,7 @@ commands:
           path: ~/fdsl-test/fluxengine-integration-test/build/test-results
 jobs:
   build_engine:
-    docker:
-      - image: circleci/openjdk:8-jdk
-        user: root
+    executor: my-java
     steps:
       - check_update:
           dir: "fluxengine-local-test fluxengine-integration-test .circleci"
@@ -455,10 +469,7 @@ jobs:
           paths:
             - .
   test_fdsl:
-    docker:
-      - image: circleci/openjdk:8-jdk
-        user: root
-    working_directory: ~/fdsl-test
+    executor: my-java
     steps:
       - check_update:
           dir: "fluxengine-local-test .circleci"
@@ -496,11 +507,7 @@ jobs:
       - store_test_results:
           path: ~/fdsl-test/fluxengine-local-test/build/test-results
   deploy_batch_servlet:
-    docker:
-      - image: google/cloud-sdk:latest
-        environment:
-          LANG: ja_JP.UTF-8
-    working_directory: ~/fdsl-test
+    executor: my-gcp
     steps:
       - check_update:
           dir: "fluxengine-integration-test .circleci"
@@ -533,42 +540,30 @@ jobs:
             pushd ~/fdsl-test/fluxengine-integration-test-batch-servlet
             mvn clean package appengine:deploy
             popd
+      - save_cache:
+          key: v2-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
+          paths:
+            - ~/.m2
   register_main_dsl:
-    docker:
-      - image: google/cloud-sdk:latest
-        environment:
-          LANG: ja_JP.UTF-8
-    working_directory: ~/fdsl-test
+    executor: my-gcp
     steps:
       - register_dsl:
           dsldirectory: "dsl"
           dslversion: 1
           cleandsl: true
   deploy_dataflow_jobs_datastore:
-    docker:
-      - image: google/cloud-sdk:latest
-        environment:
-          LANG: ja_JP.UTF-8
-    working_directory: ~/fdsl-test
+    executor: my-gcp
     steps:
       - deploy_dataflow_jobs:
           persisterdb: datastore
           presubmitevent: true
   test_dataflow_datastore:
-    docker:
-      - image: google/cloud-sdk:latest
-        environment:
-          LANG: ja_JP.UTF-8
-    working_directory: ~/fdsl-test
+    executor: my-gcp
     steps:
       - test_dataflow:
           persisterdb: datastore
   post_housekeep_test_data:
-    docker:
-      - image: google/cloud-sdk:latest
-        environment:
-          LANG: ja_JP.UTF-8
-    working_directory: ~/fdsl-test
+    executor: my-gcp
     steps:
       - check_update:
           dir: "fluxengine-integration-test .circleci"
@@ -591,30 +586,18 @@ jobs:
             curl -H 'Content-Type:application/json' -d "[{\"eventName\":\"Housekeepパケット使用D\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user4\",\"使用量\":500,\"期限1\":\"${TODAY_STRING}\",\"期限2\":\"${TODAY_STRING}\"}}]" https://${PROJECT}.appspot.com/fluxengine-integration-test-event
             wait $pidPostHousekeepEvent
   deploy_dataflow_jobs_memorystore:
-    docker:
-      - image: google/cloud-sdk:latest
-        environment:
-          LANG: ja_JP.UTF-8
-    working_directory: ~/fdsl-test
+    executor: my-gcp
     steps:
       - deploy_dataflow_jobs:
           persisterdb: memorystore
           presubmitevent: true
   test_dataflow_memorystore:
-    docker:
-      - image: google/cloud-sdk:latest
-        environment:
-          LANG: ja_JP.UTF-8
-    working_directory: ~/fdsl-test
+    executor: my-gcp
     steps:
       - test_dataflow:
           persisterdb: memorystore
   test_housekeep:
-    docker:
-      - image: google/cloud-sdk:latest
-        environment:
-          LANG: ja_JP.UTF-8
-    working_directory: ~/fdsl-test
+    executor: my-gcp
     steps:
       - check_update:
           dir: "fluxengine-integration-test .circleci"
@@ -665,6 +648,10 @@ jobs:
             pushd ~/fdsl-test/fluxengine-integration-test-housekeep
             mvn clean package appengine:deploy
             popd
+      - save_cache:
+          key: v2-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
+          paths:
+            - ~/.m2
       - edit_integration_test_conf_files
       - run:
           name: Replace jar
@@ -703,31 +690,19 @@ jobs:
       - store_test_results:
           path: ~/fdsl-test/fluxengine-integration-test/build/test-results
   deploy_dataflow_jobs_dsl_replacement:
-    docker:
-      - image: google/cloud-sdk:latest
-        environment:
-          LANG: ja_JP.UTF-8
-    working_directory: ~/fdsl-test
+    executor: my-gcp
     steps:
       - deploy_dataflow_jobs:
           persisterdb: datastore
           presubmitevent: false
   register_dsl_before:
-    docker:
-      - image: google/cloud-sdk:latest
-        environment:
-          LANG: ja_JP.UTF-8
-    working_directory: ~/fdsl-test
+    executor: my-gcp
     steps:
       - register_dsl:
           dsldirectory: "dsl_before"
           dslversion: 2
   test_dsl_before:
-    docker:
-      - image: google/cloud-sdk:latest
-        environment:
-          LANG: ja_JP.UTF-8
-    working_directory: ~/fdsl-test
+    executor: my-gcp
     steps:
       - test_dsl_replacement:
           variablename: "FLUXENGINE_INTEGRATION_TEST_DSL_REPLACEMENT_BEFORE"
@@ -741,11 +716,7 @@ jobs:
             rm -f ~/state-engine/dataflow_job_id.txt
           when: on_fail
   register_dsl_after:
-    docker:
-      - image: google/cloud-sdk:latest
-        environment:
-          LANG: ja_JP.UTF-8
-    working_directory: ~/fdsl-test
+    executor: my-gcp
     steps:
       - register_dsl:
           dsldirectory: "dsl_after"
@@ -757,11 +728,7 @@ jobs:
             sleep 60
           when: on_success
   test_dsl_after:
-    docker:
-      - image: google/cloud-sdk:latest
-        environment:
-          LANG: ja_JP.UTF-8
-    working_directory: ~/fdsl-test
+    executor: my-gcp
     steps:
       - test_dsl_replacement:
           variablename: "FLUXENGINE_INTEGRATION_TEST_DSL_REPLACEMENT_AFTER"
