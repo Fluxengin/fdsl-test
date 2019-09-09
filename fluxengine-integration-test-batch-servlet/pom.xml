@@ -88,6 +88,8 @@
             <groupId>jp.co.fluxengine</groupId>
             <artifactId>fluxengine-dataflow-batch-servlet</artifactId>
             <version>[1.0.10,]</version>
+            <scope>system</scope>
+            <systemPath>${basedir}/src/main/webapp/WEB-INF/lib/fluxengine-dataflow-batch-servlet.jar</systemPath>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
         <dependency>

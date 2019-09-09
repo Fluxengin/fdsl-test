@@ -88,6 +88,8 @@
             <groupId>jp.co.fluxengine</groupId>
             <artifactId>fluxengine-dataflow-housekeep</artifactId>
             <version>[1.0.10,]</version>
+            <scope>system</scope>
+            <systemPath>${basedir}/lib/fluxengine-dataflow-housekeep.jar</systemPath>
         </dependency>
 
     </dependencies>

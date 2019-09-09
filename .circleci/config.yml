@@ -576,7 +576,7 @@ jobs:
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test-batch-servlet/src/main/webapp/WEB-INF/lib
             rm -f fluxengine-*.jar
-            cp -f ~/state-engine/fluxengine-dataflow-batch-servlet/target/fluxengine-dataflow-batch-servlet-*.jar ./
+            cp -f ~/state-engine/fluxengine-dataflow-batch-servlet/target/fluxengine-dataflow-batch-servlet-*.jar ./fluxengine-dataflow-batch-servlet.jar
             popd
       - restore_cache:
           keys:
@@ -665,15 +665,18 @@ jobs:
       - run:
           name: Replace jar
           command: |
-            pushd ~/fdsl-test/fluxengine-integration-test-housekeep/src/main/webapp/WEB-INF/lib
-            cp -f ~/state-engine/fluxengine-dataflow-housekeep-servlet/target/fluxengine-dataflow-housekeep-servlet-*.jar ./
+            pushd ~/fdsl-test/fluxengine-integration-test-housekeep
+            rm -f lib/fluxengine-*.jar
+            cp -f ~/state-engine/fluxengine-dataflow-housekeep/target/fluxengine-dataflow-housekeep-*.jar lib/fluxengine-dataflow-housekeep.jar
+            rm -f src/main/webapp/WEB-INF/lib/fluxengine-*.jar
+            cp -f ~/state-engine/fluxengine-dataflow-housekeep-servlet/target/fluxengine-dataflow-housekeep-servlet-*.jar src/main/webapp/WEB-INF/lib/
             popd
       - run:
           name: Deploy Housekeep batch job
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test-housekeep
             chmod +x fluxengine_housekeep.sh
-            env CLASSPATH=$(ls ~/state-engine/fluxengine-dataflow-housekeep/target/fluxengine-dataflow-housekeep-*.jar) ./fluxengine_housekeep.sh $(pwd)/fluxengine_housekeep.env
+            ./fluxengine_housekeep.sh $(pwd)/fluxengine_housekeep.env
             popd
           background: true
       - restore_cache:
