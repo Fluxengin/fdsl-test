@@ -1,6 +1,7 @@
 # Required environmental variables
 # GCLOUD_SERVICE_KEY: contents of JSON key file of service account
 # PROJECT: GCP project name to deploy
+# COMPUTE_ZONE: Default GCP compute zone -- but never used for now
 # BUCKET: Storage bucket name to use for deployment
 # TOPIC: Pub/Sub topic name to use for deployment
 # SUBSCRIPTION: Pub/Sub subscription name for dataflow to use for deployment
@@ -9,6 +10,8 @@
 # DB_USER: Username for Cloud SQL
 # DB_PASS: Password for Cloud SQL
 version: 2.1
+orbs:
+  gcp-cli: circleci/gcp-cli@1.8.2
 executors:
   my-java:
     docker:
@@ -52,28 +55,24 @@ commands:
             if ! $DIFF_EXISTS; then
               circleci step halt
             fi
+  prepare_locale:
+    description: "Prepare locale settings"
+    steps:
+      - run:
+          name: Set locale
+          command: |
+            apt install -y locales
+            sed -i -e "s/# ja_JP\.UTF-8 UTF-8/ja_JP.UTF-8 UTF-8/" /etc/locale.gen
+            locale-gen
+            update-locale LANG=ja_JP.UTF-8
   prepare_gcp_and_locale:
     description: "Prepare GCP and locale settings"
     steps:
-      - run:
-          name: Prepare GCP and locale settings
-          command: |
-            # Create Google application credentials file and auth SDK
-            echo 'export GOOGLE_APPLICATION_CREDENTIALS=~/google_application_credentials.json' >> $BASH_ENV
-            source $BASH_ENV
-            echo $GCLOUD_SERVICE_KEY > $GOOGLE_APPLICATION_CREDENTIALS
-            # Install
-            {
-              apt update
-              apt install -y locales
-              sed -i -e "s/# ja_JP\.UTF-8 UTF-8/ja_JP.UTF-8 UTF-8/" /etc/locale.gen
-              locale-gen
-              update-locale LANG=ja_JP.UTF-8
-            } &
-            pidSetLocale=$!
-            gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
-            gcloud --quiet config set project $PROJECT
-            wait $pidSetLocale
+      - prepare_locale
+      - gcp-cli/initialize:
+          gcloud-service-key: GCLOUD_SERVICE_KEY
+          google-compute-zone: COMPUTE_ZONE
+          google-project-id: PROJECT
   edit_integration_test_conf_files:
     description: "Replace placeholders in conf and env files of integration test with environment variables"
     steps:
@@ -567,14 +566,7 @@ jobs:
     steps:
       - check_update:
           dir: "fluxengine-integration-test .circleci"
-      - run:
-          name: Set locale
-          command: |
-            apt update
-            apt install -y locales
-            sed -i -e "s/# ja_JP\.UTF-8 UTF-8/ja_JP.UTF-8 UTF-8/" /etc/locale.gen
-            locale-gen
-            update-locale LANG=ja_JP.UTF-8
+      - prepare_locale
       - run:
           name: Post housekeep test data through batch servlet
           command: |
