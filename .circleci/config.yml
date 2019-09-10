@@ -236,8 +236,10 @@ commands:
               while ! gcloud redis instances describe integration-test --region=asia-northeast1 | grep 'host: '; do
                 sleep 5
               done
-              gcloud redis instances describe integration-test --region=asia-northeast1 | grep 'host: ' | sed -e 's/host: /persister.memorystore.host=/' >> ~/fdsl-test/fluxengine-integration-test/conf/fluxengine.properties
-              gcloud redis instances describe integration-test --region=asia-northeast1 | grep 'port: ' | sed -e 's/port: /persister.memorystore.port/' >> ~/fdsl-test/fluxengine-integration-test/conf/fluxengine.properties
+              pushd ~/fdsl-test/fluxengine-integration-test/conf
+              gcloud redis instances describe integration-test --region=asia-northeast1 | grep 'host: ' | sed -e 's/host: /persister.memorystore.host=/' >> fluxengine.properties
+              gcloud redis instances describe integration-test --region=asia-northeast1 | grep 'port: ' | sed -e 's/port: /persister.memorystore.port/' >> fluxengine.properties
+              popd
             fi
       - run:
           name: Replace jar
