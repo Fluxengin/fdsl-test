@@ -58,10 +58,6 @@ commands:
       - run:
           name: Prepare GCP and locale settings
           command: |
-            # Create Google application credentials file and auth SDK
-            echo 'export GOOGLE_APPLICATION_CREDENTIALS=~/google_application_credentials.json' >> $BASH_ENV
-            source $BASH_ENV
-            echo $GCLOUD_SERVICE_KEY > $GOOGLE_APPLICATION_CREDENTIALS
             # Install
             {
               apt update
@@ -71,6 +67,10 @@ commands:
               update-locale LANG=ja_JP.UTF-8
             } &
             pidSetLocale=$!
+            # Create Google application credentials file and auth SDK
+            echo 'export GOOGLE_APPLICATION_CREDENTIALS=~/google_application_credentials.json' >> $BASH_ENV
+            source $BASH_ENV
+            echo $GCLOUD_SERVICE_KEY > $GOOGLE_APPLICATION_CREDENTIALS
             gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
             gcloud --quiet config set project $PROJECT
             wait $pidSetLocale
@@ -230,6 +230,16 @@ commands:
           command: |
             sed -i -e "s/persister\.db=.*/persister.db=<< parameters.persisterdb >>/" ~/fdsl-test/fluxengine-integration-test/conf/fluxengine.properties
       - run:
+          name: Edit Memorystore setting
+          command: |
+            if [ "<< parameters.persisterdb >>" = "memorystore" ]; then
+              while ! gcloud redis instances describe integration-test --region=asia-northeast1 | grep 'host: '; do
+                sleep 5
+              done
+              gcloud redis instances describe integration-test --region=asia-northeast1 | grep 'host: ' | sed -e 's/host: /persister.memorystore.host=/' >> ~/fdsl-test/fluxengine-integration-test/conf/fluxengine.properties
+              gcloud redis instances describe integration-test --region=asia-northeast1 | grep 'port: ' | sed -e 's/port: /persister.memorystore.port/' >> ~/fdsl-test/fluxengine-integration-test/conf/fluxengine.properties
+            fi
+      - run:
           name: Replace jar
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test/lib
@@ -310,6 +320,12 @@ commands:
             - v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
             - v2-gradle-{{ .Branch }}-
             - v2-gradle-
+      - run:
+          name: Wait for SQL instance startup
+          command: |
+            while ! gcloud sql instances describe integration-test | grep 'state: RUNNABLE'; do
+              sleep 5
+            done
       - run:
           name: Test Dataflow job
           command: |
@@ -400,6 +416,15 @@ commands:
           destination: test
       - store_test_results:
           path: ~/fdsl-test/fluxengine-integration-test/build/test-results
+  stop_sql_on_fail:
+    description: "Stop SQL instance when failed"
+    steps:
+      - run:
+          name: Stop DB
+          command: |
+            gcloud sql instances patch integration-test --activation-policy=NEVER --async
+            gcloud --quiet redis instances delete integration-test --region=asia-northeast1 --async
+          when: on_fail
 jobs:
   build_engine:
     executor: my-java
@@ -506,6 +531,17 @@ jobs:
           destination: test
       - store_test_results:
           path: ~/fdsl-test/fluxengine-local-test/build/test-results
+  start_db:
+    executor: my-gcp
+    steps:
+      - check_update:
+          dir: "fluxengine-integration-test .circleci"
+      - prepare_gcp_and_locale
+      - run:
+          name: Start SQL instance
+          command: |
+            gcloud sql instances patch integration-test --activation-policy=ALWAYS --async
+            gcloud redis instances create integration-test --size=1 --region=asia-northeast1 --zone=asia-northeast1-b --redis-version=redis_4_0 --async
   deploy_batch_servlet:
     executor: my-gcp
     steps:
@@ -562,6 +598,7 @@ jobs:
     steps:
       - test_dataflow:
           persisterdb: datastore
+      - stop_sql_on_fail
   post_housekeep_test_data:
     executor: my-gcp
     steps:
@@ -591,11 +628,13 @@ jobs:
       - deploy_dataflow_jobs:
           persisterdb: memorystore
           presubmitevent: true
+      - stop_sql_on_fail
   test_dataflow_memorystore:
     executor: my-gcp
     steps:
       - test_dataflow:
           persisterdb: memorystore
+      - stop_sql_on_fail
   test_housekeep:
     executor: my-gcp
     steps:
@@ -689,18 +728,21 @@ jobs:
           destination: test
       - store_test_results:
           path: ~/fdsl-test/fluxengine-integration-test/build/test-results
+      - stop_sql_on_fail
   deploy_dataflow_jobs_dsl_replacement:
     executor: my-gcp
     steps:
       - deploy_dataflow_jobs:
           persisterdb: datastore
           presubmitevent: false
+      - stop_sql_on_fail
   register_dsl_before:
     executor: my-gcp
     steps:
       - register_dsl:
           dsldirectory: "dsl_before"
           dslversion: 2
+      - stop_sql_on_fail
   test_dsl_before:
     executor: my-gcp
     steps:
@@ -715,6 +757,7 @@ jobs:
             done < ~/state-engine/dataflow_job_id.txt
             rm -f ~/state-engine/dataflow_job_id.txt
           when: on_fail
+      - stop_sql_on_fail
   register_dsl_after:
     executor: my-gcp
     steps:
@@ -727,6 +770,7 @@ jobs:
             echo "dsl_after registered at $(date +'%Y/%m/%d %H:%M:%S')"
             sleep 60
           when: on_success
+      - stop_sql_on_fail
   test_dsl_after:
     executor: my-gcp
     steps:
@@ -740,6 +784,12 @@ jobs:
               gcloud dataflow jobs cancel $dataflowJobId --region=asia-northeast1
             done < ~/state-engine/dataflow_job_id.txt
             rm -f ~/state-engine/dataflow_job_id.txt
+          when: always
+      - run:
+          name: Stop DB
+          command: |
+            gcloud sql instances patch integration-test --activation-policy=NEVER --async
+            gcloud --quiet redis instances delete integration-test --region=asia-northeast1 --async
           when: always
 workflows:
   version: 2
@@ -757,6 +807,15 @@ workflows:
       - test_fdsl:
           requires:
             - build_engine
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - start_db:
           filters:
             branches:
               only:
@@ -803,6 +862,7 @@ workflows:
             - deploy_batch_servlet
             - register_main_dsl
             - deploy_dataflow_jobs_datastore
+            - start_db
           filters:
             branches:
               only:
