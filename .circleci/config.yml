@@ -240,7 +240,7 @@ commands:
               pushd ~/fdsl-test/fluxengine-integration-test/conf
               echo -e "\n" >> fluxengine.properties
               gcloud redis instances describe integration-test --region=asia-northeast1 | grep 'host: ' | sed -e 's/host: /persister.memorystore.host=/' >> fluxengine.properties
-              gcloud redis instances describe integration-test --region=asia-northeast1 | grep 'port: ' | sed -e 's/port: /persister.memorystore.port/' >> fluxengine.properties
+              gcloud redis instances describe integration-test --region=asia-northeast1 | grep 'port: ' | sed -e 's/port: /persister.memorystore.port=/' >> fluxengine.properties
               popd
             fi
       - run:
