@@ -233,8 +233,9 @@ commands:
           name: Edit Memorystore setting
           command: |
             if [ "<< parameters.persisterdb >>" = "memorystore" ]; then
+              # Wait for Memorystore instance to startup
               while ! gcloud redis instances describe integration-test --region=asia-northeast1 | grep 'host: '; do
-                sleep 5
+                sleep 10
               done
               pushd ~/fdsl-test/fluxengine-integration-test/conf
               gcloud redis instances describe integration-test --region=asia-northeast1 | grep 'host: ' | sed -e 's/host: /persister.memorystore.host=/' >> fluxengine.properties
@@ -323,11 +324,22 @@ commands:
             - v2-gradle-{{ .Branch }}-
             - v2-gradle-
       - run:
-          name: Wait for SQL instance startup
+          name: Wait for SQL instance to startup
           command: |
-            while ! gcloud sql instances describe integration-test | grep 'state: RUNNABLE'; do
-              sleep 5
+            {
+              mkdir ~/proxy
+              cd ~/proxy
+              curl -o cloud_sql_proxy https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64
+              chmod +x cloud_sql_proxy
+              ./cloud_sql_proxy -instances=${CLOUD_SQL_INSTANCE_NAME}=tcp:3306 --refresh_config_throttle=30s
+            }
+            pidProxy=$!
+            apt install -y mysql-client
+            wait $pidProxy
+            while ! mysqladmin ping --user=${DB_USER} --password=${DB_PASS} --host=127.0.0.1 --port=3306 | grep 'mysqld is alive'; do
+              sleep 31
             done
+            kill $pidProxy
       - run:
           name: Test Dataflow job
           command: |
@@ -418,8 +430,8 @@ commands:
           destination: test
       - store_test_results:
           path: ~/fdsl-test/fluxengine-integration-test/build/test-results
-  stop_sql_on_fail:
-    description: "Stop SQL instance when failed"
+  stop_db_on_fail:
+    description: "Stop DB instances when failed"
     steps:
       - run:
           name: Stop DB
@@ -540,7 +552,7 @@ jobs:
           dir: "fluxengine-integration-test .circleci"
       - prepare_gcp_and_locale
       - run:
-          name: Start SQL instance
+          name: Start SQL instances
           command: |
             gcloud sql instances patch integration-test --activation-policy=ALWAYS --async
             gcloud redis instances create integration-test --size=1 --region=asia-northeast1 --zone=asia-northeast1-b --redis-version=redis_4_0 --async
@@ -600,7 +612,7 @@ jobs:
     steps:
       - test_dataflow:
           persisterdb: datastore
-      - stop_sql_on_fail
+      - stop_db_on_fail
   post_housekeep_test_data:
     executor: my-gcp
     steps:
@@ -630,13 +642,13 @@ jobs:
       - deploy_dataflow_jobs:
           persisterdb: memorystore
           presubmitevent: true
-      - stop_sql_on_fail
+      - stop_db_on_fail
   test_dataflow_memorystore:
     executor: my-gcp
     steps:
       - test_dataflow:
           persisterdb: memorystore
-      - stop_sql_on_fail
+      - stop_db_on_fail
   test_housekeep:
     executor: my-gcp
     steps:
@@ -730,21 +742,21 @@ jobs:
           destination: test
       - store_test_results:
           path: ~/fdsl-test/fluxengine-integration-test/build/test-results
-      - stop_sql_on_fail
+      - stop_db_on_fail
   deploy_dataflow_jobs_dsl_replacement:
     executor: my-gcp
     steps:
       - deploy_dataflow_jobs:
           persisterdb: datastore
           presubmitevent: false
-      - stop_sql_on_fail
+      - stop_db_on_fail
   register_dsl_before:
     executor: my-gcp
     steps:
       - register_dsl:
           dsldirectory: "dsl_before"
           dslversion: 2
-      - stop_sql_on_fail
+      - stop_db_on_fail
   test_dsl_before:
     executor: my-gcp
     steps:
@@ -759,7 +771,7 @@ jobs:
             done < ~/state-engine/dataflow_job_id.txt
             rm -f ~/state-engine/dataflow_job_id.txt
           when: on_fail
-      - stop_sql_on_fail
+      - stop_db_on_fail
   register_dsl_after:
     executor: my-gcp
     steps:
@@ -772,7 +784,7 @@ jobs:
             echo "dsl_after registered at $(date +'%Y/%m/%d %H:%M:%S')"
             sleep 60
           when: on_success
-      - stop_sql_on_fail
+      - stop_db_on_fail
   test_dsl_after:
     executor: my-gcp
     steps:
