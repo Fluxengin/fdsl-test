@@ -238,6 +238,7 @@ commands:
                 sleep 10
               done
               pushd ~/fdsl-test/fluxengine-integration-test/conf
+              echo "\n" >> fluxengine.properties
               gcloud redis instances describe integration-test --region=asia-northeast1 | grep 'host: ' | sed -e 's/host: /persister.memorystore.host=/' >> fluxengine.properties
               gcloud redis instances describe integration-test --region=asia-northeast1 | grep 'port: ' | sed -e 's/port: /persister.memorystore.port/' >> fluxengine.properties
               popd
@@ -554,7 +555,7 @@ jobs:
           name: Start DB instances
           command: |
             gcloud sql instances patch integration-test --activation-policy=ALWAYS --async
-            gcloud redis instances create integration-test --size=1 --region=asia-northeast1 --zone=asia-northeast1-b --redis-version=redis_4_0 --async || echo 'Memorystore instance already exists'
+            gcloud redis instances create integration-test --size=1 --region=asia-northeast1 --zone=asia-northeast1-b --redis-version=redis_4_0 --async || ! gcloud redis instances describe integration-test --region=asia-northeast1 | grep 'state: DELETING'
   deploy_batch_servlet:
     executor: my-gcp
     steps:
