@@ -554,7 +554,7 @@ jobs:
           name: Start DB instances
           command: |
             gcloud sql instances patch integration-test --activation-policy=ALWAYS --async
-            gcloud redis instances create integration-test --size=1 --region=asia-northeast1 --zone=asia-northeast1-b --redis-version=redis_4_0 --async
+            gcloud redis instances create integration-test --size=1 --region=asia-northeast1 --zone=asia-northeast1-b --redis-version=redis_4_0 --async || echo 'Memorystore instance already exists'
   deploy_batch_servlet:
     executor: my-gcp
     steps:
