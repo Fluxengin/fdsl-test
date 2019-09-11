@@ -332,10 +332,9 @@ commands:
               curl -o cloud_sql_proxy https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64
               chmod +x cloud_sql_proxy
               ./cloud_sql_proxy -instances=${CLOUD_SQL_INSTANCE_NAME}=tcp:3306 --refresh_config_throttle=30s
-            }
+            } &
             pidProxy=$!
             apt install -y mysql-client
-            wait $pidProxy
             while ! mysqladmin ping --user=${DB_USER} --password=${DB_PASS} --host=127.0.0.1 --port=3306 | grep 'mysqld is alive'; do
               sleep 31
             done
@@ -552,7 +551,7 @@ jobs:
           dir: "fluxengine-integration-test .circleci"
       - prepare_gcp_and_locale
       - run:
-          name: Start SQL instances
+          name: Start DB instances
           command: |
             gcloud sql instances patch integration-test --activation-policy=ALWAYS --async
             gcloud redis instances create integration-test --size=1 --region=asia-northeast1 --zone=asia-northeast1-b --redis-version=redis_4_0 --async
