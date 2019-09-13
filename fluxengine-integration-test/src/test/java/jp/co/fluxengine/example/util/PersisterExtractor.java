@@ -7,7 +7,7 @@ import com.google.common.collect.Maps;
 import jp.co.fluxengine.example.CloudSqlPool;
 import jp.co.fluxengine.stateengine.model.datom.Event;
 import jp.co.fluxengine.stateengine.util.JacksonUtils;
-import jp.co.fluxengine.stateengine.util.Serializer.KryoSerializer;
+import jp.co.fluxengine.stateengine.util.Serializer.KryoUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -70,7 +70,6 @@ public abstract class PersisterExtractor {
 
     public abstract IdToEntityMap getEntities(String[] keys) throws Exception;
 
-    @SuppressWarnings("unchecked")
     public EntityMap getIdMap(String id) throws Exception {
         return getEntities(new String[]{id}).get(id);
     }
@@ -91,7 +90,7 @@ public abstract class PersisterExtractor {
         publishOneTime.invoke(null, inputJsonString, topic);
     }
 
-    public static PersisterExtractor getInstance(String persisterDb) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, IOException, InstantiationException {
+    public static PersisterExtractor getInstance(String persisterDb) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, IOException {
         switch (persisterDb) {
             case "datastore":
                 return new DatastoreExtractor();
@@ -102,7 +101,7 @@ public abstract class PersisterExtractor {
         }
     }
 
-    public static PersisterExtractor getInstance() throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
+    public static PersisterExtractor getInstance() throws IOException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         Properties fluxengineProps = loadProperties("/fluxengine.properties");
         return getInstance(fluxengineProps.getProperty("persister.db"));
     }
@@ -303,8 +302,7 @@ class MemorystoreExtractor extends PersisterExtractor {
                         if (!initKey.isEmpty()) {
                             try (InputStream in = rs.getBinaryStream(2)) {
                                 byte[] value = IOUtils.toByteArray(in);
-                                KryoSerializer serializer = new KryoSerializer(HashMap.class);
-                                Map<String, Object> valueMap = serializer.deserialize(value);
+                                Map<String, Object> valueMap = KryoUtils.deserialize(value);
 
                                 result.put(initKey, new MemorystoreEntityMap(valueMap));
                             }
@@ -312,8 +310,7 @@ class MemorystoreExtractor extends PersisterExtractor {
                                 String key = rs.getString(1);
                                 try (InputStream in = rs.getBinaryStream(2)) {
                                     byte[] value = IOUtils.toByteArray(in);
-                                    KryoSerializer serializer = new KryoSerializer(HashMap.class);
-                                    Map<String, Object> valueMap = serializer.deserialize(value);
+                                    Map<String, Object> valueMap = KryoUtils.deserialize(value);
 
                                     result.put(key, new MemorystoreEntityMap(valueMap));
                                 }
