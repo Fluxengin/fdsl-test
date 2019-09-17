@@ -394,7 +394,7 @@ commands:
       - run:
           name: Edit persister db setting
           command: |
-            sed -i -e "s/persister\.db=.*/persister.db=memorystore/" ~/fdsl-test/fluxengine-integration-test/conf/fluxengine.properties
+            sed -i -e "s/persister\.db=.*/persister.db=datastore/" ~/fdsl-test/fluxengine-integration-test/conf/fluxengine.properties
       - run:
           name: Replace jar
           command: |
@@ -752,7 +752,7 @@ jobs:
     executor: my-gcp
     steps:
       - deploy_dataflow_jobs:
-          persisterdb: memorystore
+          persisterdb: datastore
           presubmitevent: false
       - stop_db_on_fail
   register_dsl_before:
@@ -809,14 +809,6 @@ jobs:
           command: |
             gcloud sql instances patch integration-test --activation-policy=NEVER --async
             gcloud --quiet redis instances delete integration-test --region=asia-northeast1 --async
-          when: always
-      - run:
-          name: Delete App Engine instances
-          command: |
-            while read service version id rest; do
-              gcloud --quiet app instances delete ${id} --service=${service} --version=${version} &
-            done < <(gcloud app instances list | tail -n +2)
-            wait
           when: always
 workflows:
   version: 2
@@ -949,6 +941,7 @@ workflows:
       - deploy_dataflow_jobs_dsl_replacement:
           requires:
             - test_dataflow_memorystore
+            - test_housekeep
           filters:
             branches:
               only:
@@ -960,6 +953,7 @@ workflows:
       - register_dsl_before:
           requires:
             - test_dataflow_memorystore
+            - test_housekeep
           filters:
             branches:
               only:
