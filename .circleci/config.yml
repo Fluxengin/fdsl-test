@@ -810,6 +810,14 @@ jobs:
             gcloud sql instances patch integration-test --activation-policy=NEVER --async
             gcloud --quiet redis instances delete integration-test --region=asia-northeast1 --async
           when: always
+      - run:
+          name: Delete App Engine instances
+          command: |
+            while read service version id rest; do
+              gcloud --quiet app instances delete ${id} --service=${service} --version=${version} &
+            done < <(gcloud app instances list | tail -n +2)
+            wait
+          when: always
 workflows:
   version: 2
   deploy_dsl_test:
