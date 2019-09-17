@@ -325,6 +325,11 @@ commands:
             - v2-gradle-{{ .Branch }}-
             - v2-gradle-
       - run:
+          name: Confirm that only one streaming job is runnung
+          command: |
+            JOBS=`gcloud dataflow jobs list --status=active --filter="TYPE=Streaming" | tail -n +2 | wc -l`
+            test $JOBS -eq 1
+      - run:
           name: Wait for SQL instance to startup
           command: |
             {
