@@ -11,6 +11,7 @@
 	xmlns="http://appengine.google.com/ns/1.0">
 	<runtime>java8</runtime>
 	<threadsafe>true</threadsafe>
+	<service>housekeep</service>
 
 	<system-properties>
 		<property name="java.util.logging.config.file"

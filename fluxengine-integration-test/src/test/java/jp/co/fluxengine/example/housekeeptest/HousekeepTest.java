@@ -32,7 +32,7 @@ public class HousekeepTest {
     private static PersisterExtractor extractor;
 
     @BeforeAll
-    static void setup() throws NoSuchMethodException, IOException, InstantiationException, IllegalAccessException, InvocationTargetException, ClassNotFoundException {
+    static void setup() throws NoSuchMethodException, IOException, IllegalAccessException, InvocationTargetException, ClassNotFoundException {
         extractor = PersisterExtractor.getInstance();
     }
 
@@ -140,7 +140,7 @@ public class HousekeepTest {
                 .readTimeout(60, TimeUnit.SECONDS)
                 .writeTimeout(60, TimeUnit.SECONDS)
                 .build();
-        String housekeepUrl = "https://" + extractor.getProjectId() + ".appspot.com/fluxengine-dataflow-housekeep";
+        String housekeepUrl = "https://housekeep-dot-" + extractor.getProjectId() + ".appspot.com/fluxengine-dataflow-housekeep";
         Request request = new Request.Builder().url(housekeepUrl).build();
 
         try (Response response = client.newCall(request).execute()) {

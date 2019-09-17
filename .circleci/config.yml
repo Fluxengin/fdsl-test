@@ -742,6 +742,11 @@ jobs:
           destination: test
       - store_test_results:
           path: ~/fdsl-test/fluxengine-integration-test/build/test-results
+      - run:
+          name: Delete App Engine service
+          command: |
+            gcloud --quiet app services delete housekeep
+          when: always
       - stop_db_on_fail
   deploy_dataflow_jobs_dsl_replacement:
     executor: my-gcp
@@ -898,6 +903,18 @@ workflows:
             tags:
               only:
                 - /^ci.*/
+      - test_housekeep:
+          requires:
+            - test_dataflow_datastore
+            - post_housekeep_test_data
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
       - deploy_dataflow_jobs_memorystore:
           requires:
             - test_dataflow_datastore
@@ -921,20 +938,9 @@ workflows:
             tags:
               only:
                 - /^ci.*/
-      - test_housekeep:
-          # test_housekeep deploys servlet, so don't run this concurrently with dataflow or webservice test
-          requires:
-            - test_dataflow_memorystore
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
       - deploy_dataflow_jobs_dsl_replacement:
           requires:
+            - test_dataflow_memorystore
             - test_housekeep
           filters:
             branches:
@@ -946,6 +952,7 @@ workflows:
                 - /^ci.*/
       - register_dsl_before:
           requires:
+            - test_dataflow_memorystore
             - test_housekeep
           filters:
             branches:
