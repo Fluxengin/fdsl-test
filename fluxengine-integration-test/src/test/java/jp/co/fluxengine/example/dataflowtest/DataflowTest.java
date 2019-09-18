@@ -32,6 +32,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.UUID;
 
 import static jp.co.fluxengine.example.util.PersisterExtractor.getClassLoaderFromLib;
@@ -52,9 +53,11 @@ public class DataflowTest {
     private static String testIdForMySQL;
 
     @BeforeAll
-    static void before() throws NoSuchMethodException, IOException, InstantiationException, IllegalAccessException, InvocationTargetException, ClassNotFoundException {
+    static void before() throws NoSuchMethodException, IOException, IllegalAccessException, InvocationTargetException, ClassNotFoundException {
         extractor = PersisterExtractor.getInstance();
         testIdForMySQL = UUID.randomUUID().toString();
+        String timezoneId = PersisterExtractor.loadProperties("/dataflow_job_publisher_sample.env").getProperty("TIMEZONE");
+        TimeZone.setDefault(TimeZone.getTimeZone(timezoneId));
     }
 
     @Test
