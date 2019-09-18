@@ -15,10 +15,10 @@ else
     fi
 
     if [ $# -eq 3 ]; then
-	if [ $3 != "debug" ]; then
-            echo "Usage: $ ./dataflow_job_publisher.sh kind[batch or stream] path[full path of fluxengine dataflow job publish config file] defaultWorkerLogLevel[debug]"
+	  if [ $3 != "debug" -a $3 != "info" -a $3 != "warn" ]; then
+            echo "Usage: $ ./dataflow_job_publisher.sh kind[batch or stream] path[full path of fluxengine dataflow job publish config file] defaultWorkerLogLevel[debug|info|warn]"
             exit 1
-	fi
+	  fi
     fi
 fi
 
@@ -49,20 +49,29 @@ if [ $1 = "stream" ]; then
     OPTIONS=${OPTIONS}" --stagingLocation=${STREAM_JOB_STAGING_LOCATION} --fromSubscription=${FROM_SUBSCRIPTION} --streaming=true"
 fi
 
-
-OPTIONS=${OPTIONS}" --region=asia-northeast1"
-OPTIONS=${OPTIONS}" --tempLocation=${TEMP_LOCATION}"
+if [ ${AUTO_SCALING} = "THROUGHPUT_BASED" ]; then
+  OPTIONS=${OPTIONS}" --autoscalingAlgorithm=${AUTO_SCALING} --maxNumWorkers=${MAX_NUM_WORKERS}"
+fi
 
 if [ $# -eq 3 ]; then
-     OPTIONS=${OPTIONS}" --defaultWorkerLogLevel=DEBUG"
+   WORKER_LOG_LEVEL=$(echo $3 | tr '[a-z]' '[A-Z]')
+   OPTIONS=${OPTIONS}" --defaultWorkerLogLevel=${WORKER_LOG_LEVEL}"
+else
+   OPTIONS=${OPTIONS}" --defaultWorkerLogLevel=WARN"
 fi
+
+#init workers
+OPTIONS=${OPTIONS}" --numWorkers=${NUM_WORKERS}"
+OPTIONS=${OPTIONS}" --region=${REGION}"
+OPTIONS=${OPTIONS}" --tempLocation=${TEMP_LOCATION}"
+OPTIONS=${OPTIONS}" --timezone=${TIMEZONE}"
+OPTIONS=${OPTIONS}" --reshuffleBound=100"
 
 BASE_DIR=$(pwd)
 CONF="${BASE_DIR}/conf/"
 export CONF=${CONF}
 LIB="${BASE_DIR}/lib"
 
-JAVA_OPTS=" -Xmx2048m"
 
 DATAFLOW_JOB_CLASS="jp.co.fluxengine.gcp.dataflow.FluxengineDataflowProcessor"
 
@@ -75,4 +84,4 @@ done
 
 CLASSPATH=${CONF}:${CLASSPATH}
 
-java ${JAVA_OPTS} -server -cp ${CLASSPATH} ${DATAFLOW_JOB_CLASS} ${OPTIONS}
+java -server -cp ${CLASSPATH} ${DATAFLOW_JOB_CLASS} ${OPTIONS}

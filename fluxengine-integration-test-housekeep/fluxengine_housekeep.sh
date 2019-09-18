@@ -34,10 +34,15 @@ fi
 
 OPTIONS=${OPTIONS}" --stagingLocation=${HOUSEKEEP_JOB_STAGING_LOCATION} --templateLocation=${TEMPLATE_LOCATION} --streaming=false"
 
-
 if [ $# -eq 2 ]; then
-     OPTIONS=${OPTIONS}" --defaultWorkerLogLevel=DEBUG"
+   WORKER_LOG_LEVEL=$(echo $3 | tr '[a-z]' '[A-Z]')
+   OPTIONS=${OPTIONS}" --defaultWorkerLogLevel=${WORKER_LOG_LEVEL}"
+else
+   OPTIONS=${OPTIONS}" --defaultWorkerLogLevel=WARN"
 fi
+
+
+OPTIONS=${OPTIONS}" --timezone=${TIMEZONE}"
 
 BASE_DIR=$(pwd)
 CONF="${BASE_DIR}/conf/"
