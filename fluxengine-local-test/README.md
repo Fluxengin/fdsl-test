@@ -1,5 +1,6 @@
 # fluxengine-local-test
-FluxengineのエンジンやDSLのテストをすることができます。
+fluxengine-local-test-runnerを使用し、ローカルでDSLやプラグインのテストを行うためのプロジェクト。
+CIでも本プロジェクトのテストが実行される。
 
 # Dependency
 使用言語：java
@@ -10,32 +11,28 @@ Fluxengine 1.0.11
 
 # SetUp
 
-1. 当プロジェクトをチェックアウト
-2. プロジェクトディレクトリにて次のコマンドを実行し、ビルドを行う
-```
-gradlew build -x test
-```
+1. 本プロジェクトをチェックアウト
 
-# Usage
-テストDSLの実行
-
-1. IDEからテストを実行する場合は、環境変数"CONF"に、confフォルダの絶対パスを設定する
+2. IDEからテストを実行する場合は、環境変数"CONF"に、confフォルダの絶対パスを設定する (gradle test を実行する場合は不要)
 
 ```
     <キー> / <値>
     CONF / C:\Users\xxx\git\fluxengine-local-test\conf\
 ```
 
-2. IDEからテストを実行する場合は、テストの実行構成のVM引数にlog4j2.xmlのパスを指定する
+3. IDEからテストを実行する場合は、テストの実行構成のVM引数にlog4j2.xmlのパスを指定する (gradle test を実行する場合は不要)
 
 ```
     例）-Dlog4j.configurationFile="file:\\\C:\Users\xxx\git\fluxengine-local-test\conf\log4j2.xml"
 ```
 
-3. src/test/java以下のテストクラスに対して、テストを実行する
+# Usage
+テストDSLの実行
+
+1. src/test/java以下のテストクラスに対して、テストを実行する
 コマンドラインからテストを行うには、 `gradlew test` を実行する
 
-4. 各テストケースの結果を確認する
+2. 各テストケースの結果を確認する
 
 # Creating tests
 テストを作成する場合、src/main/dsl と src/test/dsl 配下を同じフォルダ構成、フォルダ名にして、以下の規則でフォルダ、ファイルを作成する
