@@ -7,14 +7,11 @@ import jp.co.fluxengine.example.plugin.read.PublishDataReader;
 import jp.co.fluxengine.example.util.PersisterExtractor;
 import jp.co.fluxengine.example.util.Utils;
 import jp.co.fluxengine.stateengine.model.datom.Event;
-import jp.co.fluxengine.stateengine.util.JacksonUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.assertj.db.type.Changes;
 import org.assertj.db.type.Table;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +26,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -52,17 +50,28 @@ public class DataflowTest {
 
     private static String testIdForMySQL;
 
+    private static String timezoneId;
+
+    @BeforeEach
+    void logStart(TestInfo testinfo) {
+        LOG.info("{} 開始", testinfo.getDisplayName());
+    }
+
+    @AfterEach
+    void logEnd(TestInfo testInfo) {
+        LOG.info("{} 終了", testInfo.getDisplayName());
+    }
+
     @BeforeAll
     static void before() throws NoSuchMethodException, IOException, IllegalAccessException, InvocationTargetException, ClassNotFoundException {
         extractor = PersisterExtractor.getInstance();
         testIdForMySQL = UUID.randomUUID().toString();
-        String timezoneId = PersisterExtractor.loadProperties("/dataflow_job_publisher_sample.env").getProperty("TIMEZONE");
+        timezoneId = PersisterExtractor.loadProperties("/dataflow_job_publisher_sample.env").getProperty("TIMEZONE");
         TimeZone.setDefault(TimeZone.getTimeZone(timezoneId));
     }
 
     @Test
     void testDataflow() throws Exception {
-        LOG.info("testDataflow 開始");
         // persisterの現在の値を取得する
         double usageBefore = extractor.currentPacketUsage("uid12345", "persister/パケット積算データ#パケット積算データ");
 
@@ -72,7 +81,7 @@ public class DataflowTest {
         LOG.debug("input = " + inputJsonString);
 
         LOG.info("testDataflow データ送信");
-        extractor.publishOneTime(inputJsonString);
+        extractor.publishEventString(inputJsonString);
 
         LOG.info("testDataflow 待機開始");
         Thread.sleep(50000);
@@ -82,20 +91,16 @@ public class DataflowTest {
         PersisterExtractor.EntityMap result = extractor.getIdMap("[uid12345]");
         assertThat(getNested(result.getPersisterMap("persister/パケット積算データ#パケット積算データ"), Number.class, "value", "使用量").doubleValue()).isEqualTo(usageBefore + 500);
         assertThat(getNested(result.getPersisterMap("rule/パケット積算#状態遷移"), String.class, "value", "currentState")).isEqualTo("s2");
-
-        LOG.info("testDataflow 終了");
     }
 
     @Test
     void testPersisterPut() throws Exception {
-        LOG.info("testPersisterPut 開始");
-
         URL resourceURL = getClass().getResource("/dataflow_persister_put_data.json");
         String inputJsonString = IOUtils.toString(resourceURL, StandardCharsets.UTF_8);
         LOG.debug("input = " + inputJsonString);
 
         LOG.info("testPersisterPut データ送信");
-        extractor.publishOneTime(inputJsonString);
+        extractor.publishEventString(inputJsonString);
 
         LOG.info("testPersisterPut 待機開始");
         Thread.sleep(20000);
@@ -104,13 +109,10 @@ public class DataflowTest {
         // [PersisterRead01]に何も永続化されていないことを確認する
         Map<String, Object> result = extractor.getIdMap("[PersisterRead01]");
         assertThat(result).isNull();
-
-        LOG.info("testPersisterPut 終了");
     }
 
     @Test
     void testEventPublisherAndTransaction() throws Exception {
-        LOG.info("testEventPublisherAndTransaction 開始");
         // persisterの現在の値を取得する
         double usageBefore = extractor.currentPacketUsage("publish", "persister/パケット積算データ#パケット積算データ");
 
@@ -138,12 +140,10 @@ public class DataflowTest {
 
         // パケット積算データが2600増えているはず
         assertThat(extractor.currentPacketUsage("publish", "persister/パケット積算データ#パケット積算データ")).isEqualTo(usageBefore + 2600);
-        LOG.info("testEventPublisherAndTransaction 終了");
     }
 
     @Test
     void testEffector() throws Exception {
-        LOG.info("testEffector 開始");
         Table targetTable = new Table(CloudSqlPool.getDataSource(), "integration_test_effector");
         Changes changes = new Changes(targetTable);
 
@@ -154,7 +154,7 @@ public class DataflowTest {
         String message = "イベント送信タイムスタンプ: " + LocalDateTime.now().format(formatter);
         String eventJson = "[{\"eventName\":\"エフェクタ送信イベント\", \"namespace\":\"effector_check/エフェクタ動作確認\", \"createTime\":null, \"property\":{\"ユーザーID\":\"effector_check_01\",\"メッセージ\":\"" + message + "\"}}]";
         LOG.info("testEffector データ送信");
-        extractor.publishOneTime(eventJson);
+        extractor.publishEventString(eventJson);
 
         // Dataflowが処理完了するまで少し待つ
         LOG.info("testEffector 待機");
@@ -170,13 +170,10 @@ public class DataflowTest {
                 .isCreation()
                 .rowAtEndPoint()
                 .value("message").isEqualTo(message);
-        LOG.info("testEffector 終了");
     }
 
     @Test
     void testSubscription() throws Exception {
-        LOG.info("testSubscription 開始");
-
         String targetUserId = System.getenv("TEST_PERSIST_USERID");
         String targetString = System.getenv("TEST_PERSIST_STRING");
 
@@ -188,8 +185,6 @@ public class DataflowTest {
 
         PersisterExtractor.EntityMap result = extractor.getIdMap("[" + targetUserId + "]");
         assertThat(getNested(result.getPersisterMap("subscription/イベントの文字列をそのまま永続化#Subscriptionイベント永続化"), String.class, "value", "文字列")).isEqualTo(targetString);
-
-        LOG.info("testSubscription 終了");
     }
 
     @Test
@@ -232,11 +227,11 @@ public class DataflowTest {
         List<Event> eventList3 = Lists.newArrayList(createGetMySQLEventWithAttributes(testIdForMySQL, 60, "getMySQL_条件分岐あり_60"));
 
         LOG.info("testGetMySQL データ送信");
-        extractor.publishOneTime(JacksonUtils.writeValueAsString(eventList1));
-        extractor.publishOneTime(JacksonUtils.writeValueAsString(eventList2));
+        extractor.publishEvents(eventList1);
+        extractor.publishEvents(eventList2);
         // キャッシュONのテストのために、バリアントのキャッシュが作られるまで待つ
         Thread.sleep(30000);
-        extractor.publishOneTime(JacksonUtils.writeValueAsString(eventList3));
+        extractor.publishEvents(eventList3);
 
         LOG.info("testGetMySQL 待機開始");
         Thread.sleep(40000);
@@ -316,8 +311,6 @@ public class DataflowTest {
         String branch60CacheOffValue = getNested(branch60CacheOff, String.class, "value", "value_string");
         assertThat(branch20CacheOnValue).isEqualTo(branch60CacheOnValue);
         assertThat(branch20CacheOffValue).isNotEqualTo(branch60CacheOffValue);
-
-        LOG.info("testGetMySQL 終了");
     }
 
     private Event createGetMySQLEvent(String testId) {
@@ -348,6 +341,29 @@ public class DataflowTest {
         result.setProperty(propertyMap);
 
         return result;
+    }
+
+    @Test
+    void testTimezone() throws Exception {
+        LOG.info("testTimezone データ送信");
+        extractor.publishEvent("timezone/現在時刻を永続化", "現在時刻イベント", null, null);
+
+        LOG.info("testTimezone 待機開始");
+        Thread.sleep(30000);
+        LOG.info("testTimezone 待機終了");
+
+        Map<String, Object> persisterMap = extractor.getIdMap("[timezone]").getPersisterMap("timezone/現在時刻を永続化#現在時刻永続化");
+        Object datetimeObject = getNested(persisterMap, Object.class, "value", "時刻");
+        // datetimeは、DatastoreだとString, MemorystoreだとLocalDateTimeで取得される
+        LocalDateTime datetime = datetimeObject instanceof LocalDateTime ?
+                ((LocalDateTime) datetimeObject) :
+                LocalDateTime.parse(datetimeObject.toString());
+
+        // プロパティファイルで指定したタイムゾーンで現在時刻を取り、
+        // 取得した時刻と代替同じであることを確認する
+        LocalDateTime now = LocalDateTime.now(ZoneId.of(timezoneId));
+
+        assertThat(datetime).isBetween(now.minusMinutes(5), now);
     }
 
     @AfterAll

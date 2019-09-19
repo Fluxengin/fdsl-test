@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
@@ -46,8 +47,7 @@ public class DslReplacementAfterTest {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String todayString = LocalDate.now().format(formatter);
 
-        String eventString = Utils.createEventString("有効期限の検証イベント", "有効期限の設定", "s", "after");
-        extractor.publishOneTime(eventString);
+        extractor.publishOneAttributeEvent("有効期限の設定", "有効期限の検証イベント", LocalDateTime.now(), "s", "after");
 
         // Dataflowが処理完了するまで少し待つ
         LOG.info("testLifetime 待機");
@@ -65,8 +65,7 @@ public class DslReplacementAfterTest {
         // testPersisterLifetimeによってDSLが最新バージョンに更新されるのを待つ
         Thread.sleep(3000);
 
-        String eventString = Utils.createEventString("項目変更の検証イベント", "persister項目の変更", "dummy", "dummy");
-        extractor.publishOneTime(eventString);
+        extractor.publishOneAttributeEvent("persister項目の変更", "項目変更の検証イベント", LocalDateTime.now(), "dummy", "dummy");
 
         LOG.info("testPersisterAttributes 待機");
         Thread.sleep(30000);
@@ -100,10 +99,8 @@ public class DslReplacementAfterTest {
         // testPersisterLifetimeによってDSLが最新バージョンに更新されるのを待つ
         Thread.sleep(3000);
 
-        String eventString = Utils.createEventString("型変更の検証イベント", "persister型変更", "dummy", "dummy");
-        extractor.publishOneTime(eventString);
-        String eventString2 = Utils.createEventString("型変更の検証イベント2", "persister型変更", "dummy", "dummy");
-        extractor.publishOneTime(eventString2);
+        extractor.publishOneAttributeEvent("persister型変更", "型変更の検証イベント", LocalDateTime.now(), "dummy", "dummy");
+        extractor.publishOneAttributeEvent("persister型変更", "型変更の検証イベント2", LocalDateTime.now(), "dummy", "dummy");
 
         LOG.info("testPersisterTypes 待機");
         Thread.sleep(30000);

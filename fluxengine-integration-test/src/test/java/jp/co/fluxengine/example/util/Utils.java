@@ -2,9 +2,6 @@ package jp.co.fluxengine.example.util;
 
 import com.google.common.collect.Maps;
 import jp.co.fluxengine.example.CloudSqlPool;
-import jp.co.fluxengine.stateengine.model.datom.Event;
-import jp.co.fluxengine.stateengine.util.JacksonUtils;
-import org.assertj.core.util.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,8 +10,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -104,23 +99,30 @@ public class Utils {
         void accept(T t) throws Exception;
     }
 
-    public static String createEventString(String eventName, String namespace, Map<String, Object> propertyMap) {
-        Event event = new Event();
-        event.setCreateTime(LocalDateTime.now());
-        event.setEventName(eventName);
-        event.setNamespace(namespace);
-        event.setProperty(propertyMap);
+    public static Map<String, Object> toMap(String key1, Object value1) {
+        Map<String, Object> result = Maps.newHashMap();
+        result.put(key1, value1);
 
-        List<Event> list = Lists.newArrayList(event);
-
-        return JacksonUtils.writeValueAsString(list);
+        return result;
     }
 
-    public static String createEventString(String eventName, String namespace, String propertyKey, Object propertyValue) {
-        Map<String, Object> propertyMap = Maps.newHashMap();
-        propertyMap.put(propertyKey, propertyValue);
+    public static Map<String, Object> toMap(String key1, Object value1,
+                                     String key2, Object value2) {
+        Map<String, Object> result = Maps.newHashMap();
+        result.put(key1, value1);
+        result.put(key2, value2);
 
-        return createEventString(eventName, namespace, propertyMap);
+        return result;
     }
 
+    public static Map<String, Object> toMap(String key1, Object value1,
+                                     String key2, Object value2,
+                                     String key3, Object value3) {
+        Map<String, Object> result = Maps.newHashMap();
+        result.put(key1, value1);
+        result.put(key2, value2);
+        result.put(key3, value3);
+
+        return result;
+    }
 }

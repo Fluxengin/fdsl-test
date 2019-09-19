@@ -2,7 +2,7 @@ package jp.co.fluxengine.example.util;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.client.util.Lists;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import jp.co.fluxengine.example.CloudSqlPool;
 import jp.co.fluxengine.stateengine.model.datom.Event;
@@ -86,8 +86,30 @@ public abstract class PersisterExtractor {
                 0.0;
     }
 
-    public void publishOneTime(String inputJsonString) throws InvocationTargetException, IllegalAccessException {
+    public void publishEventString(String inputJsonString) throws InvocationTargetException, IllegalAccessException {
         publishOneTime.invoke(null, inputJsonString, topic);
+    }
+
+    public void publishEvents(List<Event> events) throws InvocationTargetException, IllegalAccessException {
+        publishEventString(JacksonUtils.writeValueAsString(events));
+    }
+
+    public void publishEvent(Event event) throws InvocationTargetException, IllegalAccessException {
+        publishEvents(Lists.newArrayList(event));
+    }
+
+    public void publishEvent(String namespace, String eventName, LocalDateTime createTime, Map<String, Object> propertyMap) throws InvocationTargetException, IllegalAccessException {
+        Event event = new Event();
+        event.setNamespace(namespace);
+        event.setEventName(eventName);
+        event.setCreateTime(createTime);
+        event.setProperty(propertyMap);
+
+        publishEvent(event);
+    }
+
+    public void publishOneAttributeEvent(String namespace, String eventName, LocalDateTime createTime, String propertyKey, Object propertyValue) throws InvocationTargetException, IllegalAccessException {
+        publishEvent(namespace, eventName, createTime, Utils.toMap(propertyKey, propertyValue));
     }
 
     public static PersisterExtractor getInstance(String persisterDb) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, IOException {
@@ -255,22 +277,14 @@ class MemorystoreExtractor extends PersisterExtractor {
 
         LOG.debug("requestId = {}, keys = {}", requestId, Arrays.toString(keys));
 
-        Event inputEvent = new Event();
-        inputEvent.setNamespace("memorystore/Memorystoreの内容取得");
-        inputEvent.setEventName("Memorystore取得イベント");
-        inputEvent.setCreateTime(LocalDateTime.now());
         Map<String, Object> propertyMap = Maps.newHashMap();
         propertyMap.put("requestid", requestId);
         propertyMap.put("keys", (keys == null || keys.length == 0) ?
                 Lists.newArrayList() :
                 Arrays.asList(keys));
-        inputEvent.setProperty(propertyMap);
-        List<Event> eventList = Lists.newArrayList();
-        eventList.add(inputEvent);
 
-        String inputJsonString = JacksonUtils.writeValueAsString(eventList);
         // Streamジョブが動いている前提で、イベントを発行する
-        publishOneTime(inputJsonString);
+        publishEvent("memorystore/Memorystoreの内容取得", "Memorystore取得イベント", LocalDateTime.now(), propertyMap);
 
         // すぐに処理されないはずなので、少し待つ
         Thread.sleep(5000);

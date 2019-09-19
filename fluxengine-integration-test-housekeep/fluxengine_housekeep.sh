@@ -41,15 +41,13 @@ else
    OPTIONS=${OPTIONS}" --defaultWorkerLogLevel=WARN"
 fi
 
-
+OPTIONS=${OPTIONS}" --region=${REGION}"
 OPTIONS=${OPTIONS}" --timezone=${TIMEZONE}"
 
 BASE_DIR=$(pwd)
 CONF="${BASE_DIR}/conf/"
 export CONF=${CONF}
 LIB="${BASE_DIR}/lib"
-
-JAVA_OPTS=" -Xmx2048m"
 
 HOUSEKEEP_JOB_CLASS="jp.co.fluxengine.gcp.dataflow.housekeep.HouseKeepProcessor"
 
@@ -62,4 +60,4 @@ done
 
 CLASSPATH=${CONF}:${CLASSPATH}
 
-java ${JAVA_OPTS} -server -cp ${CLASSPATH} ${HOUSEKEEP_JOB_CLASS} ${OPTIONS}
+java -server -cp ${CLASSPATH} ${HOUSEKEEP_JOB_CLASS} ${OPTIONS}

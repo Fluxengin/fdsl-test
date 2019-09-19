@@ -48,7 +48,7 @@ test {
     // So make them dependent and execute them in parallel
     systemProperties['junit.jupiter.execution.parallel.mode.default'] = 'concurrent'
     systemProperties['junit.jupiter.execution.parallel.enabled'] = true
-    maxParallelForks = 8
+    maxParallelForks = 10
     // Not to exceed the limit of CircleCI (4GB)
     maxHeapSize = "3g"
     environment 'CONF', file('conf').absolutePath
