@@ -68,10 +68,10 @@ public abstract class PersisterExtractor {
 
     public abstract IdToEntityMap getAll() throws Exception;
 
-    public abstract IdToEntityMap getEntities(String[] keys) throws Exception;
+    public abstract IdToEntityMap getEntities(String... keys) throws Exception;
 
     public EntityMap getIdMap(String id) throws Exception {
-        return getEntities(new String[]{id}).get(id);
+        return getEntities(id).get(id);
     }
 
     public double currentPacketUsage(String userId, String name) throws Exception {
@@ -244,7 +244,7 @@ class DatastoreExtractor extends PersisterExtractor {
     }
 
     @Override
-    public IdToEntityMap getEntities(String[] keys) throws Exception {
+    public IdToEntityMap getEntities(String... keys) throws Exception {
         // Datastoreの方は、キーを絞って取得する機能はないので、全件取得してから絞る
         IdToEntityMap all = getAll();
         IdToEntityMap result = new IdToEntityMap();
@@ -267,11 +267,11 @@ class MemorystoreExtractor extends PersisterExtractor {
 
     @Override
     public IdToEntityMap getAll() throws Exception {
-        return getEntities(new String[]{});
+        return getEntities();
     }
 
     @Override
-    public IdToEntityMap getEntities(String[] keys) throws Exception {
+    public IdToEntityMap getEntities(String... keys) throws Exception {
         // DSLのプラグインによって、MemorystoreからCloud SQLに値を移す
         String requestId = UUID.randomUUID().toString();
 

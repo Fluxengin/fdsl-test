@@ -237,7 +237,7 @@ public class DataflowTest {
         Thread.sleep(40000);
         LOG.info("testGetMySQL 待機終了");
 
-        PersisterExtractor.IdToEntityMap resultMap = extractor.getEntities(new String[]{
+        PersisterExtractor.IdToEntityMap resultMap = extractor.getEntities(
                 "[getMySQL_条件分岐なしの単一属性]",
                 "[getMySQL_条件分岐なしの複数属性]",
                 "[getMySQL_条件分岐あり_20]",
@@ -245,7 +245,7 @@ public class DataflowTest {
                 "[getMySQL_param1つのSQL]",
                 "[getMySQL_paramなしのSQL]",
                 "[getMySQL_パラメタのあるvariant]"
-        });
+        );
 
         Map<String, Object> noBranchOneAttribute = resultMap.get("[getMySQL_条件分岐なしの単一属性]").getPersisterMap("mysql/getMySQL#条件分岐なしの単一属性persister");
         assertThat(getNested(noBranchOneAttribute, String.class, "value", "value_string")).isEqualTo("test string 0");

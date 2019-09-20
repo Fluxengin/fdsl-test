@@ -46,9 +46,9 @@ public class HousekeepTest {
         String tomorrowString = tomorrow.format(formatter);
 
         // Housekeep実行前の状態のassetionを行う
-        PersisterExtractor.IdToEntityMap before = extractor.getEntities(new String[]{
+        PersisterExtractor.IdToEntityMap before = extractor.getEntities(
                 "[user1]", "[user2]", "[user3]", "[user4]", "[user5]"
-        });
+        );
 
         PersisterExtractor.EntityMap before1 = before.get("[user1]");
         assertThat(getNested(before1, Object.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算A", "value", "使用量")).isInstanceOf(Number.class);
@@ -98,9 +98,9 @@ public class HousekeepTest {
         LOG.info("testAfterHousekeep 待機終了");
 
         // Housekeep実行後の状態のassetionを行う
-        PersisterExtractor.IdToEntityMap after = extractor.getEntities(new String[]{
+        PersisterExtractor.IdToEntityMap after = extractor.getEntities(
                 "[user1]", "[user2]", "[user3]", "[user4]", "[user5]"
-        });
+        );
 
         PersisterExtractor.EntityMap after1 = after.get("[user1]");
         assertThat(getNested(after1, Object.class, "value", "housekeep/様々なlifetimeで永続化#Housekeepパケット積算A", "value", "使用量")).isInstanceOf(Number.class);
