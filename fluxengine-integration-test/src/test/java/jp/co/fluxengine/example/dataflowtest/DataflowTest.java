@@ -25,9 +25,12 @@ import java.nio.charset.StandardCharsets;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoField;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
@@ -360,10 +363,16 @@ public class DataflowTest {
                 LocalDateTime.parse(datetimeObject.toString());
 
         // プロパティファイルで指定したタイムゾーンで現在時刻を取り、
-        // 取得した時刻と代替同じであることを確認する
-        LocalDateTime now = LocalDateTime.now(ZoneId.of(timezoneId));
-
+        // 取得した時刻と大体同じであることを確認する
+        ZoneId zoneId = ZoneId.of(timezoneId);
+        LocalDateTime now = LocalDateTime.now(zoneId);
         assertThat(datetime).isBetween(now.minusMinutes(5), now);
+
+        // さらに、UTCとの差が正しいことも確認しておく。
+        ZoneOffset offset = zoneId.getRules().getOffset(Instant.EPOCH);
+        int diffUTC = offset.get(ChronoField.OFFSET_SECONDS);
+        LocalDateTime nowUTC = LocalDateTime.now(ZoneId.of("UTC"));
+        assertThat(datetime.minusSeconds(diffUTC)).isBetween(nowUTC.minusMinutes(5), nowUTC);
     }
 
     @AfterAll
