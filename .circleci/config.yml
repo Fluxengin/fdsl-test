@@ -111,7 +111,7 @@ commands:
         type: string
       dsleffectivedate:
         type: string
-        default: `date +"%Y%m%d"`
+        default: "`date +'%Y%m%d'`"
       dslversion:
         type: integer
       cleandsl:
@@ -804,7 +804,7 @@ jobs:
       # register dsl_dummy with its effective start date set tomorrow to make sure it's not executed
       - register_dsl:
           dsldirectory: "dsl_dummy"
-          dsleffectivedate: `date +"%Y%m%d" -d '1 days'`
+          dsleffectivedate: "`date +'%Y%m%d' -d '1 days'`"
           dslversion: 4
       - run:
           name: Wait for job to read new FDSL
