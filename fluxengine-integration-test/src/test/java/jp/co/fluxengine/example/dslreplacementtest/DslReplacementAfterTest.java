@@ -58,6 +58,11 @@ public class DslReplacementAfterTest {
         Map<String, Object> persisterMap = entity.getPersisterMap("有効期限の設定#有効期限の検証");
         assertThat(Utils.getNested(persisterMap, String.class, "value", "s")).isEqualTo("after");
         assertThat(Utils.getNested(persisterMap, String.class, "lifetime")).isEqualTo(todayString);
+
+        // 有効開始日が明日のDSLが実行されていないことを念のために確認する
+        // もし実行されていれば、以下のエンティティが存在してしまう
+        PersisterExtractor.EntityMap dummy = extractor.getIdMap("[有効期限の検証イベントの永続化_dummy]");
+        assertThat(dummy).isNull();
     }
 
     @Test
@@ -92,6 +97,11 @@ public class DslReplacementAfterTest {
         @SuppressWarnings("unchecked")
         Map<String, Object> s4Map = (Map<String, Object>) decreasedNotExpired.get("value");
         assertThat(s4Map).doesNotContainKey("n4");
+
+        // 有効開始日が明日のDSLが実行されていないことを念のために確認する
+        // もし実行されていれば、以下のエンティティが存在してしまう
+        PersisterExtractor.EntityMap dummy = extractor.getIdMap("[項目変更の検証イベントの永続化_dummy]");
+        assertThat(dummy).isNull();
     }
 
     @Test
@@ -117,5 +127,10 @@ public class DslReplacementAfterTest {
 
         Map<String, Object> calculatable = entity.getPersisterMap("persister型変更#型変更の検証_計算可能1");
         assertThat(Utils.getNested(calculatable, Number.class, "value", "contents3")).isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(369));
+
+        // 有効開始日が明日のDSLが実行されていないことを念のために確認する
+        // もし実行されていれば、以下のエンティティが存在してしまう
+        PersisterExtractor.IdToEntityMap dummy = extractor.getEntities("[型変更の検証イベントの永続化_dummy]", "[型変更の検証イベントの永続化2_dummy]");
+        assertThat(dummy).isEmpty();
     }
 }

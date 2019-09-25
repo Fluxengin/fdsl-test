@@ -109,6 +109,9 @@ commands:
     parameters:
       dsldirectory:
         type: string
+      dsleffectivedate:
+        type: string
+        default: `date +"%Y%m%d"`
       dslversion:
         type: integer
       cleandsl:
@@ -190,7 +193,7 @@ commands:
             chmod +x regisdsl.sh
             mkdir -p out
             mkdir -p log
-            EFFECTIVE_DATE=`date +"%Y%m%d"`
+            EFFECTIVE_DATE=<< parameters.dsleffectivedate >>
             # Run regisdsl with classpath of fluxengine-dsl-register because fluxengine-dsl-register requires GCP related jars but it's not a fat jar
             env CLASSPATH=~/state-engine/fluxengine-dsl-register/target/lib/* ./regisdsl.sh << parameters.dslversion>> ${EFFECTIVE_DATE} 2>&1 | tee temp_dsl_register_output.txt
             ! grep 'Exception:' temp_dsl_register_output.txt > /dev/null
@@ -795,6 +798,21 @@ jobs:
             sleep 60
           when: on_success
       - stop_db_on_fail
+  register_dsl_dummy:
+    executor: my-gcp
+    steps:
+      # register dsl_dummy with its effective start date set tomorrow to make sure it's not executed
+      - register_dsl:
+          dsldirectory: "dsl_dummy"
+          dsleffectivedate: `date +"%Y%m%d" -d '1 days'`
+          dslversion: 4
+      - run:
+          name: Wait for job to read new FDSL
+          command: |
+            echo "dsl_dummy registered at $(date +'%Y/%m/%d %H:%M:%S')"
+            sleep 60
+          when: on_success
+      - stop_db_on_fail
   test_dsl_after:
     executor: my-gcp
     steps:
@@ -998,9 +1016,21 @@ workflows:
             tags:
               only:
                 - /^ci.*/
+      - register_dsl_dummy:
+          requires:
+            - test_dsl_before
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
       - test_dsl_after:
           requires:
             - register_dsl_after
+            - register_dsl_dummy
           filters:
             branches:
               only:
