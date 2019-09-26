@@ -5,6 +5,7 @@ import jp.co.fluxengine.example.util.Utils;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.apache.commons.lang.StringUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -140,7 +141,13 @@ public class HousekeepTest {
                 .readTimeout(60, TimeUnit.SECONDS)
                 .writeTimeout(60, TimeUnit.SECONDS)
                 .build();
-        String housekeepUrl = "https://housekeep-dot-" + extractor.getProjectId() + ".appspot.com/fluxengine-dataflow-housekeep";
+
+        String housekeepServiceName = System.getenv("HOUSEKEEP_SERVICE_NAME");
+        // HOUSEKEEP_SERVICE_NAME が空である場合を考慮するのは、古い config.yml との互換性のため。
+        // state-engine, fdsl-test がともにテストの並列化対応の config.yml を採用していれば、考慮不要
+        String hostPrefix = StringUtils.isEmpty(housekeepServiceName) ? "housekeep" : housekeepServiceName;
+
+        String housekeepUrl = "https://" + hostPrefix + "-dot-" + extractor.getProjectId() + ".appspot.com/fluxengine-dataflow-housekeep";
         Request request = new Request.Builder().url(housekeepUrl).build();
 
         try (Response response = client.newCall(request).execute()) {

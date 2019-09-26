@@ -81,14 +81,29 @@ commands:
           name: Edit conf files
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test/conf
-            sed -i -e "s/\[YOUR_BUCKET_NAME\]/${BUCKET}/g" dataflow_job_publisher_sample.env
-            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" dataflow_job_publisher_sample.env
-            sed -i -e "s/\[YOUR_SUBSCRIPTION_NAME\]/${SUBSCRIPTION}/g" dataflow_job_publisher_sample.env
-            for confFile in dslDataStore effectorDataStore illegalEventDataStore persisterDataStore publisher
-            do
-            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" ${confFile}.properties
+
+            TEMP_LOCATION=gs://${BUCKET}/temp_${CIRCLE_WORKFLOW_ID}
+            sed -i -e "s@TEMP_LOCATION=.*@TEMP_LOCATION=${TEMP_LOCATION}@" dataflow_job_publisher_sample.env
+
+            JOB_STAGING_LOCATION=gs://${BUCKET}/staging_${CIRCLE_WORKFLOW_ID}
+            sed -i -e "s@BATCH_JOB_STAGING_LOCATION=.*@BATCH_JOB_STAGING_LOCATION=${JOB_STAGING_LOCATION}@" dataflow_job_publisher_sample.env
+            sed -i -e "s@STREAM_JOB_STAGING_LOCATION=.*@STREAM_JOB_STAGING_LOCATION=${JOB_STAGING_LOCATION}@" dataflow_job_publisher_sample.env
+
+            TEMPLATE_LOCATION=gs://${BUCKET}/templates/MyTemplate_${CIRCLE_WORKFLOW_ID}
+            sed -i -e "s@TEMPLATE_LOCATION=.*@TEMPLATE_LOCATION=${TEMPLATE_LOCATION}@" dataflow_job_publisher_sample.env
+
+            FROM_SUBSCRIPTION=projects/${PROJECT}/subscriptions/integration-test_${CIRCLE_WORKFLOW_ID}
+            sed -i -e "s@FROM_SUBSCRIPTION=.*@FROM_SUBSCRIPTION=${FROM_SUBSCRIPTION}@" dataflow_job_publisher_sample.env
+
+            NAMESPACE=INTEGRATION_TEST_${CIRCLE_WORKFLOW_ID}
+            for confFile in dslDataStore effectorDataStore illegalEventDataStore persisterDataStore publisher; do
+              sed -i -e "s/\[PROJECT\]/${PROJECT}/g" ${confFile}.properties
+              sed -i -e "s/namespace=.*/namespace=${NAMESPACE}/" ${confFile}.properties
             done
-            sed -i -e "s/\[YOUR_TOPIC_NAME\]/${TOPIC}/g" publisher.properties
+
+            TOTOPIC=projects/${project}/topics/integration-test_${CIRCLE_WORKFLOW_ID}
+            sed -i -e "s@totopic=.*@totopic=${TOTOPIC}@" publisher.properties
+
             sed -i -e "s/\[CLOUD_SQL_INSTANCE_NAME\]/${CLOUD_SQL_INSTANCE_NAME}/g" cloud-sql.properties
             sed -i -e "s/\[DB_USER\]/${DB_USER}/g" cloud-sql.properties
             sed -i -e "s/\[DB_PASS\]/${DB_PASS}/g" cloud-sql.properties
@@ -114,9 +129,6 @@ commands:
         default: "`date +'%Y%m%d'`"
       dslversion:
         type: integer
-      cleandsl:
-        type: boolean
-        default: false
     steps:
       - check_update:
           dir: "fluxengine-integration-test .circleci"
@@ -138,16 +150,6 @@ commands:
             - v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
             - v2-gradle-{{ .Branch }}-
             - v2-gradle-
-      - when:
-          condition: << parameters.cleandsl >>
-          steps:
-            - run:
-                name: Clean DSL
-                command: |
-                  pushd ~/fdsl-test/fluxengine-dsl-cleaner
-                  chmod +x gradlew
-                  ./gradlew run
-                  popd
       - run:
           name: Build integration test
           command: |
@@ -159,11 +161,11 @@ commands:
           key: v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
           paths:
             - ~/.gradle
+      - edit_integration_test_conf_files
       - run:
-          name: Edit conf
+          name: Create license file
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test/conf
-            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" dslDataStore.properties
             echo $FLUXENGINE_LICENSE_ENCODED | base64 -d > license.lic
             popd
       - run:
@@ -217,15 +219,14 @@ commands:
             - run:
                 name: Publish event before deployment
                 command: |
-                  # Empty subscription
-                  gcloud pubsub subscriptions pull projects/${PROJECT}/subscriptions/${SUBSCRIPTION} --limit=1000 --auto-ack
                   # Publish event
                   # Temporarily disable pipefail because "cat /dev/urandom" raises it
                   set +o pipefail
                   TEST_PERSIST_STRING=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -1 | tr -d '\n'`
                   set -o pipefail
                   echo -n $TEST_PERSIST_STRING > ~/state-engine/test_persist_string.txt
-                  gcloud pubsub topics publish projects/${PROJECT}/topics/${TOPIC} --message="[{\"eventName\":\"Subscriptionイベント\",\"namespace\":\"subscription/イベントの文字列をそのまま永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"S01\",\"文字列\":\"${TEST_PERSIST_STRING}\"}}]"
+                  PUBSUB_NAME=integration-test_${CIRCLE_WORKFLOW_ID}
+                  gcloud pubsub topics publish projects/${PROJECT}/topics/${PUBSUB_NAME} --message="[{\"eventName\":\"Subscriptionイベント\",\"namespace\":\"subscription/イベントの文字列をそのまま永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"S01\",\"文字列\":\"${TEST_PERSIST_STRING}\"}}]"
                 background: true
       - edit_integration_test_conf_files
       - run:
@@ -237,13 +238,14 @@ commands:
           command: |
             if [ "<< parameters.persisterdb >>" = "memorystore" ]; then
               # Wait for Memorystore instance to startup
-              while ! gcloud redis instances describe integration-test --region=asia-northeast1 | grep 'host: '; do
+              REDIS_INSTANCE_NAME=integration-test_${CIRCLE_WORKFLOW_ID}
+              while ! gcloud redis instances describe ${REDIS_INSTANCE_NAME} --region=asia-northeast1 | grep 'host: '; do
                 sleep 10
               done
               pushd ~/fdsl-test/fluxengine-integration-test/conf
               echo -e "\n" >> fluxengine.properties
-              gcloud redis instances describe integration-test --region=asia-northeast1 | grep 'host: ' | sed -e 's/host: /persister.memorystore.host=/' >> fluxengine.properties
-              gcloud redis instances describe integration-test --region=asia-northeast1 | grep 'port: ' | sed -e 's/port: /persister.memorystore.port=/' >> fluxengine.properties
+              gcloud redis instances describe ${REDIS_INSTANCE_NAME} --region=asia-northeast1 | grep 'host: ' | sed -e 's/host: /persister.memorystore.host=/' >> fluxengine.properties
+              gcloud redis instances describe ${REDIS_INSTANCE_NAME} --region=asia-northeast1 | grep 'port: ' | sed -e 's/port: /persister.memorystore.port=/' >> fluxengine.properties
               popd
             fi
       - run:
@@ -328,11 +330,6 @@ commands:
             - v2-gradle-{{ .Branch }}-
             - v2-gradle-
       - run:
-          name: Confirm that only one streaming job is runnung
-          command: |
-            JOBS=`gcloud dataflow jobs list --status=active --filter="TYPE=Streaming" | tail -n +2 | wc -l`
-            test $JOBS -eq 1
-      - run:
           name: Wait for SQL instance to startup
           command: |
             {
@@ -353,7 +350,7 @@ commands:
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test
             chmod +x gradlew
-            env FLUXENGINE_INTEGRATION_TEST_DATAFLOW_STREAM=true FLUXENGINE_INTEGRATION_TEST_DATAFLOW_BATCH=true TEST_PERSIST_USERID=S01 TEST_PERSIST_STRING=`cat ~/state-engine/test_persist_string.txt` ./gradlew test --tests jp.co.fluxengine.example.dataflowtest*
+            env FLUXENGINE_INTEGRATION_TEST_DATAFLOW_STREAM=true FLUXENGINE_INTEGRATION_TEST_DATAFLOW_BATCH=true TEST_PERSIST_USERID=S01 TEST_PERSIST_STRING=`cat ~/state-engine/test_persist_string.txt` SERVICE_NAME=${CIRCLE_WORKFLOW_ID} ./gradlew test --tests jp.co.fluxengine.example.dataflowtest*
             popd
       - run:
           name: Stop Dataflow job
@@ -444,10 +441,37 @@ commands:
       - run:
           name: Stop DB
           command: |
+            {
+              PUBSUB_NAME=integration-test_${CIRCLE_WORKFLOW_ID}
+              gcloud pubsub subscriptions delete ${PUBSUB_NAME}
+              gcloud pubsub topics delete ${PUBSUB_NAME}
+            } &
+            pidPubsub=$!
             gcloud sql instances patch integration-test --activation-policy=NEVER --async
-            gcloud --quiet redis instances delete integration-test --region=asia-northeast1 --async
+            REDIS_INSTANCE_NAME=integration-test_${CIRCLE_WORKFLOW_ID}
+            gcloud --quiet redis instances delete ${REDIS_INSTANCE_NAME} --region=asia-northeast1 --async
+            wait $pidPubsub
           when: on_fail
 jobs:
+  start_db:
+    executor: my-gcp
+    steps:
+      - check_update:
+          dir: "fluxengine-integration-test .circleci"
+      - prepare_gcp_and_locale
+      - run:
+          name: Start DB instances
+          command: |
+            {
+              PUBSUB_NAME=integration-test_${CIRCLE_WORKFLOW_ID}
+              gcloud pubsub topics create ${PUBSUB_NAME}
+              gcloud pubsub subscriptions create ${PUBSUB_NAME}
+            } &
+            pidPubsub=$!
+            gcloud sql instances patch integration-test --activation-policy=ALWAYS --async
+            REDIS_INSTANCE_NAME=integration-test_${CIRCLE_WORKFLOW_ID}
+            gcloud redis instances create ${REDIS_INSTANCE_NAME} --size=1 --region=asia-northeast1 --zone=asia-northeast1-b --redis-version=redis_4_0 --async
+            wait $pidPubsub
   build_engine:
     executor: my-java
     steps:
@@ -553,17 +577,6 @@ jobs:
           destination: test
       - store_test_results:
           path: ~/fdsl-test/fluxengine-local-test/build/test-results
-  start_db:
-    executor: my-gcp
-    steps:
-      - check_update:
-          dir: "fluxengine-integration-test .circleci"
-      - prepare_gcp_and_locale
-      - run:
-          name: Start DB instances
-          command: |
-            gcloud sql instances patch integration-test --activation-policy=ALWAYS --async
-            gcloud redis instances create integration-test --size=1 --region=asia-northeast1 --zone=asia-northeast1-b --redis-version=redis_4_0 --async || ! gcloud redis instances describe integration-test --region=asia-northeast1 | grep 'state: DELETING'
   deploy_batch_servlet:
     executor: my-gcp
     steps:
@@ -577,8 +590,11 @@ jobs:
           name: Edit conf file
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test-batch-servlet/src/main/webapp/WEB-INF
-            sed -i -e "s/\[YOUR_BUCKET_NAME\]/${BUCKET}/g" job.properties
             sed -i -e "s/\[PROJECT\]/${PROJECT}/g" job.properties
+            TEMPLATE_LOCATION=gs://${BUCKET}/templates/MyTemplate_${CIRCLE_WORKFLOW_ID}
+            sed -i -e "s@templateLocation=.*@templateLocation=${TEMPLATE_LOCATION}@" job.properties
+            SERVICE_NAME=${CIRCLE_WORKFLOW_ID}
+            sed -i -e "s@<service>.*?</service>@<service>${SERVICE_NAME}</service>@" appengine-web.xml
             popd
       - run:
           name: Replace jar
@@ -596,7 +612,7 @@ jobs:
           name: Deploy batch servlet
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test-batch-servlet
-            mvn clean package appengine:deploy
+            mvn package appengine:deploy
             popd
       - save_cache:
           key: v2-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
@@ -608,7 +624,6 @@ jobs:
       - register_dsl:
           dsldirectory: "dsl"
           dslversion: 1
-          cleandsl: true
   deploy_dataflow_jobs_datastore:
     executor: my-gcp
     steps:
@@ -670,10 +685,19 @@ jobs:
           name: Edit Housekeep conf files
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test-housekeep
-            sed -i -e "s/\[YOUR_BUCKET_NAME\]/${BUCKET}/g" fluxengine_housekeep.env
+            HOUSEKEEP_JOB_STAGING_LOCATION=gs://${BUCKET}/staging_${CIRCLE_WORKFLOW_ID}
+            sed -i -e "s@HOUSEKEEP_JOB_STAGING_LOCATION=.*@HOUSEKEEP_JOB_STAGING_LOCATION=${HOUSEKEEP_JOB_STAGING_LOCATION}@" fluxengine_housekeep.env
+
+            NAMESPACE=INTEGRATION_TEST_${CIRCLE_WORKFLOW_ID}
+            sed -i -e "s/namespace=.*/namespace=${NAMESPACE}/" src/main/resources/persisterDataStore.properties
             sed -i -e "s/\[PROJECT\]/${PROJECT}/g" src/main/resources/persisterDataStore.properties
+
             sed -i -e "s/\[PROJECT\]/${PROJECT}/g" src/main/webapp/WEB-INF/housekeepJob.properties
-            sed -i -e "s/\[YOUR_BUCKET_NAME\]/${BUCKET}/g" src/main/webapp/WEB-INF/housekeepJob.properties
+            TEMPLATE_LOCATION=gs://${BUCKET}/templates/housekeepJob_${CIRCLE_WORKFLOW_ID}
+            sed -i -e "s@templateLocation=.*@templateLocation=${TEMPLATE_LOCATION}@" src/main/webapp/WEB-INF/housekeepJob.properties
+
+            HOUSEKEEP_SERVICE_NAME=housekeep_${CIRCLE_WORKFLOW_ID}
+            sed -i -e "s@<service>.*?</service>@<service>${HOUSEKEEP_SERVICE_NAME}</service>@" src/main/webapp/WEB-INF/appengine-web.xml
             popd
       - run:
           name: Copy Housekeep conf files
@@ -734,7 +758,7 @@ jobs:
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test
             chmod +x gradlew
-            env FLUXENGINE_INTEGRATION_TEST_HOUSEKEEP=true ./gradlew test --tests jp.co.fluxengine.example.housekeeptest.HousekeepTest
+            env FLUXENGINE_INTEGRATION_TEST_HOUSEKEEP=true HOUSEKEEP_SERVICE_NAME=housekeep_${CIRCLE_WORKFLOW_ID} ./gradlew test --tests jp.co.fluxengine.example.housekeeptest.HousekeepTest
             popd
       - save_cache:
           key: v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
@@ -753,7 +777,8 @@ jobs:
       - run:
           name: Delete App Engine service
           command: |
-            gcloud --quiet app services delete housekeep
+            HOUSEKEEP_SERVICE_NAME=housekeep_${CIRCLE_WORKFLOW_ID}
+            gcloud --quiet app services delete ${HOUSEKEEP_SERVICE_NAME}
           when: always
       - stop_db_on_fail
   deploy_dataflow_jobs_dsl_replacement:
@@ -831,15 +856,10 @@ jobs:
           name: Stop DB
           command: |
             gcloud sql instances patch integration-test --activation-policy=NEVER --async
-            gcloud --quiet redis instances delete integration-test --region=asia-northeast1 --async
-          when: always
-      - run:
-          name: Delete App Engine instances
-          command: |
-            while read service version id rest; do
-              gcloud --quiet app instances delete ${id} --service=${service} --version=${version} &
-            done < <(gcloud app instances list | tail -n +2)
-            wait
+            REDIS_INSTANCE_NAME=integration-test_${CIRCLE_WORKFLOW_ID}
+            gcloud --quiet redis instances delete ${REDIS_INSTANCE_NAME} --region=asia-northeast1 --async
+            SERVICE_NAME=${CIRCLE_WORKFLOW_ID}
+            gcloud --quiet app services delete ${SERVICE_NAME}
           when: always
 workflows:
   version: 2

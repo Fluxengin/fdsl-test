@@ -6,6 +6,7 @@ import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.apache.commons.lang.StringUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -30,7 +31,7 @@ public class DataflowBatchTest {
     private static PersisterExtractor extractor;
 
     @BeforeAll
-    static void setup() throws NoSuchMethodException, IOException, InstantiationException, IllegalAccessException, InvocationTargetException, ClassNotFoundException {
+    static void setup() throws NoSuchMethodException, IOException, IllegalAccessException, InvocationTargetException, ClassNotFoundException {
         extractor = PersisterExtractor.getInstance();
     }
 
@@ -47,7 +48,13 @@ public class DataflowBatchTest {
                 .readTimeout(60, TimeUnit.SECONDS)
                 .writeTimeout(60, TimeUnit.SECONDS)
                 .build();
-        HttpUrl url = HttpUrl.parse("https://" + extractor.getProjectId() + ".appspot.com/fluxengine-dataflow-batch").newBuilder()
+
+        String serviceName = System.getenv("SERVICE_NAME");
+        // SERVICE_NAME が空である場合を考慮するのは、古い config.yml との互換性のため。
+        // state-engine, fdsl-test がともにテストの並列化対応の config.yml を採用していれば、考慮不要
+        String hostPrefix = StringUtils.isEmpty(serviceName) ? "" : serviceName + "-dot-";
+
+        HttpUrl url = HttpUrl.parse("https://" + hostPrefix + extractor.getProjectId() + ".appspot.com/fluxengine-dataflow-batch").newBuilder()
                 .addQueryParameter("event", "rule/日別データ検証#日別パケットイベント")
                 .build();
         Request request = new Request.Builder()

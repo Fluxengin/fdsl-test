@@ -2,15 +2,12 @@ package jp.co.fluxengine.example.dataflowtest;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import jp.co.fluxengine.example.CloudSqlPool;
 import jp.co.fluxengine.example.plugin.read.PublishDataReader;
 import jp.co.fluxengine.example.util.PersisterExtractor;
 import jp.co.fluxengine.example.util.Utils;
 import jp.co.fluxengine.stateengine.model.datom.Event;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.assertj.db.type.Changes;
-import org.assertj.db.type.Table;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.slf4j.Logger;
@@ -147,11 +144,6 @@ public class DataflowTest {
 
     @Test
     void testEffector() throws Exception {
-        Table targetTable = new Table(CloudSqlPool.getDataSource(), "integration_test_effector");
-        Changes changes = new Changes(targetTable);
-
-        changes.setStartPointNow();
-
         // RemoteTestRunnerを使ってデータを流す
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSSSS");
         String message = "イベント送信タイムスタンプ: " + LocalDateTime.now().format(formatter);
@@ -164,15 +156,19 @@ public class DataflowTest {
         Thread.sleep(40000);
         LOG.info("testEffector 待機終了");
 
-        changes.setEndPointNow();
-
         // 結果のassertionを行う
-        org.assertj.db.api.Assertions.assertThat(changes)
-                .ofCreationOnTable("integration_test_effector").hasNumberOfChanges(1)
-                .changeOnTable("integration_test_effector")
-                .isCreation()
-                .rowAtEndPoint()
-                .value("message").isEqualTo(message);
+        Utils.withTestDb(testDbConnection -> {
+            // message を持つ行が、1行あればOK
+            PreparedStatement selectCount = testDbConnection.prepareStatement(
+                    "SELECT COUNT(*) FROM integration_test_effector WHERE message = ?"
+            );
+            selectCount.setString(1, message);
+
+            try (ResultSet countResult = selectCount.executeQuery()) {
+                assertThat(countResult.next()).isTrue();
+                assertThat(countResult.getInt(1)).isEqualTo(1);
+            }
+        });
     }
 
     @Test

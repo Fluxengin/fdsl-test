@@ -20,6 +20,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 // 普段は実行されないようにし、
 // 環境変数"FLUXENGINE_INTEGRATION_TEST_MODE"が"WEBSERVICE"のときだけ実行できるようにしている
 // CI/CDで実行されることを想定したテストクラス
+
+// Web Service はいったん廃止になったが、このテストは念のために残しておく
+@Deprecated
 @EnabledIfEnvironmentVariable(named = "FLUXENGINE_INTEGRATION_TEST_WEBSERVICE", matches = "true|TRUE")
 public class WebServiceTest {
 
