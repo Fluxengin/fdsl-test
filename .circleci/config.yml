@@ -101,7 +101,7 @@ commands:
               sed -i -e "s/namespace=.*/namespace=${NAMESPACE}/" ${confFile}.properties
             done
 
-            TOTOPIC=projects/${project}/topics/integration-test_${CIRCLE_WORKFLOW_ID}
+            TOTOPIC=projects/${PROJECT}/topics/integration-test_${CIRCLE_WORKFLOW_ID}
             sed -i -e "s@totopic=.*@totopic=${TOTOPIC}@" publisher.properties
 
             sed -i -e "s/\[CLOUD_SQL_INSTANCE_NAME\]/${CLOUD_SQL_INSTANCE_NAME}/g" cloud-sql.properties
@@ -595,6 +595,7 @@ jobs:
             sed -i -e "s@templateLocation=.*@templateLocation=${TEMPLATE_LOCATION}@" job.properties
             SERVICE_NAME=${CIRCLE_WORKFLOW_ID}
             sed -i -e "s@<service>.*?</service>@<service>${SERVICE_NAME}</service>@" appengine-web.xml
+            cat appengine-web.xml
             popd
       - run:
           name: Replace jar
