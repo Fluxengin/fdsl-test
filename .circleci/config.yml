@@ -238,7 +238,7 @@ commands:
           command: |
             if [ "<< parameters.persisterdb >>" = "memorystore" ]; then
               # Wait for Memorystore instance to startup
-              REDIS_INSTANCE_NAME=integration-test_${CIRCLE_WORKFLOW_ID}
+              REDIS_INSTANCE_NAME=i-${CIRCLE_WORKFLOW_ID}
               while ! gcloud redis instances describe ${REDIS_INSTANCE_NAME} --region=asia-northeast1 | grep 'host: '; do
                 sleep 10
               done
@@ -448,7 +448,7 @@ commands:
             } &
             pidPubsub=$!
             gcloud sql instances patch integration-test --activation-policy=NEVER --async
-            REDIS_INSTANCE_NAME=integration-test_${CIRCLE_WORKFLOW_ID}
+            REDIS_INSTANCE_NAME=i-${CIRCLE_WORKFLOW_ID}
             gcloud --quiet redis instances delete ${REDIS_INSTANCE_NAME} --region=asia-northeast1 --async
             wait $pidPubsub
           when: on_fail
@@ -465,11 +465,11 @@ jobs:
             {
               PUBSUB_NAME=integration-test_${CIRCLE_WORKFLOW_ID}
               gcloud pubsub topics create ${PUBSUB_NAME}
-              gcloud pubsub subscriptions create ${PUBSUB_NAME}
+              gcloud pubsub subscriptions create ${PUBSUB_NAME} --topic=${PUBSUB_NAME}
             } &
             pidPubsub=$!
             gcloud sql instances patch integration-test --activation-policy=ALWAYS --async
-            REDIS_INSTANCE_NAME=integration-test_${CIRCLE_WORKFLOW_ID}
+            REDIS_INSTANCE_NAME=i-${CIRCLE_WORKFLOW_ID}
             gcloud redis instances create ${REDIS_INSTANCE_NAME} --size=1 --region=asia-northeast1 --zone=asia-northeast1-b --redis-version=redis_4_0 --async
             wait $pidPubsub
   build_engine:
@@ -855,11 +855,21 @@ jobs:
       - run:
           name: Stop DB
           command: |
+            {
+              PUBSUB_NAME=integration-test_${CIRCLE_WORKFLOW_ID}
+              gcloud pubsub subscriptions delete ${PUBSUB_NAME}
+              gcloud pubsub topics delete ${PUBSUB_NAME}
+            } &
+            pidPubsub=$!
+
             gcloud sql instances patch integration-test --activation-policy=NEVER --async
-            REDIS_INSTANCE_NAME=integration-test_${CIRCLE_WORKFLOW_ID}
+            REDIS_INSTANCE_NAME=i-${CIRCLE_WORKFLOW_ID}
             gcloud --quiet redis instances delete ${REDIS_INSTANCE_NAME} --region=asia-northeast1 --async
+
             SERVICE_NAME=${CIRCLE_WORKFLOW_ID}
             gcloud --quiet app services delete ${SERVICE_NAME}
+
+            wait $pidPubsub
           when: always
 workflows:
   version: 2
