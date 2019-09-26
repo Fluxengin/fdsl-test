@@ -594,8 +594,7 @@ jobs:
             TEMPLATE_LOCATION=gs://${BUCKET}/templates/MyTemplate_${CIRCLE_WORKFLOW_ID}
             sed -i -e "s@templateLocation=.*@templateLocation=${TEMPLATE_LOCATION}@" job.properties
             SERVICE_NAME=${CIRCLE_WORKFLOW_ID}
-            sed -i -e "s@<service>.*?</service>@<service>${SERVICE_NAME}</service>@" appengine-web.xml
-            cat appengine-web.xml
+            sed -i -e "s@<service>.*\?</service>@<service>${SERVICE_NAME}</service>@" appengine-web.xml
             popd
       - run:
           name: Replace jar
@@ -687,18 +686,19 @@ jobs:
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test-housekeep
             HOUSEKEEP_JOB_STAGING_LOCATION=gs://${BUCKET}/staging_${CIRCLE_WORKFLOW_ID}
+            TEMPLATE_LOCATION=gs://${BUCKET}/templates/housekeepJob_${CIRCLE_WORKFLOW_ID}
             sed -i -e "s@HOUSEKEEP_JOB_STAGING_LOCATION=.*@HOUSEKEEP_JOB_STAGING_LOCATION=${HOUSEKEEP_JOB_STAGING_LOCATION}@" fluxengine_housekeep.env
+            sed -i -e "s@TEMPLATE_LOCATION=.*@TEMPLATE_LOCATION=${TEMPLATE_LOCATION}@" fluxengine_housekeep.env
 
             NAMESPACE=INTEGRATION_TEST_${CIRCLE_WORKFLOW_ID}
             sed -i -e "s/namespace=.*/namespace=${NAMESPACE}/" src/main/resources/persisterDataStore.properties
             sed -i -e "s/\[PROJECT\]/${PROJECT}/g" src/main/resources/persisterDataStore.properties
 
             sed -i -e "s/\[PROJECT\]/${PROJECT}/g" src/main/webapp/WEB-INF/housekeepJob.properties
-            TEMPLATE_LOCATION=gs://${BUCKET}/templates/housekeepJob_${CIRCLE_WORKFLOW_ID}
             sed -i -e "s@templateLocation=.*@templateLocation=${TEMPLATE_LOCATION}@" src/main/webapp/WEB-INF/housekeepJob.properties
 
             HOUSEKEEP_SERVICE_NAME=housekeep_${CIRCLE_WORKFLOW_ID}
-            sed -i -e "s@<service>.*?</service>@<service>${HOUSEKEEP_SERVICE_NAME}</service>@" src/main/webapp/WEB-INF/appengine-web.xml
+            sed -i -e "s@<service>.*\?</service>@<service>${HOUSEKEEP_SERVICE_NAME}</service>@" src/main/webapp/WEB-INF/appengine-web.xml
             popd
       - run:
           name: Copy Housekeep conf files
