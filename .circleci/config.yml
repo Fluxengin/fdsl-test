@@ -433,11 +433,11 @@ commands:
           destination: test
       - store_test_results:
           path: ~/fdsl-test/fluxengine-integration-test/build/test-results
-  stop_db_on_fail:
-    description: "Stop DB instances when failed"
+  delete_cloud_resources_on_fail:
+    description: "Delete GCP resources when failed"
     steps:
       - run:
-          name: Stop DB
+          name: Delete GCP resources
           command: |
             {
               PUBSUB_NAME=integration-test_${CIRCLE_WORKFLOW_ID}
@@ -445,31 +445,53 @@ commands:
               gcloud pubsub topics delete ${PUBSUB_NAME}
             } &
             pidPubsub=$!
-            gcloud sql instances patch integration-test --activation-policy=NEVER --async
+
+            {
+              # Stop SQL instance only when no other test is runnung
+              FLAG_FILE_LOCATION=gs://${BUCKET}/running/${CIRCLE_WORKFLOW_ID}
+              gsutil rm ${FLAG_FILE_LOCATION}
+              gsutil ls gs://${BUCKET}/running/* || gcloud sql instances patch integration-test --activation-policy=NEVER --async
+            } &
+            pidStopSql=$!
+
             REDIS_INSTANCE_NAME=i-${CIRCLE_WORKFLOW_ID}
             gcloud --quiet redis instances delete ${REDIS_INSTANCE_NAME} --region=asia-northeast1 --async
-            wait $pidPubsub
+
+            SERVICE_NAME=${CIRCLE_WORKFLOW_ID}
+            gcloud --quiet app services delete ${SERVICE_NAME}
+
+            wait $pidPubsub $pidStopSql
           when: on_fail
 jobs:
-  start_db:
+  create_cloud_resources:
     executor: my-gcp
     steps:
       - check_update:
           dir: "fluxengine-integration-test .circleci"
       - prepare_gcp_and_locale
       - run:
-          name: Start DB instances
+          name: Create GCP resources
           command: |
+            # Create running flag
+            {
+              touch dummy.txt
+              FLAG_FILE_LOCATION=gs://${BUCKET}/running/${CIRCLE_WORKFLOW_ID}
+              gsutil cp dummy.txt ${FLAG_FILE_LOCATION}
+            } &
+            pidFlag=$!
+
             {
               PUBSUB_NAME=integration-test_${CIRCLE_WORKFLOW_ID}
               gcloud pubsub topics create ${PUBSUB_NAME}
               gcloud pubsub subscriptions create ${PUBSUB_NAME} --topic=${PUBSUB_NAME}
             } &
             pidPubsub=$!
+
             gcloud sql instances patch integration-test --activation-policy=ALWAYS --async
             REDIS_INSTANCE_NAME=i-${CIRCLE_WORKFLOW_ID}
             gcloud redis instances create ${REDIS_INSTANCE_NAME} --size=1 --region=asia-northeast1 --zone=asia-northeast1-b --redis-version=redis_4_0 --async
-            wait $pidPubsub
+
+            wait $pidFlag $pidPubsub
   build_engine:
     executor: my-java
     steps:
@@ -633,7 +655,7 @@ jobs:
     steps:
       - test_dataflow:
           persisterdb: datastore
-      - stop_db_on_fail
+      - delete_cloud_resources_on_fail
   post_housekeep_test_data:
     executor: my-gcp
     steps:
@@ -664,13 +686,13 @@ jobs:
       - deploy_dataflow_jobs:
           persisterdb: memorystore
           presubmitevent: true
-      - stop_db_on_fail
+      - delete_cloud_resources_on_fail
   test_dataflow_memorystore:
     executor: my-gcp
     steps:
       - test_dataflow:
           persisterdb: memorystore
-      - stop_db_on_fail
+      - delete_cloud_resources_on_fail
   test_housekeep:
     executor: my-gcp
     steps:
@@ -780,21 +802,21 @@ jobs:
             HOUSEKEEP_SERVICE_NAME=h-${CIRCLE_WORKFLOW_ID}
             gcloud --quiet app services delete ${HOUSEKEEP_SERVICE_NAME}
           when: always
-      - stop_db_on_fail
+      - delete_cloud_resources_on_fail
   deploy_dataflow_jobs_dsl_replacement:
     executor: my-gcp
     steps:
       - deploy_dataflow_jobs:
           persisterdb: datastore
           presubmitevent: false
-      - stop_db_on_fail
+      - delete_cloud_resources_on_fail
   register_dsl_before:
     executor: my-gcp
     steps:
       - register_dsl:
           dsldirectory: "dsl_before"
           dslversion: 2
-      - stop_db_on_fail
+      - delete_cloud_resources_on_fail
   test_dsl_before:
     executor: my-gcp
     steps:
@@ -809,7 +831,7 @@ jobs:
             done < ~/state-engine/dataflow_job_id.txt
             rm -f ~/state-engine/dataflow_job_id.txt
           when: on_fail
-      - stop_db_on_fail
+      - delete_cloud_resources_on_fail
   register_dsl_after:
     executor: my-gcp
     steps:
@@ -822,7 +844,7 @@ jobs:
             echo "dsl_after registered at $(date +'%Y/%m/%d %H:%M:%S')"
             sleep 60
           when: on_success
-      - stop_db_on_fail
+      - delete_cloud_resources_on_fail
   register_dsl_dummy:
     executor: my-gcp
     steps:
@@ -837,7 +859,7 @@ jobs:
             echo "dsl_dummy registered at $(date +'%Y/%m/%d %H:%M:%S')"
             sleep 60
           when: on_success
-      - stop_db_on_fail
+      - delete_cloud_resources_on_fail
   test_dsl_after:
     executor: my-gcp
     steps:
@@ -853,7 +875,7 @@ jobs:
             rm -f ~/state-engine/dataflow_job_id.txt
           when: always
       - run:
-          name: Stop DB
+          name: Delete GCP resources
           command: |
             {
               PUBSUB_NAME=integration-test_${CIRCLE_WORKFLOW_ID}
@@ -862,14 +884,21 @@ jobs:
             } &
             pidPubsub=$!
 
-            gcloud sql instances patch integration-test --activation-policy=NEVER --async
+            {
+              # Stop SQL instance only when no other test is runnung
+              FLAG_FILE_LOCATION=gs://${BUCKET}/running/${CIRCLE_WORKFLOW_ID}
+              gsutil rm ${FLAG_FILE_LOCATION}
+              gsutil ls gs://${BUCKET}/running/* || gcloud sql instances patch integration-test --activation-policy=NEVER --async
+            } &
+            pidStopSql=$!
+
             REDIS_INSTANCE_NAME=i-${CIRCLE_WORKFLOW_ID}
             gcloud --quiet redis instances delete ${REDIS_INSTANCE_NAME} --region=asia-northeast1 --async
 
             SERVICE_NAME=${CIRCLE_WORKFLOW_ID}
             gcloud --quiet app services delete ${SERVICE_NAME}
 
-            wait $pidPubsub
+            wait $pidPubsub $pidStopSql
           when: always
 workflows:
   version: 2
@@ -895,7 +924,7 @@ workflows:
             tags:
               only:
                 - /^ci.*/
-      - start_db:
+      - create_cloud_resources:
           filters:
             branches:
               only:
@@ -928,7 +957,7 @@ workflows:
                 - /^ci.*/
       - deploy_dataflow_jobs_datastore:
           requires:
-            - build_engine
+            - register_main_dsl
           filters:
             branches:
               only:
@@ -940,9 +969,8 @@ workflows:
       - test_dataflow_datastore:
           requires:
             - deploy_batch_servlet
-            - register_main_dsl
             - deploy_dataflow_jobs_datastore
-            - start_db
+            - create_cloud_resources
           filters:
             branches:
               only:
