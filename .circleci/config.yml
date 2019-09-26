@@ -2,8 +2,6 @@
 # GCLOUD_SERVICE_KEY: contents of JSON key file of service account
 # PROJECT: GCP project name to deploy
 # BUCKET: Storage bucket name to use for deployment
-# TOPIC: Pub/Sub topic name to use for deployment
-# SUBSCRIPTION: Pub/Sub subscription name for dataflow to use for deployment
 # FLUXENGINE_LICENSE_ENCODED: base64-encoded Fluxengine license file
 # CLOUD_SQL_INSTANCE_NAME: Cloud SQL instance name to store effector result and memorystore data
 # DB_USER: Username for Cloud SQL

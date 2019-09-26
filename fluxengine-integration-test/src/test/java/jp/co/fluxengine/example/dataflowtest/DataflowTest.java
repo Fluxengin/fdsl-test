@@ -348,7 +348,7 @@ public class DataflowTest {
         extractor.publishEvent("timezone/現在時刻を永続化", "現在時刻イベント", null, null);
 
         LOG.info("testTimezone 待機開始");
-        Thread.sleep(30000);
+        Thread.sleep(40000);
         LOG.info("testTimezone 待機終了");
 
         Map<String, Object> persisterMap = extractor.getIdMap("[timezone]").getPersisterMap("timezone/現在時刻を永続化#現在時刻永続化");
