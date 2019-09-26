@@ -698,7 +698,7 @@ jobs:
             sed -i -e "s/\[PROJECT\]/${PROJECT}/g" src/main/webapp/WEB-INF/housekeepJob.properties
             sed -i -e "s@templateLocation=.*@templateLocation=${TEMPLATE_LOCATION}@" src/main/webapp/WEB-INF/housekeepJob.properties
 
-            HOUSEKEEP_SERVICE_NAME=housekeep-${CIRCLE_WORKFLOW_ID}
+            HOUSEKEEP_SERVICE_NAME=h-${CIRCLE_WORKFLOW_ID}
             sed -i -e "s@<service>.*\?</service>@<service>${HOUSEKEEP_SERVICE_NAME}</service>@" src/main/webapp/WEB-INF/appengine-web.xml
             popd
       - run:
@@ -760,7 +760,7 @@ jobs:
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test
             chmod +x gradlew
-            env FLUXENGINE_INTEGRATION_TEST_HOUSEKEEP=true HOUSEKEEP_SERVICE_NAME=housekeep-${CIRCLE_WORKFLOW_ID} ./gradlew test --tests jp.co.fluxengine.example.housekeeptest.HousekeepTest
+            env FLUXENGINE_INTEGRATION_TEST_HOUSEKEEP=true HOUSEKEEP_SERVICE_NAME=h-${CIRCLE_WORKFLOW_ID} ./gradlew test --tests jp.co.fluxengine.example.housekeeptest.HousekeepTest
             popd
       - save_cache:
           key: v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-dsl-cleaner/build.gradle" }}
@@ -779,7 +779,7 @@ jobs:
       - run:
           name: Delete App Engine service
           command: |
-            HOUSEKEEP_SERVICE_NAME=housekeep-${CIRCLE_WORKFLOW_ID}
+            HOUSEKEEP_SERVICE_NAME=h-${CIRCLE_WORKFLOW_ID}
             gcloud --quiet app services delete ${HOUSEKEEP_SERVICE_NAME}
           when: always
       - stop_db_on_fail
