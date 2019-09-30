@@ -24,7 +24,7 @@ public class State {
   @Test
   @DslPath("persisterによる遷移")
   void transitionByPersister(String dslPath) {
-    // TODO 1.0.4では、なぜかNullPointerExceptionになる
+    // TODO NullPointerExceptionはなくなったが、解説待ち
     // https://trello.com/c/48sycPEc
 //    assertThat(testDslAndGetResults(dslPath))
 //        .hasSize(1)

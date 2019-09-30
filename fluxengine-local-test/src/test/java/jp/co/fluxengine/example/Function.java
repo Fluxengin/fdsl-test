@@ -1,11 +1,14 @@
 package jp.co.fluxengine.example;
 
+import static jp.co.fluxengine.apptest.TestUtils.testDsl;
 import static jp.co.fluxengine.apptest.TestUtils.testDslAndGetResults;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import jp.co.fluxengine.apptest.DslPath;
 import jp.co.fluxengine.apptest.DslPathResolver;
 import jp.co.fluxengine.apptest.TestResult;
+import jp.co.fluxengine.stateengine.exceptions.DslParserException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,9 +26,19 @@ public class Function {
   @Test
   @DslPath("リスト型の返り値")
   void listResult(String dslPath) {
+    assertThat(testDslAndGetResults(dslPath)).hasSize(2).allMatch(TestResult::isSucceeded);
+  }
+
+  @Test
+  @DslPath("リスト型の返り値_エラー")
+  void listResultError(String dslPath) {
     // TODO 1.0.4ではパースエラーになる
     // https://trello.com/c/U2cWGek3
-//    assertThat(testDslAndGetResults(dslPath)).hasSize(2).allMatch(TestResult::isSucceeded);
+    // エラーメッセージもおかしい
+    // https://trello.com/c/VqcS0Gpi
+//    assertThatThrownBy(() -> testDsl(dslPath))
+//            .isInstanceOf(DslParserException.class)
+//            .hasMessageContaining("「l1.filter(name.startsWith(\"a\"))」が解析できないため、「リスト型の返り値_エラー#l2」が定まりません");
   }
 
   @Nested
