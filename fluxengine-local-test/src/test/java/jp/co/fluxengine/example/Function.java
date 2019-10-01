@@ -34,11 +34,9 @@ public class Function {
   void listResultError(String dslPath) {
     // TODO 1.0.4ではパースエラーになる
     // https://trello.com/c/U2cWGek3
-    // エラーメッセージもおかしい
-    // https://trello.com/c/VqcS0Gpi
-//    assertThatThrownBy(() -> testDsl(dslPath))
-//            .isInstanceOf(DslParserException.class)
-//            .hasMessageContaining("「l1.filter(name.startsWith(\"a\"))」が解析できないため、「リスト型の返り値_エラー#l2」が定まりません");
+    assertThatThrownBy(() -> testDsl(dslPath))
+            .isInstanceOf(DslParserException.class)
+            .hasMessageContaining("「l1.filter(name.startsWith(\"a\"))」が解析できないため、「リスト型の返り値_エラー#l2」が定まりません");
   }
 
   @Nested
