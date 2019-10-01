@@ -36,4 +36,10 @@ public class Variant {
     void cache(String dslPath) {
         assertThat(testDslAndGetResults(dslPath)).hasSize(2).allMatch(TestResult::isSucceeded);
     }
+
+    @Test
+    @DslPath("条件分岐")
+    void conditionalBranches(String dslPath) {
+        assertThat(testDslAndGetResults(dslPath)).hasSize(3).allMatch(TestResult::isSucceeded);
+    }
 }

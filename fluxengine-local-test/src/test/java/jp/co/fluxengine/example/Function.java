@@ -51,9 +51,14 @@ public class Function {
 
     @Test
     @DslPath("組み込み関数")
-    void builtinFunction(String dslPath) {
+    void builtInFunction(String dslPath) {
       assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
     }
   }
 
+  @Test
+  @DslPath("組み込み関数")
+  void builtInFunctions(String dslPath) {
+    assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
+  }
 }
