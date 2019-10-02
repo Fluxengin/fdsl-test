@@ -439,28 +439,10 @@ commands:
       - run:
           name: Delete GCP resources
           command: |
-            {
-              PUBSUB_NAME=integration-test_${CIRCLE_WORKFLOW_ID}
-              gcloud pubsub subscriptions delete ${PUBSUB_NAME}
-              gcloud pubsub topics delete ${PUBSUB_NAME}
-            } &
-            pidPubsub=$!
-
-            {
-              # Stop SQL instance only when no other test is runnung
-              FLAG_FILE_LOCATION=gs://${BUCKET}/running/${CIRCLE_WORKFLOW_ID}
-              gsutil rm ${FLAG_FILE_LOCATION}
-              gsutil ls gs://${BUCKET}/running/* || gcloud sql instances patch integration-test --activation-policy=NEVER --async
-            } &
-            pidStopSql=$!
-
-            REDIS_INSTANCE_NAME=i-${CIRCLE_WORKFLOW_ID}
-            gcloud --quiet redis instances delete ${REDIS_INSTANCE_NAME} --region=asia-northeast1 --async
-
-            SERVICE_NAME=${CIRCLE_WORKFLOW_ID}
-            gcloud --quiet app services delete ${SERVICE_NAME}
-
-            wait $pidPubsub $pidStopSql
+            pushd ~/fdsl-test/fluxengine-integration-test
+            chmod +x cleanup.sh
+            ./cleanup.sh
+            popd
           when: on_fail
 jobs:
   create_cloud_resources:
@@ -874,32 +856,20 @@ jobs:
             done < ~/state-engine/dataflow_job_id.txt
             rm -f ~/state-engine/dataflow_job_id.txt
           when: always
+      - delete_cloud_resources_on_fail
+  cleanup:
+    executor: my-gcp
+    steps:
+      - check_update:
+          dir: "fluxengine-integration-test .circleci"
+      - prepare_gcp_and_locale
       - run:
           name: Delete GCP resources
           command: |
-            {
-              PUBSUB_NAME=integration-test_${CIRCLE_WORKFLOW_ID}
-              gcloud pubsub subscriptions delete ${PUBSUB_NAME}
-              gcloud pubsub topics delete ${PUBSUB_NAME}
-            } &
-            pidPubsub=$!
-
-            {
-              # Stop SQL instance only when no other test is runnung
-              FLAG_FILE_LOCATION=gs://${BUCKET}/running/${CIRCLE_WORKFLOW_ID}
-              gsutil rm ${FLAG_FILE_LOCATION}
-              gsutil ls gs://${BUCKET}/running/* || gcloud sql instances patch integration-test --activation-policy=NEVER --async
-            } &
-            pidStopSql=$!
-
-            REDIS_INSTANCE_NAME=i-${CIRCLE_WORKFLOW_ID}
-            gcloud --quiet redis instances delete ${REDIS_INSTANCE_NAME} --region=asia-northeast1 --async
-
-            SERVICE_NAME=${CIRCLE_WORKFLOW_ID}
-            gcloud --quiet app services delete ${SERVICE_NAME}
-
-            wait $pidPubsub $pidStopSql
-          when: always
+            pushd ~/fdsl-test/fluxengine-integration-test
+            chmod +x cleanup.sh
+            ./cleanup.sh
+            popd
 workflows:
   version: 2
   deploy_dsl_test:
@@ -1089,6 +1059,17 @@ workflows:
           requires:
             - register_dsl_after
             - register_dsl_dummy
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - cleanup:
+          requires:
+            - test_dsl_after
           filters:
             branches:
               only:
