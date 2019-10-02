@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 {
   pushd ~/fdsl-test/datastore-cleaner
