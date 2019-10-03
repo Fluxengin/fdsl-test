@@ -53,6 +53,21 @@ public class Method {
     void contains(String dslPath) {
       assertThat(testDslAndGetResults(dslPath)).hasSize(3).allMatch(TestResult::isSucceeded);
     }
+
+    @Test
+    @DslPath("join")
+    void join(String dslPath) {
+      assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
+    }
+
+    @Test
+    @DslPath("filter")
+    void filter(String dslPath) {
+      // TODO 1.1.0
+      // https://trello.com/c/vUUsLWkb
+      // コメントアウトしている l3 が期待通りではない
+      assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
+    }
   }
 
   @Nested
