@@ -23,10 +23,18 @@ pidPubsub=$!
 } &
 pidStopSql=$!
 
+{
+  STAGING_DIRECTORY=gs://fluxengine-integration-test/staging_${CIRCLE_WORKFLOW_ID}
+  TEMPLATE_FILE=gs://fluxengine-integration-test/templates/MyTemplate_${CIRCLE_WORKFLOW_ID}
+  HOUSEKEEP_TEMPLATE_FILE=gs://fluxengine-integration-test/templates/housekeepJob_${CIRCLE_WORKFLOW_ID}
+  gsutil -m rm -r ${STAGING_DIRECTORY} ${TEMPLATE_FILE} ${HOUSEKEEP_TEMPLATE_FILE}
+} &
+pidStorage=$!
+
 REDIS_INSTANCE_NAME=i-${CIRCLE_WORKFLOW_ID}
 gcloud --quiet redis instances delete ${REDIS_INSTANCE_NAME} --region=asia-northeast1 --async
 
 SERVICE_NAME=${CIRCLE_WORKFLOW_ID}
 gcloud --quiet app services delete ${SERVICE_NAME}
 
-wait $pidDatastore $pidPubsub $pidStopSql
+wait $pidDatastore $pidPubsub $pidStopSql $pidStorage
