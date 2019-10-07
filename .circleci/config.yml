@@ -74,32 +74,35 @@ commands:
             wait $pidSetLocale
   edit_integration_test_conf_files:
     description: "Replace placeholders in conf and env files of integration test with environment variables"
+    parameters:
+      resourcenumber:
+        type: integer
     steps:
       - run:
           name: Edit conf files
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test/conf
 
-            TEMP_LOCATION=gs://${BUCKET}/temp_${CIRCLE_WORKFLOW_ID}
+            TEMP_LOCATION=gs://${BUCKET}/temp<< parameters.resourcenumber >>_${CIRCLE_WORKFLOW_ID}
             sed -i -e "s@TEMP_LOCATION=.*@TEMP_LOCATION=${TEMP_LOCATION}@" dataflow_job_publisher_sample.env
 
-            JOB_STAGING_LOCATION=gs://${BUCKET}/staging_${CIRCLE_WORKFLOW_ID}
+            JOB_STAGING_LOCATION=gs://${BUCKET}/staging<< parameters.resourcenumber >>_${CIRCLE_WORKFLOW_ID}
             sed -i -e "s@BATCH_JOB_STAGING_LOCATION=.*@BATCH_JOB_STAGING_LOCATION=${JOB_STAGING_LOCATION}@" dataflow_job_publisher_sample.env
             sed -i -e "s@STREAM_JOB_STAGING_LOCATION=.*@STREAM_JOB_STAGING_LOCATION=${JOB_STAGING_LOCATION}@" dataflow_job_publisher_sample.env
 
-            TEMPLATE_LOCATION=gs://${BUCKET}/templates/MyTemplate_${CIRCLE_WORKFLOW_ID}
+            TEMPLATE_LOCATION=gs://${BUCKET}/templates/MyTemplate<< parameters.resourcenumber >>_${CIRCLE_WORKFLOW_ID}
             sed -i -e "s@TEMPLATE_LOCATION=.*@TEMPLATE_LOCATION=${TEMPLATE_LOCATION}@" dataflow_job_publisher_sample.env
 
-            FROM_SUBSCRIPTION=projects/${PROJECT}/subscriptions/integration-test_${CIRCLE_WORKFLOW_ID}
+            FROM_SUBSCRIPTION=projects/${PROJECT}/subscriptions/integration-test<< parameters.resourcenumber >>_${CIRCLE_WORKFLOW_ID}
             sed -i -e "s@FROM_SUBSCRIPTION=.*@FROM_SUBSCRIPTION=${FROM_SUBSCRIPTION}@" dataflow_job_publisher_sample.env
 
-            NAMESPACE=INTEGRATION_TEST_${CIRCLE_WORKFLOW_ID}
+            NAMESPACE=INTEGRATION_TEST<< parameters.resourcenumber >>_${CIRCLE_WORKFLOW_ID}
             for confFile in dslDataStore effectorDataStore illegalEventDataStore persisterDataStore publisher; do
               sed -i -e "s/\[PROJECT\]/${PROJECT}/g" ${confFile}.properties
               sed -i -e "s/namespace=.*/namespace=${NAMESPACE}/" ${confFile}.properties
             done
 
-            TOTOPIC=projects/${PROJECT}/topics/integration-test_${CIRCLE_WORKFLOW_ID}
+            TOTOPIC=projects/${PROJECT}/topics/integration-test<< parameters.resourcenumber >>_${CIRCLE_WORKFLOW_ID}
             sed -i -e "s@totopic=.*@totopic=${TOTOPIC}@" publisher.properties
 
             sed -i -e "s/\[CLOUD_SQL_INSTANCE_NAME\]/${CLOUD_SQL_INSTANCE_NAME}/g" cloud-sql.properties
@@ -117,6 +120,50 @@ commands:
             curl https://www-us.apache.org/dist/maven/maven-3/3.6.1/binaries/apache-maven-3.6.1-bin.tar.gz | tar xzvf -
             echo 'export PATH=$PATH:~/maven/apache-maven-3.6.1/bin' >> $BASH_ENV
             popd
+  deploy_batch_servlet:
+    description: "Deploy batch servlet"
+    parameters:
+      resourcenumber:
+        type: integer
+    steps:
+      - check_update:
+          dir: "fluxengine-integration-test .circleci"
+      - prepare_gcp_and_locale
+      - install_maven
+      - attach_workspace:
+          at: ~/state-engine
+      - run:
+          name: Edit conf file
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test-batch-servlet/src/main/webapp/WEB-INF
+            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" job.properties
+            TEMPLATE_LOCATION=gs://${BUCKET}/templates/MyTemplate<< parameters.resourcenumber >>_${CIRCLE_WORKFLOW_ID}
+            sed -i -e "s@templateLocation=.*@templateLocation=${TEMPLATE_LOCATION}@" job.properties
+            SERVICE_NAME=<< parameters.resourcenumber >>-${CIRCLE_WORKFLOW_ID}
+            sed -i -e "s@<service>.*\?</service>@<service>${SERVICE_NAME}</service>@" appengine-web.xml
+            popd
+      - run:
+          name: Replace jar
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test-batch-servlet/src/main/webapp/WEB-INF/lib
+            rm -f fluxengine-*.jar
+            cp -f ~/state-engine/fluxengine-dataflow-batch-servlet/target/fluxengine-dataflow-batch-servlet-*.jar ./fluxengine-dataflow-batch-servlet.jar
+            popd
+      - restore_cache:
+          keys:
+            - v2-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
+            - v2-m2-{{ .Branch }}-
+            - v2-m2-
+      - run:
+          name: Deploy batch servlet
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test-batch-servlet
+            mvn package appengine:deploy
+            popd
+      - save_cache:
+          key: v2-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
+          paths:
+            - ~/.m2
   register_dsl:
     description: "Register FDSL"
     parameters:
@@ -126,6 +173,8 @@ commands:
         type: string
         default: "`date +'%Y%m%d'`"
       dslversion:
+        type: integer
+      resourcenumber:
         type: integer
     steps:
       - check_update:
@@ -159,7 +208,8 @@ commands:
           key: v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/datastore-cleaner/build.gradle" }}
           paths:
             - ~/.gradle
-      - edit_integration_test_conf_files
+      - edit_integration_test_conf_files:
+          resourcenumber: << parameters.resourcenumber >>
       - run:
           name: Create license file
           command: |
@@ -205,6 +255,8 @@ commands:
         type: string
       presubmitevent:
         type: boolean
+      resourcenumber:
+        type: integer
     steps:
       - check_update:
           dir: "fluxengine-integration-test .circleci"
@@ -223,10 +275,11 @@ commands:
                   TEST_PERSIST_STRING=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -1 | tr -d '\n'`
                   set -o pipefail
                   echo -n $TEST_PERSIST_STRING > ~/state-engine/test_persist_string.txt
-                  PUBSUB_NAME=integration-test_${CIRCLE_WORKFLOW_ID}
+                  PUBSUB_NAME=integration-test_${CIRCLE_WORKFLOW_ID}_<< parameters.resourcenumber >>
                   gcloud pubsub topics publish projects/${PROJECT}/topics/${PUBSUB_NAME} --message="[{\"eventName\":\"Subscriptionイベント\",\"namespace\":\"subscription/イベントの文字列をそのまま永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"S01\",\"文字列\":\"${TEST_PERSIST_STRING}\"}}]"
                 background: true
-      - edit_integration_test_conf_files
+      - edit_integration_test_conf_files:
+          resourcenumber: << parameters.resourcenumber >>
       - run:
           name: Edit persister db setting
           command: |
@@ -301,13 +354,16 @@ commands:
     parameters:
       persisterdb:
         type: string
+      resourcenumber:
+        type: integer
     steps:
       - check_update:
           dir: "fluxengine-integration-test .circleci"
       - prepare_gcp_and_locale
       - attach_workspace:
           at: ~/state-engine
-      - edit_integration_test_conf_files
+      - edit_integration_test_conf_files:
+          resourcenumber: << parameters.resourcenumber >>
       - run:
           name: Edit persister db setting
           command: |
@@ -348,7 +404,7 @@ commands:
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test
             chmod +x gradlew
-            env FLUXENGINE_INTEGRATION_TEST_DATAFLOW_STREAM=true FLUXENGINE_INTEGRATION_TEST_DATAFLOW_BATCH=true TEST_PERSIST_USERID=S01 TEST_PERSIST_STRING=`cat ~/state-engine/test_persist_string.txt` SERVICE_NAME=${CIRCLE_WORKFLOW_ID} ./gradlew test --tests jp.co.fluxengine.example.dataflowtest*
+            env FLUXENGINE_INTEGRATION_TEST_DATAFLOW_STREAM=true FLUXENGINE_INTEGRATION_TEST_DATAFLOW_BATCH=true TEST_PERSIST_USERID=S01 TEST_PERSIST_STRING=`cat ~/state-engine/test_persist_string.txt` SERVICE_NAME=<< parameters.resourcenumber >>-${CIRCLE_WORKFLOW_ID} ./gradlew test --tests jp.co.fluxengine.example.dataflowtest*
             popd
       - run:
           name: Stop Dataflow job
@@ -393,7 +449,8 @@ commands:
       - prepare_gcp_and_locale
       - attach_workspace:
           at: ~/state-engine
-      - edit_integration_test_conf_files
+      - edit_integration_test_conf_files:
+          resourcenumber: 3
       - run:
           name: Edit persister db setting
           command: |
@@ -433,17 +490,6 @@ commands:
           destination: test
       - store_test_results:
           path: ~/fdsl-test/fluxengine-integration-test/build/test-results
-  delete_cloud_resources_on_fail:
-    description: "Delete GCP resources when failed"
-    steps:
-      - run:
-          name: Delete GCP resources
-          command: |
-            pushd ~/fdsl-test/fluxengine-integration-test
-            chmod +x cleanup.sh
-            ./cleanup.sh
-            popd
-          when: on_fail
 jobs:
   create_cloud_resources:
     executor: my-gcp
@@ -454,26 +500,10 @@ jobs:
       - run:
           name: Create GCP resources
           command: |
-            # Create running flag
-            {
-              touch dummy.txt
-              FLAG_FILE_LOCATION=gs://${BUCKET}/running/${CIRCLE_WORKFLOW_ID}
-              gsutil cp dummy.txt ${FLAG_FILE_LOCATION}
-            } &
-            pidFlag=$!
-
-            {
-              PUBSUB_NAME=integration-test_${CIRCLE_WORKFLOW_ID}
-              gcloud pubsub topics create ${PUBSUB_NAME}
-              gcloud pubsub subscriptions create ${PUBSUB_NAME} --topic=${PUBSUB_NAME}
-            } &
-            pidPubsub=$!
-
-            gcloud sql instances patch integration-test --activation-policy=ALWAYS --async || echo "SQL instance is in operation, but continues this test"
-            REDIS_INSTANCE_NAME=i-${CIRCLE_WORKFLOW_ID}
-            gcloud redis instances create ${REDIS_INSTANCE_NAME} --size=1 --region=asia-northeast1 --zone=asia-northeast1-b --redis-version=redis_4_0 --async
-
-            wait $pidFlag $pidPubsub
+            pushd ~/fdsl-test/fluxengine-integration-test
+            chmod +x prepare.sh
+            ./prepare.sh
+            popd
   build_engine:
     executor: my-java
     steps:
@@ -579,65 +609,31 @@ jobs:
           destination: test
       - store_test_results:
           path: ~/fdsl-test/fluxengine-local-test/build/test-results
-  deploy_batch_servlet:
+  deploy_batch_servlet_datastore:
     executor: my-gcp
     steps:
-      - check_update:
-          dir: "fluxengine-integration-test .circleci"
-      - prepare_gcp_and_locale
-      - install_maven
-      - attach_workspace:
-          at: ~/state-engine
-      - run:
-          name: Edit conf file
-          command: |
-            pushd ~/fdsl-test/fluxengine-integration-test-batch-servlet/src/main/webapp/WEB-INF
-            sed -i -e "s/\[PROJECT\]/${PROJECT}/g" job.properties
-            TEMPLATE_LOCATION=gs://${BUCKET}/templates/MyTemplate_${CIRCLE_WORKFLOW_ID}
-            sed -i -e "s@templateLocation=.*@templateLocation=${TEMPLATE_LOCATION}@" job.properties
-            SERVICE_NAME=${CIRCLE_WORKFLOW_ID}
-            sed -i -e "s@<service>.*\?</service>@<service>${SERVICE_NAME}</service>@" appengine-web.xml
-            popd
-      - run:
-          name: Replace jar
-          command: |
-            pushd ~/fdsl-test/fluxengine-integration-test-batch-servlet/src/main/webapp/WEB-INF/lib
-            rm -f fluxengine-*.jar
-            cp -f ~/state-engine/fluxengine-dataflow-batch-servlet/target/fluxengine-dataflow-batch-servlet-*.jar ./fluxengine-dataflow-batch-servlet.jar
-            popd
-      - restore_cache:
-          keys:
-            - v2-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
-            - v2-m2-{{ .Branch }}-
-            - v2-m2-
-      - run:
-          name: Deploy batch servlet
-          command: |
-            pushd ~/fdsl-test/fluxengine-integration-test-batch-servlet
-            mvn package appengine:deploy
-            popd
-      - save_cache:
-          key: v2-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
-          paths:
-            - ~/.m2
-  register_main_dsl:
+      - deploy_batch_servlet:
+          resourcenumber: 1
+  register_dsl_datastore:
     executor: my-gcp
     steps:
       - register_dsl:
           dsldirectory: "dsl"
           dslversion: 1
+          resourcenumber: 1
   deploy_dataflow_jobs_datastore:
     executor: my-gcp
     steps:
       - deploy_dataflow_jobs:
           persisterdb: datastore
           presubmitevent: true
+          resourcenumber: 1
   test_dataflow_datastore:
     executor: my-gcp
     steps:
       - test_dataflow:
           persisterdb: datastore
-      - delete_cloud_resources_on_fail
+          resourcenumber: 1
   post_housekeep_test_data:
     executor: my-gcp
     steps:
@@ -657,24 +653,36 @@ jobs:
             mkdir ~/curl
             TODAY_STRING=`date "+%Y-%m-%d"`
             TOMORROW_STRING=`date "+%Y-%m-%d" -d '1 days'`
-            APP_SERVER=${CIRCLE_WORKFLOW_ID}-dot-${PROJECT}.appspot.com
+            APP_SERVER=1-${CIRCLE_WORKFLOW_ID}-dot-${PROJECT}.appspot.com
             curl -H 'Content-Type:application/json' -d "[{\"eventName\":\"Housekeepパケット使用A\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user1\",\"使用量\":500}},{\"eventName\":\"Housekeepパケット使用B\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user2\",\"使用量\":500,\"期限1\":\"${TODAY_STRING}\"}},{\"eventName\":\"Housekeepパケット使用C\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user3\",\"使用量\":500,\"期限2\":\"${TODAY_STRING}\"}},{\"eventName\":\"Housekeepパケット使用D\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user5\",\"使用量\":500,\"期限1\":\"${TODAY_STRING}\",\"期限2\":\"${TOMORROW_STRING}\"}}]" https://${APP_SERVER}/fluxengine-integration-test-event &
             pidPostHousekeepEvent=$!
             curl -H 'Content-Type:application/json' -d "[{\"eventName\":\"Housekeepパケット使用D\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user4\",\"使用量\":500,\"期限1\":\"${TODAY_STRING}\",\"期限2\":\"${TODAY_STRING}\"}}]" https://${APP_SERVER}/fluxengine-integration-test-event
             wait $pidPostHousekeepEvent
+  deploy_batch_servlet_memorystore:
+    executor: my-gcp
+    steps:
+      - deploy_batch_servlet:
+          resourcenumber: 2
+  register_dsl_memorystore:
+    executor: my-gcp
+    steps:
+      - register_dsl:
+          dsldirectory: "dsl"
+          dslversion: 1
+          resourcenumber: 2
   deploy_dataflow_jobs_memorystore:
     executor: my-gcp
     steps:
       - deploy_dataflow_jobs:
           persisterdb: memorystore
           presubmitevent: true
-      - delete_cloud_resources_on_fail
+          resourcenumber: 2
   test_dataflow_memorystore:
     executor: my-gcp
     steps:
       - test_dataflow:
           persisterdb: memorystore
-      - delete_cloud_resources_on_fail
+          resourcenumber: 2
   test_housekeep:
     executor: my-gcp
     steps:
@@ -688,12 +696,12 @@ jobs:
           name: Edit Housekeep conf files
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test-housekeep
-            HOUSEKEEP_JOB_STAGING_LOCATION=gs://${BUCKET}/staging_${CIRCLE_WORKFLOW_ID}
+            HOUSEKEEP_JOB_STAGING_LOCATION=gs://${BUCKET}/stagingh_${CIRCLE_WORKFLOW_ID}
             TEMPLATE_LOCATION=gs://${BUCKET}/templates/housekeepJob_${CIRCLE_WORKFLOW_ID}
             sed -i -e "s@HOUSEKEEP_JOB_STAGING_LOCATION=.*@HOUSEKEEP_JOB_STAGING_LOCATION=${HOUSEKEEP_JOB_STAGING_LOCATION}@" fluxengine_housekeep.env
             sed -i -e "s@TEMPLATE_LOCATION=.*@TEMPLATE_LOCATION=${TEMPLATE_LOCATION}@" fluxengine_housekeep.env
 
-            NAMESPACE=INTEGRATION_TEST_${CIRCLE_WORKFLOW_ID}
+            NAMESPACE=INTEGRATION_TEST1_${CIRCLE_WORKFLOW_ID}
             sed -i -e "s/namespace=.*/namespace=${NAMESPACE}/" src/main/resources/persisterDataStore.properties
             sed -i -e "s/\[PROJECT\]/${PROJECT}/g" src/main/resources/persisterDataStore.properties
 
@@ -741,7 +749,8 @@ jobs:
           key: v2-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
           paths:
             - ~/.m2
-      - edit_integration_test_conf_files
+      - edit_integration_test_conf_files:
+          resourcenumber: 1
       - run:
           name: Replace jar
           command: |
@@ -784,21 +793,20 @@ jobs:
             HOUSEKEEP_SERVICE_NAME=h-${CIRCLE_WORKFLOW_ID}
             gcloud --quiet app services delete ${HOUSEKEEP_SERVICE_NAME}
           when: always
-      - delete_cloud_resources_on_fail
   deploy_dataflow_jobs_dsl_replacement:
     executor: my-gcp
     steps:
       - deploy_dataflow_jobs:
           persisterdb: datastore
           presubmitevent: false
-      - delete_cloud_resources_on_fail
+          resourcenumber: 3
   register_dsl_before:
     executor: my-gcp
     steps:
       - register_dsl:
           dsldirectory: "dsl_before"
           dslversion: 2
-      - delete_cloud_resources_on_fail
+          resourcenumber: 3
   test_dsl_before:
     executor: my-gcp
     steps:
@@ -813,20 +821,19 @@ jobs:
             done < ~/state-engine/dataflow_job_id.txt
             rm -f ~/state-engine/dataflow_job_id.txt
           when: on_fail
-      - delete_cloud_resources_on_fail
   register_dsl_after:
     executor: my-gcp
     steps:
       - register_dsl:
           dsldirectory: "dsl_after"
           dslversion: 3
+          resourcenumber: 3
       - run:
           name: Wait for job to read new FDSL
           command: |
             echo "dsl_after registered at $(date +'%Y/%m/%d %H:%M:%S')"
             sleep 60
           when: on_success
-      - delete_cloud_resources_on_fail
   register_dsl_dummy:
     executor: my-gcp
     steps:
@@ -835,13 +842,13 @@ jobs:
           dsldirectory: "dsl_dummy"
           dsleffectivedate: "`date +'%Y%m%d' -d '1 days'`"
           dslversion: 4
+          resourcenumber: 3
       - run:
           name: Wait for job to read new FDSL
           command: |
             echo "dsl_dummy registered at $(date +'%Y/%m/%d %H:%M:%S')"
             sleep 60
           when: on_success
-      - delete_cloud_resources_on_fail
   test_dsl_after:
     executor: my-gcp
     steps:
@@ -856,7 +863,6 @@ jobs:
             done < ~/state-engine/dataflow_job_id.txt
             rm -f ~/state-engine/dataflow_job_id.txt
           when: always
-      - delete_cloud_resources_on_fail
   cleanup:
     executor: my-gcp
     steps:
@@ -874,6 +880,15 @@ workflows:
   version: 2
   deploy_dsl_test:
     jobs:
+      - create_cloud_resources:
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
       - build_engine:
           filters:
             branches:
@@ -894,16 +909,7 @@ workflows:
             tags:
               only:
                 - /^ci.*/
-      - create_cloud_resources:
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
-      - deploy_batch_servlet:
+      - deploy_batch_servlet_datastore:
           requires:
             - build_engine
           filters:
@@ -914,7 +920,7 @@ workflows:
             tags:
               only:
                 - /^ci.*/
-      - register_main_dsl:
+      - register_dsl_datastore:
           requires:
             - build_engine
           filters:
@@ -927,7 +933,7 @@ workflows:
                 - /^ci.*/
       - deploy_dataflow_jobs_datastore:
           requires:
-            - register_main_dsl
+            - register_dsl_datastore
           filters:
             branches:
               only:
@@ -938,9 +944,9 @@ workflows:
                 - /^ci.*/
       - test_dataflow_datastore:
           requires:
-            - deploy_batch_servlet
-            - deploy_dataflow_jobs_datastore
             - create_cloud_resources
+            - deploy_batch_servlet_datastore
+            - deploy_dataflow_jobs_datastore
           filters:
             branches:
               only:
@@ -951,8 +957,7 @@ workflows:
                 - /^ci.*/
       - post_housekeep_test_data:
           requires:
-            - deploy_batch_servlet
-            - register_main_dsl
+            - deploy_batch_servlet_datastore
             - deploy_dataflow_jobs_datastore
           filters:
             branches:
@@ -974,10 +979,31 @@ workflows:
             tags:
               only:
                 - /^ci.*/
+      - deploy_batch_servlet_memorystore:
+          requires:
+            - build_engine
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - register_dsl_memorystore:
+          requires:
+            - build_engine
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
       - deploy_dataflow_jobs_memorystore:
           requires:
-            - test_dataflow_datastore
-            - post_housekeep_test_data
+            - register_dsl_memorystore
           filters:
             branches:
               only:
@@ -988,6 +1014,7 @@ workflows:
                 - /^ci.*/
       - test_dataflow_memorystore:
           requires:
+            - deploy_batch_servlet_memorystore
             - deploy_dataflow_jobs_memorystore
           filters:
             branches:
@@ -999,8 +1026,7 @@ workflows:
                 - /^ci.*/
       - deploy_dataflow_jobs_dsl_replacement:
           requires:
-            - test_dataflow_memorystore
-            - test_housekeep
+            - build_engine
           filters:
             branches:
               only:
@@ -1011,8 +1037,7 @@ workflows:
                 - /^ci.*/
       - register_dsl_before:
           requires:
-            - test_dataflow_memorystore
-            - test_housekeep
+            - build_engine
           filters:
             branches:
               only:
@@ -1069,6 +1094,8 @@ workflows:
                 - /^ci.*/
       - cleanup:
           requires:
+            - test_dataflow_datastore
+            - test_dataflow_memorystore
             - test_dsl_after
           filters:
             branches:

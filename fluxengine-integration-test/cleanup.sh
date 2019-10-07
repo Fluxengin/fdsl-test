@@ -9,11 +9,32 @@
 pidDatastore=$!
 
 {
-  PUBSUB_NAME=integration-test_${CIRCLE_WORKFLOW_ID}
-  gcloud pubsub subscriptions delete ${PUBSUB_NAME}
-  gcloud pubsub topics delete ${PUBSUB_NAME}
+  for i in `seq 1 3`; do
+    PUBSUB_NAME=integration-test${i}_${CIRCLE_WORKFLOW_ID}
+    gcloud pubsub subscriptions delete ${PUBSUB_NAME}
+    gcloud pubsub topics delete ${PUBSUB_NAME}
+  done
 } &
 pidPubsub=$!
+
+{
+  for i in `seq 1 3`; do
+    STAGING_DIRECTORY=gs://fluxengine-integration-test/staging${i}_${CIRCLE_WORKFLOW_ID}
+    TEMPLATE_FILE=gs://fluxengine-integration-test/templates/MyTemplate${i}_${CIRCLE_WORKFLOW_ID}
+    gsutil -m rm -r ${STAGING_DIRECTORY} ${TEMPLATE_FILE}
+  done
+  HOUSEKEEP_TEMPLATE_FILE=gs://fluxengine-integration-test/templates/housekeepJob_${CIRCLE_WORKFLOW_ID}
+  gsutil -m rm -r ${HOUSEKEEP_TEMPLATE_FILE}
+} &
+pidStorage=$!
+
+{
+  for i in `seq 1 2`; do
+    SERVICE_NAME=${i}-${CIRCLE_WORKFLOW_ID}
+    gcloud --quiet app services delete ${SERVICE_NAME}
+  done
+}
+pidService=$!
 
 {
   # Stop SQL instance only when no other test is runnung
@@ -21,20 +42,9 @@ pidPubsub=$!
   gsutil rm ${FLAG_FILE_LOCATION}
   gsutil ls gs://${BUCKET}/running/* || gcloud sql instances patch integration-test --activation-policy=NEVER --async
 } &
-pidStopSql=$!
-
-{
-  STAGING_DIRECTORY=gs://fluxengine-integration-test/staging_${CIRCLE_WORKFLOW_ID}
-  TEMPLATE_FILE=gs://fluxengine-integration-test/templates/MyTemplate_${CIRCLE_WORKFLOW_ID}
-  HOUSEKEEP_TEMPLATE_FILE=gs://fluxengine-integration-test/templates/housekeepJob_${CIRCLE_WORKFLOW_ID}
-  gsutil -m rm -r ${STAGING_DIRECTORY} ${TEMPLATE_FILE} ${HOUSEKEEP_TEMPLATE_FILE}
-} &
-pidStorage=$!
+pidSql=$!
 
 REDIS_INSTANCE_NAME=i-${CIRCLE_WORKFLOW_ID}
 gcloud --quiet redis instances delete ${REDIS_INSTANCE_NAME} --region=asia-northeast1 --async
 
-SERVICE_NAME=${CIRCLE_WORKFLOW_ID}
-gcloud --quiet app services delete ${SERVICE_NAME}
-
-wait $pidDatastore $pidPubsub $pidStopSql $pidStorage
+wait $pidDatastore $pidPubsub $pidStorage $pidService $pidSql
