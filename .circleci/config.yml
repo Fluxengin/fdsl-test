@@ -275,7 +275,7 @@ commands:
                   TEST_PERSIST_STRING=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -1 | tr -d '\n'`
                   set -o pipefail
                   echo -n $TEST_PERSIST_STRING > ~/state-engine/test_persist_string.txt
-                  PUBSUB_NAME=integration-test<< parameters.resourcenumber >>_${CIRCLE_WORKFLOW_ID}_<< parameters.resourcenumber >>
+                  PUBSUB_NAME=integration-test<< parameters.resourcenumber >>_${CIRCLE_WORKFLOW_ID}
                   gcloud pubsub topics publish projects/${PROJECT}/topics/${PUBSUB_NAME} --message="[{\"eventName\":\"Subscriptionイベント\",\"namespace\":\"subscription/イベントの文字列をそのまま永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"S01\",\"文字列\":\"${TEST_PERSIST_STRING}\"}}]"
                 background: true
       - edit_integration_test_conf_files:
@@ -406,6 +406,10 @@ commands:
             chmod +x gradlew
             env FLUXENGINE_INTEGRATION_TEST_DATAFLOW_STREAM=true FLUXENGINE_INTEGRATION_TEST_DATAFLOW_BATCH=true TEST_PERSIST_USERID=S01 TEST_PERSIST_STRING=`cat ~/state-engine/test_persist_string.txt` SERVICE_NAME=<< parameters.resourcenumber >>-${CIRCLE_WORKFLOW_ID} ./gradlew test --tests jp.co.fluxengine.example.dataflowtest*
             popd
+      - save_cache:
+          key: v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/datastore-cleaner/build.gradle" }}
+          paths:
+            - ~/.gradle
       - run:
           name: Stop Dataflow job
           command: |
@@ -414,13 +418,7 @@ commands:
             echo "Stopping $dataflowJobId"
             gcloud dataflow jobs cancel $dataflowJobId --region=asia-northeast1
             done < ~/state-engine/dataflow_job_id.txt
-            rm -f ~/state-engine/dataflow_job_id.txt
           when: always
-          background: true
-      - save_cache:
-          key: v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/datastore-cleaner/build.gradle" }}
-          paths:
-            - ~/.gradle
       - run:
           name: Copy log file
           command: cp -f ~/fdsl-test/fluxengine-integration-test/debug.log ~/fdsl-test/fluxengine-integration-test/build/reports/tests/test/
@@ -430,14 +428,6 @@ commands:
           destination: test
       - store_test_results:
           path: ~/fdsl-test/fluxengine-integration-test/build/test-results
-      - run:
-          name: Wait for job termination
-          command: |
-            while [ -f ~/state-engine/dataflow_job_id.txt ]
-            do
-              sleep 2
-            done
-          when: always
   test_dsl_replacement:
     description: "Test FDSL replacement"
     parameters:
@@ -819,7 +809,6 @@ jobs:
               echo "Stopping $dataflowJobId"
               gcloud dataflow jobs cancel $dataflowJobId --region=asia-northeast1
             done < ~/state-engine/dataflow_job_id.txt
-            rm -f ~/state-engine/dataflow_job_id.txt
           when: on_fail
   register_dsl_after:
     executor: my-gcp
@@ -861,7 +850,6 @@ jobs:
               echo "Stopping $dataflowJobId"
               gcloud dataflow jobs cancel $dataflowJobId --region=asia-northeast1
             done < ~/state-engine/dataflow_job_id.txt
-            rm -f ~/state-engine/dataflow_job_id.txt
           when: always
   cleanup:
     executor: my-gcp
@@ -869,6 +857,11 @@ jobs:
       - check_update:
           dir: "fluxengine-integration-test .circleci"
       - prepare_gcp_and_locale
+      - restore_cache:
+          keys:
+            - v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/datastore-cleaner/build.gradle" }}
+            - v2-gradle-{{ .Branch }}-
+            - v2-gradle-
       - run:
           name: Delete GCP resources
           command: |
@@ -876,6 +869,10 @@ jobs:
             chmod +x cleanup.sh
             ./cleanup.sh
             popd
+      - save_cache:
+          key: v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/datastore-cleaner/build.gradle" }}
+          paths:
+            - ~/.gradle
 workflows:
   version: 2
   deploy_dsl_test:
