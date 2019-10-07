@@ -3,7 +3,7 @@
 {
   pushd ~/fdsl-test/datastore-cleaner
   chmod +x gradlew
-  env NAMESPACE=INTEGRATION_TEST_${CIRCLE_WORKFLOW_ID} ./gradlew run
+  env NAMESPACE="INTEGRATION_TEST1_${CIRCLE_WORKFLOW_ID} INTEGRATION_TEST2_${CIRCLE_WORKFLOW_ID} INTEGRATION_TEST3_${CIRCLE_WORKFLOW_ID}" ./gradlew run
   popd
 } &
 pidDatastore=$!

@@ -275,7 +275,7 @@ commands:
                   TEST_PERSIST_STRING=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -1 | tr -d '\n'`
                   set -o pipefail
                   echo -n $TEST_PERSIST_STRING > ~/state-engine/test_persist_string.txt
-                  PUBSUB_NAME=integration-test_${CIRCLE_WORKFLOW_ID}_<< parameters.resourcenumber >>
+                  PUBSUB_NAME=integration-test<< parameters.resourcenumber >>_${CIRCLE_WORKFLOW_ID}_<< parameters.resourcenumber >>
                   gcloud pubsub topics publish projects/${PROJECT}/topics/${PUBSUB_NAME} --message="[{\"eventName\":\"Subscriptionイベント\",\"namespace\":\"subscription/イベントの文字列をそのまま永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"S01\",\"文字列\":\"${TEST_PERSIST_STRING}\"}}]"
                 background: true
       - edit_integration_test_conf_files:
@@ -1094,7 +1094,7 @@ workflows:
                 - /^ci.*/
       - cleanup:
           requires:
-            - test_dataflow_datastore
+            - test_housekeep
             - test_dataflow_memorystore
             - test_dsl_after
           filters:
