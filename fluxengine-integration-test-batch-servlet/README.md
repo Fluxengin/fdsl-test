@@ -7,7 +7,7 @@ Dataflowを使用して結合テストを行う際に、バッチジョブの起
 ビルドツール：maven
 
 # Version
-Fluxengine 1.0.11
+Fluxengine 1.1.0
 
 # SetUp
 

@@ -7,7 +7,7 @@ Dataflowを使用して不要データの削除を行うためのプロジェク
 ビルドツール：maven
 
 # Version
-Fluxengine 1.0.11
+Fluxengine 1.1.0
 
 # SetUp
 
