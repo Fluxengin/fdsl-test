@@ -208,6 +208,7 @@ commands:
         default: "`date +'%Y%m%d'`"
       dslversion:
         type: integer
+        default: 1
       resourcenumber:
         type: string
     steps:
@@ -216,15 +217,20 @@ commands:
       - prepare_gcp_and_locale
       - attach_workspace:
           at: ~/state-engine
+      - edit_integration_test_conf_files:
+          resourcenumber: << parameters.resourcenumber >>
+      - run:
+          name: Create license file
+          command: |
+            pushd ~/fdsl-test/fluxengine-integration-test/conf
+            echo $FLUXENGINE_LICENSE_ENCODED | base64 -d > license.lic
+            popd
       - run:
           name: Replace jar
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test/lib
             rm -f fluxengine-*.jar
-            for projectDir in local-test-runner remote-test-runner event-publisher
-            do
-            cp -f ~/state-engine/fluxengine-${projectDir}/target/fluxengine-${projectDir}-*.jar ./
-            done
+            cp -f ~/state-engine/fluxengine-local-test-runner/target/fluxengine-local-test-runner-*.jar ./
             popd
       - restore_cache_gradle
       - run:
@@ -235,14 +241,6 @@ commands:
             ./gradlew build copyDependencies -x test
             popd
       - save_cache_gradle
-      - edit_integration_test_conf_files:
-          resourcenumber: << parameters.resourcenumber >>
-      - run:
-          name: Create license file
-          command: |
-            pushd ~/fdsl-test/fluxengine-integration-test/conf
-            echo $FLUXENGINE_LICENSE_ENCODED | base64 -d > license.lic
-            popd
       - run:
           name: Move DSL
           command: |
@@ -257,9 +255,8 @@ commands:
             cp -f ~/state-engine/stateengine/target/fluxengine-core-*.jar ./
             rm -f fluxengine-core-*-tests.jar
             # Copy other jars
-            for libname in dsl-register parser persist-manager
-            do
-            cp -f ~/state-engine/fluxengine-${libname}/target/fluxengine-${libname}-*.jar ./
+            for libname in dsl-register parser persist-manager; do
+              cp -f ~/state-engine/fluxengine-${libname}/target/fluxengine-${libname}-*.jar ./
             done
             popd
       - run:
@@ -275,9 +272,17 @@ commands:
             env CLASSPATH=~/state-engine/fluxengine-dsl-register/target/lib/* ./regisdsl.sh << parameters.dslversion>> ${EFFECTIVE_DATE} 2>&1 | tee temp_dsl_register_output.txt
             ! grep 'Exception:' temp_dsl_register_output.txt > /dev/null
             popd
-  deploy_dataflow_jobs:
-    description: "Deploy Dataflow jobs with designated persister db"
+  deploy_dsl_and_job:
+    description: "Register FDSL and deploy Dataflow jobs (both batch and stream)"
     parameters:
+      dsldirectory:
+        type: string
+      dsleffectivedate:
+        type: string
+        default: "`date +'%Y%m%d'`"
+      dslversion:
+        type: integer
+        default: 1
       persisterdb:
         type: enum
         enum: ["datastore", "memorystore"]
@@ -286,11 +291,11 @@ commands:
       resourcenumber:
         type: string
     steps:
-      - check_update:
-          dir: "fluxengine-integration-test .circleci"
-      - prepare_gcp_and_locale
-      - attach_workspace:
-          at: ~/state-engine
+      - register_dsl:
+          dsldirectory: << parameters.dsldirectory >>
+          dsleffectivedate: << parameters.dsleffectivedate >>
+          dslversion: << parameters.dslversion >>
+          resourcenumber: << parameters.resourcenumber >>
       - when:
           condition: << parameters.presubmitevent >>
           steps:
@@ -306,8 +311,6 @@ commands:
                   PUBSUB_NAME=integration-test<< parameters.resourcenumber >>_${CIRCLE_WORKFLOW_ID}
                   gcloud pubsub topics publish projects/${PROJECT}/topics/${PUBSUB_NAME} --message="[{\"eventName\":\"Subscriptionイベント\",\"namespace\":\"subscription/イベントの文字列をそのまま永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"S01\",\"文字列\":\"${TEST_PERSIST_STRING}\"}}]"
                 background: true
-      - edit_integration_test_conf_files:
-          resourcenumber: << parameters.resourcenumber >>
       - run:
           name: Edit persister db setting
           command: |
@@ -332,26 +335,11 @@ commands:
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test/lib
             rm -f fluxengine-*.jar
-            for libname in local-test-runner dataflow
-            do
-            cp -f ~/state-engine/fluxengine-${libname}/target/fluxengine-${libname}-*.jar ./
-            done
+            # Copy integration test jar
+            cp -f ../build/libs/fluxengine-integration-test-*.jar ./
+            # Copy dataflow jar
+            cp -f ~/state-engine/fluxengine-dataflow/target/fluxengine-dataflow-*.jar ./
             popd
-      - restore_cache_gradle
-      - run:
-          name: Build integration test
-          command: |
-            pushd ~/fdsl-test/fluxengine-integration-test
-            chmod +x gradlew
-            ./gradlew build copyDependencies -x test
-            cp -f build/libs/fluxengine-integration-test-*.jar lib/
-            popd
-      - save_cache_gradle
-      - run:
-          name: Remove local test runner
-          command: |
-            # Avoid local test runner to work in dataflow
-            rm -f ~/fdsl-test/fluxengine-integration-test/lib/fluxengine-local-test-runner-*.jar
       - run:
           name: Register job
           command: |
@@ -577,17 +565,11 @@ jobs:
     steps:
       - deploy_batch_servlet:
           resourcenumber: "1"
-  register_dsl_datastore:
+  deploy_dsl_and_job_datastore:
     executor: my-gcp
     steps:
-      - register_dsl:
+      - deploy_dsl_and_job:
           dsldirectory: "dsl"
-          dslversion: 1
-          resourcenumber: "1"
-  deploy_dataflow_jobs_datastore:
-    executor: my-gcp
-    steps:
-      - deploy_dataflow_jobs:
           persisterdb: "datastore"
           presubmitevent: true
           resourcenumber: "1"
@@ -602,17 +584,11 @@ jobs:
     steps:
       - deploy_batch_servlet:
           resourcenumber: "2"
-  register_dsl_memorystore:
+  deploy_dsl_and_job_memorystore:
     executor: my-gcp
     steps:
-      - register_dsl:
+      - deploy_dsl_and_job:
           dsldirectory: "dsl"
-          dslversion: 1
-          resourcenumber: "2"
-  deploy_dataflow_jobs_memorystore:
-    executor: my-gcp
-    steps:
-      - deploy_dataflow_jobs:
           persisterdb: "memorystore"
           presubmitevent: true
           resourcenumber: "2"
@@ -622,19 +598,14 @@ jobs:
       - test_dataflow:
           persisterdb: "memorystore"
           resourcenumber: "2"
-  deploy_dataflow_jobs_dsl_replacement:
+  deploy_dsl_and_job_dsl_replacement:
     executor: my-gcp
     steps:
-      - deploy_dataflow_jobs:
-          persisterdb: "datastore"
-          presubmitevent: false
-          resourcenumber: "3"
-  register_dsl_before:
-    executor: my-gcp
-    steps:
-      - register_dsl:
+      - deploy_dsl_and_job:
           dsldirectory: "dsl_before"
           dslversion: 2
+          persisterdb: "datastore"
+          presubmitevent: false
           resourcenumber: "3"
   test_dsl_before:
     executor: my-gcp
@@ -690,17 +661,11 @@ jobs:
               gcloud dataflow jobs cancel $dataflowJobId --region=asia-northeast1
             done < ~/state-engine/dataflow_job_id.txt
           when: always
-  register_dsl_housekeep:
+  deploy_dsl_and_job_housekeep:
     executor: my-gcp
     steps:
-      - register_dsl:
+      - deploy_dsl_and_job:
           dsldirectory: "dsl"
-          dslversion: 1
-          resourcenumber: "4"
-  deploy_dataflow_jobs_housekeep:
-    executor: my-gcp
-    steps:
-      - deploy_dataflow_jobs:
           persisterdb: "datastore"
           presubmitevent: false
           resourcenumber: "4"
@@ -775,7 +740,7 @@ jobs:
             popd
       - save_cache_maven
       - edit_integration_test_conf_files:
-          resourcenumber: "1"
+          resourcenumber: "4"
       - run:
           name: Replace jar
           command: |
@@ -864,21 +829,10 @@ workflows:
             tags:
               only:
                 - /^ci.*/
-      - register_dsl_datastore:
-          requires:
-            - build_engine
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
-      - deploy_dataflow_jobs_datastore:
+      - deploy_dsl_and_job_datastore:
           requires:
             - create_cloud_resources
-            - register_dsl_datastore
+            - build_engine
           filters:
             branches:
               only:
@@ -890,7 +844,7 @@ workflows:
       - test_dataflow_datastore:
           requires:
             - deploy_batch_servlet_datastore
-            - deploy_dataflow_jobs_datastore
+            - deploy_dsl_and_job_datastore
           filters:
             branches:
               only:
@@ -910,21 +864,10 @@ workflows:
             tags:
               only:
                 - /^ci.*/
-      - register_dsl_memorystore:
-          requires:
-            - build_engine
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
-      - deploy_dataflow_jobs_memorystore:
+      - deploy_dsl_and_job_memorystore:
           requires:
             - create_cloud_resources
-            - register_dsl_memorystore
+            - build_engine
           filters:
             branches:
               only:
@@ -936,7 +879,7 @@ workflows:
       - test_dataflow_memorystore:
           requires:
             - deploy_batch_servlet_memorystore
-            - deploy_dataflow_jobs_memorystore
+            - deploy_dsl_and_job_memorystore
           filters:
             branches:
               only:
@@ -945,18 +888,7 @@ workflows:
             tags:
               only:
                 - /^ci.*/
-      - deploy_dataflow_jobs_dsl_replacement:
-          requires:
-            - build_engine
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
-      - register_dsl_before:
+      - deploy_dsl_and_job_dsl_replacement:
           requires:
             - build_engine
           filters:
@@ -970,8 +902,7 @@ workflows:
       - test_dsl_before:
           requires:
             - create_cloud_resources
-            - deploy_dataflow_jobs_dsl_replacement
-            - register_dsl_before
+            - deploy_dsl_and_job_dsl_replacement
           filters:
             branches:
               only:
@@ -1014,18 +945,7 @@ workflows:
             tags:
               only:
                 - /^ci.*/
-      - register_dsl_housekeep:
-          requires:
-            - build_engine
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
-      - deploy_dataflow_jobs_housekeep:
+      - deploy_dsl_and_job_housekeep:
           requires:
             - build_engine
           filters:
@@ -1039,8 +959,7 @@ workflows:
       - test_housekeep:
           requires:
             - create_cloud_resources
-            - register_dsl_housekeep
-            - deploy_dataflow_jobs_housekeep
+            - deploy_dsl_and_job_housekeep
           filters:
             branches:
               only:
