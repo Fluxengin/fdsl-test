@@ -753,6 +753,10 @@ jobs:
             popd
       - restore_cache_gradle
       - run:
+          name: Wait for test data processed
+          command: |
+            sleep 20
+      - run:
           name: Stop Dataflow job for test data
           command: |
             while read dataflowJobId; do
