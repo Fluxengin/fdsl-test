@@ -698,7 +698,7 @@ jobs:
             sed -i -e "s@HOUSEKEEP_JOB_STAGING_LOCATION=.*@HOUSEKEEP_JOB_STAGING_LOCATION=${HOUSEKEEP_JOB_STAGING_LOCATION}@" fluxengine_housekeep.env
             sed -i -e "s@TEMPLATE_LOCATION=.*@TEMPLATE_LOCATION=${TEMPLATE_LOCATION}@" fluxengine_housekeep.env
 
-            NAMESPACE=INTEGRATION_TEST1_${CIRCLE_WORKFLOW_ID}
+            NAMESPACE=INTEGRATION_TEST4_${CIRCLE_WORKFLOW_ID}
             sed -i -e "s/namespace=.*/namespace=${NAMESPACE}/" src/main/resources/persisterDataStore.properties
             sed -i -e "s/\[PROJECT\]/${PROJECT}/g" src/main/resources/persisterDataStore.properties
 
