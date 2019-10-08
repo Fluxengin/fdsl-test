@@ -10,7 +10,7 @@
 pidDatastore=$!
 
 {
-  PUBSUBS=`seq --format="integration-test%g_${CIRCLE_WORKFLOW_ID}" --separator=' ' 1 4"`
+  PUBSUBS=`seq --format="integration-test%g_${CIRCLE_WORKFLOW_ID}" --separator=' ' 1 4`
   gcloud pubsub subscriptions delete ${PUBSUBS}
   gcloud pubsub topics delete ${PUBSUBS}
 } &
@@ -22,8 +22,9 @@ pidPubsub=$!
     TEMPLATE_FILE=gs://fluxengine-integration-test/templates/MyTemplate${i}_${CIRCLE_WORKFLOW_ID}
     gsutil -m rm -r ${STAGING_DIRECTORY} ${TEMPLATE_FILE}
   done
+  HOUSEKEEP_STAGING_DIRECTORY=gs://fluxengine-integration-test/stagingh_${CIRCLE_WORKFLOW_ID}
   HOUSEKEEP_TEMPLATE_FILE=gs://fluxengine-integration-test/templates/housekeepJob_${CIRCLE_WORKFLOW_ID}
-  gsutil -m rm -r ${HOUSEKEEP_TEMPLATE_FILE}
+  gsutil -m rm -r ${HOUSEKEEP_STAGING_DIRECTORY} ${HOUSEKEEP_TEMPLATE_FILE}
 } &
 pidStorage=$!
 
