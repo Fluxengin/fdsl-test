@@ -3,17 +3,16 @@
 {
   pushd ~/fdsl-test/datastore-cleaner
   chmod +x gradlew
-  env NAMESPACE="INTEGRATION_TEST1_${CIRCLE_WORKFLOW_ID} INTEGRATION_TEST2_${CIRCLE_WORKFLOW_ID} INTEGRATION_TEST3_${CIRCLE_WORKFLOW_ID}" ./gradlew run
+  ALL_NAMESPACES=`seq --format="INTEGRATION_TEST%g_${CIRCLE_WORKFLOW_ID}" --separator=' ' 1 4`
+  env NAMESPACE="${ALL_NAMESPACES}" ./gradlew run
   popd
 } &
 pidDatastore=$!
 
 {
-  for i in `seq 1 4`; do
-    PUBSUB_NAME=integration-test${i}_${CIRCLE_WORKFLOW_ID}
-    gcloud pubsub subscriptions delete ${PUBSUB_NAME}
-    gcloud pubsub topics delete ${PUBSUB_NAME}
-  done
+  PUBSUBS=`seq --format="integration-test%g_${CIRCLE_WORKFLOW_ID}" --separator=' ' 1 4"`
+  gcloud pubsub subscriptions delete ${PUBSUBS}
+  gcloud pubsub topics delete ${PUBSUBS}
 } &
 pidPubsub=$!
 
@@ -29,13 +28,10 @@ pidPubsub=$!
 pidStorage=$!
 
 {
-  for i in `seq 1 2`; do
-    SERVICE_NAME=${i}-${CIRCLE_WORKFLOW_ID}
-    gcloud --quiet app services delete ${SERVICE_NAME}
-  done
+  SERVICES=`seq --format="%g-${CIRCLE_WORKFLOW_ID}" --separator=' ' 1 2`
   HOUSEKEEP_SERVICE_NAME=h-${CIRCLE_WORKFLOW_ID}
-  gcloud --quiet app services delete ${HOUSEKEEP_SERVICE_NAME}
-}
+  gcloud --quiet app services delete ${SERVICES} ${HOUSEKEEP_SERVICE_NAME}
+} &
 pidService=$!
 
 {

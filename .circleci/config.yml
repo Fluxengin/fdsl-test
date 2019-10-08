@@ -720,7 +720,7 @@ jobs:
             gcloud pubsub topics publish projects/${PROJECT}/topics/${PUBSUB_NAME} --message="[{\"eventName\":\"Housekeepパケット使用A\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user1\",\"使用量\":500}},{\"eventName\":\"Housekeepパケット使用B\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user2\",\"使用量\":500,\"期限1\":\"${TODAY_STRING}\"}},{\"eventName\":\"Housekeepパケット使用C\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user3\",\"使用量\":500,\"期限2\":\"${TODAY_STRING}\"}},{\"eventName\":\"Housekeepパケット使用D\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user5\",\"使用量\":500,\"期限1\":\"${TODAY_STRING}\",\"期限2\":\"${TOMORROW_STRING}\"}}]" &
             pidHousekeepEvent=$!
             gcloud pubsub topics publish projects/${PROJECT}/topics/${PUBSUB_NAME} --message="[{\"eventName\":\"Housekeepパケット使用D\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user4\",\"使用量\":500,\"期限1\":\"${TODAY_STRING}\",\"期限2\":\"${TODAY_STRING}\"}}]"
-            wait pidHousekeepEvent
+            wait $pidHousekeepEvent
       - attach_workspace:
           at: ~/state-engine
       - install_maven
@@ -877,6 +877,7 @@ workflows:
                 - /^ci.*/
       - deploy_dataflow_jobs_datastore:
           requires:
+            - create_cloud_resources
             - register_dsl_datastore
           filters:
             branches:
@@ -888,7 +889,6 @@ workflows:
                 - /^ci.*/
       - test_dataflow_datastore:
           requires:
-            - create_cloud_resources
             - deploy_batch_servlet_datastore
             - deploy_dataflow_jobs_datastore
           filters:
@@ -923,6 +923,7 @@ workflows:
                 - /^ci.*/
       - deploy_dataflow_jobs_memorystore:
           requires:
+            - create_cloud_resources
             - register_dsl_memorystore
           filters:
             branches:
@@ -968,6 +969,7 @@ workflows:
                 - /^ci.*/
       - test_dsl_before:
           requires:
+            - create_cloud_resources
             - deploy_dataflow_jobs_dsl_replacement
             - register_dsl_before
           filters:
@@ -1036,6 +1038,7 @@ workflows:
                 - /^ci.*/
       - test_housekeep:
           requires:
+            - create_cloud_resources
             - register_dsl_housekeep
             - deploy_dataflow_jobs_housekeep
           filters:
