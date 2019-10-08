@@ -76,7 +76,7 @@ commands:
     description: "Replace placeholders in conf and env files of integration test with environment variables"
     parameters:
       resourcenumber:
-        type: integer
+        type: string
     steps:
       - run:
           name: Edit conf files
@@ -120,11 +120,52 @@ commands:
             curl https://www-us.apache.org/dist/maven/maven-3/3.6.1/binaries/apache-maven-3.6.1-bin.tar.gz | tar xzvf -
             echo 'export PATH=$PATH:~/maven/apache-maven-3.6.1/bin' >> $BASH_ENV
             popd
+  restore_cache_maven:
+    steps:
+      - restore_cache:
+          keys:
+            - v2-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
+            - v2-m2-{{ .Branch }}-
+            - v2-m2-
+  save_cache_maven:
+    steps:
+      - save_cache:
+          key: v2-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
+          paths:
+            - ~/.m2
+  restore_cache_gradle:
+    steps:
+      - restore_cache:
+          keys:
+            - v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/datastore-cleaner/build.gradle" }}
+            - v2-gradle-{{ .Branch }}-
+            - v2-gradle-
+  save_cache_gradle:
+    steps:
+      - save_cache:
+          key: v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/datastore-cleaner/build.gradle" }}
+          paths:
+            - ~/.gradle
+  upload_test_results:
+    description: "Upload gradle test results at fluxengine-integration-test"
+    parameters:
+      project:
+        type: string
+    steps:
+      - run:
+          name: Copy log file
+          command: cp -f ~/fdsl-test/<< parameters.project >>/debug.log ~/fdsl-test/<< parameters.project >>/build/reports/tests/test/
+          when: always
+      - store_artifacts:
+          path: ~/fdsl-test/<< parameters.project >>/build/reports/tests/test
+          destination: test
+      - store_test_results:
+          path: ~/fdsl-test/<< parameters.project >>/build/test-results
   deploy_batch_servlet:
     description: "Deploy batch servlet"
     parameters:
       resourcenumber:
-        type: integer
+        type: string
     steps:
       - check_update:
           dir: "fluxengine-integration-test .circleci"
@@ -149,21 +190,14 @@ commands:
             rm -f fluxengine-*.jar
             cp -f ~/state-engine/fluxengine-dataflow-batch-servlet/target/fluxengine-dataflow-batch-servlet-*.jar ./fluxengine-dataflow-batch-servlet.jar
             popd
-      - restore_cache:
-          keys:
-            - v2-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
-            - v2-m2-{{ .Branch }}-
-            - v2-m2-
+      - restore_cache_maven
       - run:
           name: Deploy batch servlet
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test-batch-servlet
             mvn package appengine:deploy
             popd
-      - save_cache:
-          key: v2-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
-          paths:
-            - ~/.m2
+      - save_cache_maven
   register_dsl:
     description: "Register FDSL"
     parameters:
@@ -175,7 +209,7 @@ commands:
       dslversion:
         type: integer
       resourcenumber:
-        type: integer
+        type: string
     steps:
       - check_update:
           dir: "fluxengine-integration-test .circleci"
@@ -192,11 +226,7 @@ commands:
             cp -f ~/state-engine/fluxengine-${projectDir}/target/fluxengine-${projectDir}-*.jar ./
             done
             popd
-      - restore_cache:
-          keys:
-            - v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/datastore-cleaner/build.gradle" }}
-            - v2-gradle-{{ .Branch }}-
-            - v2-gradle-
+      - restore_cache_gradle
       - run:
           name: Build integration test
           command: |
@@ -204,10 +234,7 @@ commands:
             chmod +x gradlew
             ./gradlew build copyDependencies -x test
             popd
-      - save_cache:
-          key: v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/datastore-cleaner/build.gradle" }}
-          paths:
-            - ~/.gradle
+      - save_cache_gradle
       - edit_integration_test_conf_files:
           resourcenumber: << parameters.resourcenumber >>
       - run:
@@ -252,11 +279,12 @@ commands:
     description: "Deploy Dataflow jobs with designated persister db"
     parameters:
       persisterdb:
-        type: string
+        type: enum
+        enum: ["datastore", "memorystore"]
       presubmitevent:
         type: boolean
       resourcenumber:
-        type: integer
+        type: string
     steps:
       - check_update:
           dir: "fluxengine-integration-test .circleci"
@@ -309,11 +337,7 @@ commands:
             cp -f ~/state-engine/fluxengine-${libname}/target/fluxengine-${libname}-*.jar ./
             done
             popd
-      - restore_cache:
-          keys:
-            - v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/datastore-cleaner/build.gradle" }}
-            - v2-gradle-{{ .Branch }}-
-            - v2-gradle-
+      - restore_cache_gradle
       - run:
           name: Build integration test
           command: |
@@ -322,10 +346,7 @@ commands:
             ./gradlew build copyDependencies -x test
             cp -f build/libs/fluxengine-integration-test-*.jar lib/
             popd
-      - save_cache:
-          key: v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/datastore-cleaner/build.gradle" }}
-          paths:
-            - ~/.gradle
+      - save_cache_gradle
       - run:
           name: Remove local test runner
           command: |
@@ -353,9 +374,10 @@ commands:
     description: "Test Dataflow jobs with designated persister db"
     parameters:
       persisterdb:
-        type: string
+        type: enum
+        enum: ["datastore", "memorystore"]
       resourcenumber:
-        type: integer
+        type: string
     steps:
       - check_update:
           dir: "fluxengine-integration-test .circleci"
@@ -378,11 +400,7 @@ commands:
             cp -f ~/state-engine/fluxengine-${projectDir}/target/fluxengine-${projectDir}-*.jar ./
             done
             popd
-      - restore_cache:
-          keys:
-            - v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/datastore-cleaner/build.gradle" }}
-            - v2-gradle-{{ .Branch }}-
-            - v2-gradle-
+      - restore_cache_gradle
       - run:
           name: Wait for SQL instance to startup
           command: |
@@ -406,10 +424,7 @@ commands:
             chmod +x gradlew
             env FLUXENGINE_INTEGRATION_TEST_DATAFLOW_STREAM=true FLUXENGINE_INTEGRATION_TEST_DATAFLOW_BATCH=true TEST_PERSIST_USERID=S01 TEST_PERSIST_STRING=`cat ~/state-engine/test_persist_string.txt` SERVICE_NAME=<< parameters.resourcenumber >>-${CIRCLE_WORKFLOW_ID} ./gradlew test --tests jp.co.fluxengine.example.dataflowtest*
             popd
-      - save_cache:
-          key: v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/datastore-cleaner/build.gradle" }}
-          paths:
-            - ~/.gradle
+      - save_cache_gradle
       - run:
           name: Stop Dataflow job
           command: |
@@ -419,15 +434,8 @@ commands:
             gcloud dataflow jobs cancel $dataflowJobId --region=asia-northeast1
             done < ~/state-engine/dataflow_job_id.txt
           when: always
-      - run:
-          name: Copy log file
-          command: cp -f ~/fdsl-test/fluxengine-integration-test/debug.log ~/fdsl-test/fluxengine-integration-test/build/reports/tests/test/
-          when: always
-      - store_artifacts:
-          path: ~/fdsl-test/fluxengine-integration-test/build/reports/tests/test
-          destination: test
-      - store_test_results:
-          path: ~/fdsl-test/fluxengine-integration-test/build/test-results
+      - upload_test_results:
+          project: "fluxengine-integration-test"
   test_dsl_replacement:
     description: "Test FDSL replacement"
     parameters:
@@ -440,7 +448,7 @@ commands:
       - attach_workspace:
           at: ~/state-engine
       - edit_integration_test_conf_files:
-          resourcenumber: 3
+          resourcenumber: "3"
       - run:
           name: Edit persister db setting
           command: |
@@ -455,11 +463,7 @@ commands:
             cp -f ~/state-engine/fluxengine-${projectDir}/target/fluxengine-${projectDir}-*.jar ./
             done
             popd
-      - restore_cache:
-          keys:
-            - v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/datastore-cleaner/build.gradle" }}
-            - v2-gradle-{{ .Branch }}-
-            - v2-gradle-
+      - restore_cache_gradle
       - run:
           name: Test Dataflow job
           command: |
@@ -467,19 +471,9 @@ commands:
             chmod +x gradlew
             env << parameters.variablename >>=true ./gradlew test --tests jp.co.fluxengine.example.dslreplacementtest*
             popd
-      - save_cache:
-          key: v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/datastore-cleaner/build.gradle" }}
-          paths:
-            - ~/.gradle
-      - run:
-          name: Copy log file
-          command: cp -f ~/fdsl-test/fluxengine-integration-test/debug.log ~/fdsl-test/fluxengine-integration-test/build/reports/tests/test/
-          when: always
-      - store_artifacts:
-          path: ~/fdsl-test/fluxengine-integration-test/build/reports/tests/test
-          destination: test
-      - store_test_results:
-          path: ~/fdsl-test/fluxengine-integration-test/build/test-results
+      - save_cache_gradle
+      - upload_test_results:
+          project: "fluxengine-integration-test"
 jobs:
   create_cloud_resources:
     executor: my-gcp
@@ -507,11 +501,7 @@ jobs:
             pushd ~/
             git clone git@github.com:Fluxengin/state-engine.git
             popd
-      - restore_cache:
-          keys:
-            - v2-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
-            - v2-m2-{{ .Branch }}-
-            - v2-m2-
+      - restore_cache_maven
       - run:
           name: Build state-engine
           command: |
@@ -550,10 +540,7 @@ jobs:
             wait $pidCloudSql
             buildEngine fluxengine-dataflow
             wait $pidDataflowHousekeepServlet $pidDslRegister $pidEventPublisher $pidDataflowBatchServlet $pidLocalTestRunner $pidRemoteTestRunner $pidDataflowHousekeep
-      - save_cache:
-          key: v2-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
-          paths:
-            - ~/.m2
+      - save_cache_maven
       - store_artifacts:
           path: ~/logs
           destination: logs
@@ -573,11 +560,7 @@ jobs:
           command: |
             rm -f ~/fdsl-test/fluxengine-local-test/lib/fluxengine-local-test-runner-*.jar
             cp -f ~/state-engine/fluxengine-local-test-runner/target/fluxengine-local-test-runner-*.jar ~/fdsl-test/fluxengine-local-test/lib/
-      - restore_cache:
-          keys:
-            - v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/datastore-cleaner/build.gradle" }}
-            - v2-gradle-{{ .Branch }}-
-            - v2-gradle-
+      - restore_cache_gradle
       - run:
           name: Run test
           command: |
@@ -586,99 +569,158 @@ jobs:
             export CONF=`pwd`/conf/
             ./gradlew test
             popd
-      - run:
-          name: Copy log file
-          command: cp -f ~/fdsl-test/fluxengine-local-test/debug.log ~/fdsl-test/fluxengine-local-test/build/reports/tests/test/
-          when: always
-      - save_cache:
-          key: v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/datastore-cleaner/build.gradle" }}
-          paths:
-            - ~/.gradle
-      - store_artifacts:
-          path: ~/fdsl-test/fluxengine-local-test/build/reports/tests/test
-          destination: test
-      - store_test_results:
-          path: ~/fdsl-test/fluxengine-local-test/build/test-results
+      - save_cache_gradle
+      - upload_test_results:
+          project: "fluxengine-local-test"
   deploy_batch_servlet_datastore:
     executor: my-gcp
     steps:
       - deploy_batch_servlet:
-          resourcenumber: 1
+          resourcenumber: "1"
   register_dsl_datastore:
     executor: my-gcp
     steps:
       - register_dsl:
           dsldirectory: "dsl"
           dslversion: 1
-          resourcenumber: 1
+          resourcenumber: "1"
   deploy_dataflow_jobs_datastore:
     executor: my-gcp
     steps:
       - deploy_dataflow_jobs:
-          persisterdb: datastore
+          persisterdb: "datastore"
           presubmitevent: true
-          resourcenumber: 1
+          resourcenumber: "1"
   test_dataflow_datastore:
     executor: my-gcp
     steps:
       - test_dataflow:
-          persisterdb: datastore
-          resourcenumber: 1
-  post_housekeep_test_data:
-    executor: my-gcp
-    steps:
-      - check_update:
-          dir: "fluxengine-integration-test .circleci"
-      - run:
-          name: Set locale
-          command: |
-            apt update
-            apt install -y locales
-            sed -i -e "s/# ja_JP\.UTF-8 UTF-8/ja_JP.UTF-8 UTF-8/" /etc/locale.gen
-            locale-gen
-            update-locale LANG=ja_JP.UTF-8
-      - run:
-          name: Post housekeep test data through batch servlet
-          command: |
-            mkdir ~/curl
-            TODAY_STRING=`date "+%Y-%m-%d"`
-            TOMORROW_STRING=`date "+%Y-%m-%d" -d '1 days'`
-            APP_SERVER=1-${CIRCLE_WORKFLOW_ID}-dot-${PROJECT}.appspot.com
-            curl -H 'Content-Type:application/json' -d "[{\"eventName\":\"Housekeepパケット使用A\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user1\",\"使用量\":500}},{\"eventName\":\"Housekeepパケット使用B\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user2\",\"使用量\":500,\"期限1\":\"${TODAY_STRING}\"}},{\"eventName\":\"Housekeepパケット使用C\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user3\",\"使用量\":500,\"期限2\":\"${TODAY_STRING}\"}},{\"eventName\":\"Housekeepパケット使用D\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user5\",\"使用量\":500,\"期限1\":\"${TODAY_STRING}\",\"期限2\":\"${TOMORROW_STRING}\"}}]" https://${APP_SERVER}/fluxengine-integration-test-event &
-            pidPostHousekeepEvent=$!
-            curl -H 'Content-Type:application/json' -d "[{\"eventName\":\"Housekeepパケット使用D\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user4\",\"使用量\":500,\"期限1\":\"${TODAY_STRING}\",\"期限2\":\"${TODAY_STRING}\"}}]" https://${APP_SERVER}/fluxengine-integration-test-event
-            wait $pidPostHousekeepEvent
+          persisterdb: "datastore"
+          resourcenumber: "1"
   deploy_batch_servlet_memorystore:
     executor: my-gcp
     steps:
       - deploy_batch_servlet:
-          resourcenumber: 2
+          resourcenumber: "2"
   register_dsl_memorystore:
     executor: my-gcp
     steps:
       - register_dsl:
           dsldirectory: "dsl"
           dslversion: 1
-          resourcenumber: 2
+          resourcenumber: "2"
   deploy_dataflow_jobs_memorystore:
     executor: my-gcp
     steps:
       - deploy_dataflow_jobs:
-          persisterdb: memorystore
+          persisterdb: "memorystore"
           presubmitevent: true
-          resourcenumber: 2
+          resourcenumber: "2"
   test_dataflow_memorystore:
     executor: my-gcp
     steps:
       - test_dataflow:
-          persisterdb: memorystore
-          resourcenumber: 2
+          persisterdb: "memorystore"
+          resourcenumber: "2"
+  deploy_dataflow_jobs_dsl_replacement:
+    executor: my-gcp
+    steps:
+      - deploy_dataflow_jobs:
+          persisterdb: "datastore"
+          presubmitevent: false
+          resourcenumber: "3"
+  register_dsl_before:
+    executor: my-gcp
+    steps:
+      - register_dsl:
+          dsldirectory: "dsl_before"
+          dslversion: 2
+          resourcenumber: "3"
+  test_dsl_before:
+    executor: my-gcp
+    steps:
+      - test_dsl_replacement:
+          variablename: "FLUXENGINE_INTEGRATION_TEST_DSL_REPLACEMENT_BEFORE"
+      - run:
+          name: Stop Dataflow job
+          command: |
+            while read dataflowJobId; do
+              echo "Stopping $dataflowJobId"
+              gcloud dataflow jobs cancel $dataflowJobId --region=asia-northeast1
+            done < ~/state-engine/dataflow_job_id.txt
+          when: on_fail
+  register_dsl_after:
+    executor: my-gcp
+    steps:
+      - register_dsl:
+          dsldirectory: "dsl_after"
+          dslversion: 3
+          resourcenumber: "3"
+      - run:
+          name: Wait for job to read new FDSL
+          command: |
+            echo "dsl_after registered at $(date +'%Y/%m/%d %H:%M:%S')"
+            sleep 60
+          when: on_success
+  register_dsl_dummy:
+    executor: my-gcp
+    steps:
+      # register dsl_dummy with its effective start date set tomorrow to make sure it's not executed
+      - register_dsl:
+          dsldirectory: "dsl_dummy"
+          dsleffectivedate: "`date +'%Y%m%d' -d '1 days'`"
+          dslversion: 4
+          resourcenumber: "3"
+      - run:
+          name: Wait for job to read new FDSL
+          command: |
+            echo "dsl_dummy registered at $(date +'%Y/%m/%d %H:%M:%S')"
+            sleep 60
+          when: on_success
+  test_dsl_after:
+    executor: my-gcp
+    steps:
+      - test_dsl_replacement:
+          variablename: "FLUXENGINE_INTEGRATION_TEST_DSL_REPLACEMENT_AFTER"
+      - run:
+          name: Stop Dataflow job
+          command: |
+            while read dataflowJobId; do
+              echo "Stopping $dataflowJobId"
+              gcloud dataflow jobs cancel $dataflowJobId --region=asia-northeast1
+            done < ~/state-engine/dataflow_job_id.txt
+          when: always
+  register_dsl_housekeep:
+    executor: my-gcp
+    steps:
+      - register_dsl:
+          dsldirectory: "dsl"
+          dslversion: 1
+          resourcenumber: "4"
+  deploy_dataflow_jobs_housekeep:
+    executor: my-gcp
+    steps:
+      - deploy_dataflow_jobs:
+          persisterdb: "datastore"
+          presubmitevent: false
+          resourcenumber: "4"
   test_housekeep:
     executor: my-gcp
     steps:
       - check_update:
           dir: "fluxengine-integration-test .circleci"
       - prepare_gcp_and_locale
+      - run:
+          name: Publish housekeep test data
+          command: |
+            TODAY_STRING=`date "+%Y-%m-%d"`
+            TOMORROW_STRING=`date "+%Y-%m-%d" -d '1 days'`
+            PUBSUB_NAME=integration-test4_${CIRCLE_WORKFLOW_ID}
+
+            gcloud pubsub topics publish projects/${PROJECT}/topics/${PUBSUB_NAME} --message="[{\"eventName\":\"Housekeepパケット使用A\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user1\",\"使用量\":500}},{\"eventName\":\"Housekeepパケット使用B\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user2\",\"使用量\":500,\"期限1\":\"${TODAY_STRING}\"}},{\"eventName\":\"Housekeepパケット使用C\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user3\",\"使用量\":500,\"期限2\":\"${TODAY_STRING}\"}},{\"eventName\":\"Housekeepパケット使用D\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user5\",\"使用量\":500,\"期限1\":\"${TODAY_STRING}\",\"期限2\":\"${TOMORROW_STRING}\"}}]" &
+            pidHousekeepEvent=$!
+            gcloud pubsub topics publish projects/${PROJECT}/topics/${PUBSUB_NAME} --message="[{\"eventName\":\"Housekeepパケット使用D\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user4\",\"使用量\":500,\"期限1\":\"${TODAY_STRING}\",\"期限2\":\"${TODAY_STRING}\"}}]"
+            wait pidHousekeepEvent
       - attach_workspace:
           at: ~/state-engine
       - install_maven
@@ -724,23 +766,16 @@ jobs:
             ./fluxengine_housekeep.sh $(pwd)/fluxengine_housekeep.env
             popd
           background: true
-      - restore_cache:
-          keys:
-            - v2-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
-            - v2-m2-{{ .Branch }}-
-            - v2-m2-
+      - restore_cache_maven
       - run:
           name: Deploy Housekeep servlet
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test-housekeep
             mvn clean package appengine:deploy
             popd
-      - save_cache:
-          key: v2-m2-{{ .Branch }}-{{ checksum "~/state-engine/stateengine/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-register/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-event-publisher/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-parser/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-local-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dsl-loader/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-persist-manager/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-remote-test-runner/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-cloud-sql/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-housekeep-servlet/pom.xml" }}-{{ checksum "~/state-engine/fluxengine-dataflow-batch-servlet/pom.xml" }}
-          paths:
-            - ~/.m2
+      - save_cache_maven
       - edit_integration_test_conf_files:
-          resourcenumber: 1
+          resourcenumber: "1"
       - run:
           name: Replace jar
           command: |
@@ -751,11 +786,15 @@ jobs:
             cp -f ~/state-engine/fluxengine-${projectDir}/target/fluxengine-${projectDir}-*.jar ./
             done
             popd
-      - restore_cache:
-          keys:
-            - v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/datastore-cleaner/build.gradle" }}
-            - v2-gradle-{{ .Branch }}-
-            - v2-gradle-
+      - restore_cache_gradle
+      - run:
+          name: Stop Dataflow job for test data
+          command: |
+            while read dataflowJobId; do
+              echo "Stopping $dataflowJobId"
+              gcloud dataflow jobs cancel $dataflowJobId --region=asia-northeast1
+            done < ~/state-engine/dataflow_job_id.txt
+          when: always
       - run:
           name: Test Housekeep
           command: |
@@ -763,105 +802,16 @@ jobs:
             chmod +x gradlew
             env FLUXENGINE_INTEGRATION_TEST_HOUSEKEEP=true HOUSEKEEP_SERVICE_NAME=h-${CIRCLE_WORKFLOW_ID} ./gradlew test --tests jp.co.fluxengine.example.housekeeptest.HousekeepTest
             popd
-      - save_cache:
-          key: v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/datastore-cleaner/build.gradle" }}
-          paths:
-            - ~/.gradle
-      - run:
-          name: Copy log file
-          command: |
-            cp -f ~/fdsl-test/fluxengine-integration-test/debug.log ~/fdsl-test/fluxengine-integration-test/build/reports/tests/test/
-          when: always
-      - store_artifacts:
-          path: ~/fdsl-test/fluxengine-integration-test/build/reports/tests/test
-          destination: test
-      - store_test_results:
-          path: ~/fdsl-test/fluxengine-integration-test/build/test-results
-      - run:
-          name: Delete App Engine service
-          command: |
-            HOUSEKEEP_SERVICE_NAME=h-${CIRCLE_WORKFLOW_ID}
-            gcloud --quiet app services delete ${HOUSEKEEP_SERVICE_NAME}
-          when: always
-  deploy_dataflow_jobs_dsl_replacement:
-    executor: my-gcp
-    steps:
-      - deploy_dataflow_jobs:
-          persisterdb: datastore
-          presubmitevent: false
-          resourcenumber: 3
-  register_dsl_before:
-    executor: my-gcp
-    steps:
-      - register_dsl:
-          dsldirectory: "dsl_before"
-          dslversion: 2
-          resourcenumber: 3
-  test_dsl_before:
-    executor: my-gcp
-    steps:
-      - test_dsl_replacement:
-          variablename: "FLUXENGINE_INTEGRATION_TEST_DSL_REPLACEMENT_BEFORE"
-      - run:
-          name: Stop Dataflow job
-          command: |
-            while read dataflowJobId; do
-              echo "Stopping $dataflowJobId"
-              gcloud dataflow jobs cancel $dataflowJobId --region=asia-northeast1
-            done < ~/state-engine/dataflow_job_id.txt
-          when: on_fail
-  register_dsl_after:
-    executor: my-gcp
-    steps:
-      - register_dsl:
-          dsldirectory: "dsl_after"
-          dslversion: 3
-          resourcenumber: 3
-      - run:
-          name: Wait for job to read new FDSL
-          command: |
-            echo "dsl_after registered at $(date +'%Y/%m/%d %H:%M:%S')"
-            sleep 60
-          when: on_success
-  register_dsl_dummy:
-    executor: my-gcp
-    steps:
-      # register dsl_dummy with its effective start date set tomorrow to make sure it's not executed
-      - register_dsl:
-          dsldirectory: "dsl_dummy"
-          dsleffectivedate: "`date +'%Y%m%d' -d '1 days'`"
-          dslversion: 4
-          resourcenumber: 3
-      - run:
-          name: Wait for job to read new FDSL
-          command: |
-            echo "dsl_dummy registered at $(date +'%Y/%m/%d %H:%M:%S')"
-            sleep 60
-          when: on_success
-  test_dsl_after:
-    executor: my-gcp
-    steps:
-      - test_dsl_replacement:
-          variablename: "FLUXENGINE_INTEGRATION_TEST_DSL_REPLACEMENT_AFTER"
-      - run:
-          name: Stop Dataflow job
-          command: |
-            while read dataflowJobId; do
-              echo "Stopping $dataflowJobId"
-              gcloud dataflow jobs cancel $dataflowJobId --region=asia-northeast1
-            done < ~/state-engine/dataflow_job_id.txt
-          when: always
+      - save_cache_gradle
+      - upload_test_results:
+          project: "fluxengine-integration-test"
   cleanup:
     executor: my-gcp
     steps:
       - check_update:
           dir: "fluxengine-integration-test .circleci"
       - prepare_gcp_and_locale
-      - restore_cache:
-          keys:
-            - v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/datastore-cleaner/build.gradle" }}
-            - v2-gradle-{{ .Branch }}-
-            - v2-gradle-
+      - restore_cache_gradle
       - run:
           name: Delete GCP resources
           command: |
@@ -869,10 +819,7 @@ jobs:
             chmod +x cleanup.sh
             ./cleanup.sh
             popd
-      - save_cache:
-          key: v2-gradle-{{ .Branch }}-{{ checksum "~/fdsl-test/fluxengine-local-test/build.gradle" }}-{{ checksum "~/fdsl-test/fluxengine-integration-test/build.gradle" }}-{{ checksum "~/fdsl-test/datastore-cleaner/build.gradle" }}
-          paths:
-            - ~/.gradle
+      - save_cache_gradle
 workflows:
   version: 2
   deploy_dsl_test:
@@ -944,30 +891,6 @@ workflows:
             - create_cloud_resources
             - deploy_batch_servlet_datastore
             - deploy_dataflow_jobs_datastore
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
-      - post_housekeep_test_data:
-          requires:
-            - deploy_batch_servlet_datastore
-            - deploy_dataflow_jobs_datastore
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
-      - test_housekeep:
-          requires:
-            - test_dataflow_datastore
-            - post_housekeep_test_data
           filters:
             branches:
               only:
@@ -1089,11 +1012,46 @@ workflows:
             tags:
               only:
                 - /^ci.*/
+      - register_dsl_housekeep:
+          requires:
+            - build_engine
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - deploy_dataflow_jobs_housekeep:
+          requires:
+            - build_engine
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - test_housekeep:
+          requires:
+            - register_dsl_housekeep
+            - deploy_dataflow_jobs_housekeep
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
       - cleanup:
           requires:
-            - test_housekeep
+            - test_dataflow_datastore
             - test_dataflow_memorystore
             - test_dsl_after
+            - test_housekeep
           filters:
             branches:
               only:

@@ -9,7 +9,7 @@
 pidDatastore=$!
 
 {
-  for i in `seq 1 3`; do
+  for i in `seq 1 4`; do
     PUBSUB_NAME=integration-test${i}_${CIRCLE_WORKFLOW_ID}
     gcloud pubsub subscriptions delete ${PUBSUB_NAME}
     gcloud pubsub topics delete ${PUBSUB_NAME}
@@ -18,7 +18,7 @@ pidDatastore=$!
 pidPubsub=$!
 
 {
-  for i in `seq 1 3`; do
+  for i in `seq 1 4`; do
     STAGING_DIRECTORY=gs://fluxengine-integration-test/staging${i}_${CIRCLE_WORKFLOW_ID}
     TEMPLATE_FILE=gs://fluxengine-integration-test/templates/MyTemplate${i}_${CIRCLE_WORKFLOW_ID}
     gsutil -m rm -r ${STAGING_DIRECTORY} ${TEMPLATE_FILE}
@@ -33,6 +33,8 @@ pidStorage=$!
     SERVICE_NAME=${i}-${CIRCLE_WORKFLOW_ID}
     gcloud --quiet app services delete ${SERVICE_NAME}
   done
+  HOUSEKEEP_SERVICE_NAME=h-${CIRCLE_WORKFLOW_ID}
+  gcloud --quiet app services delete ${HOUSEKEEP_SERVICE_NAME}
 }
 pidService=$!
 

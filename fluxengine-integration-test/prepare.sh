@@ -9,7 +9,7 @@
 pidFlag=$!
 
 {
-  for i in `seq 1 3`; do
+  for i in `seq 1 4`; do
     gcloud pubsub topics create integration-test${i}_${CIRCLE_WORKFLOW_ID}
     gcloud pubsub subscriptions create integration-test${i}_${CIRCLE_WORKFLOW_ID} --topic=integration-test${i}_${CIRCLE_WORKFLOW_ID}
   done
