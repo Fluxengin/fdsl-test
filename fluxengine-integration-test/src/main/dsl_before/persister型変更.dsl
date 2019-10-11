@@ -8,12 +8,20 @@ persister 型変更の検証_期限内:
   persist("persister型変更の検証"):
     lifetime: today()
 
+persister 型変更の検証_期限内_error:
+  contents2_error: date
+  persist("persister型変更の検証"):
+    lifetime: today()
+
 persister 型変更の検証_計算可能1:
   contents3: string
   persist("persister型変更の検証"):
     lifetime: today()
 
 event 型変更の検証イベント:
+  dummy: string
+
+event 型変更の検証イベント_error1:
   dummy: string
 
 persist 型変更の検証_期限切れ:
@@ -23,6 +31,10 @@ persist 型変更の検証_期限切れ:
 persist 型変更の検証_期限内:
   contents2: today()
   watch(型変更の検証イベント):
+
+persist 型変更の検証_期限内_error:
+  contents2_error: today()
+  watch(型変更の検証イベント_error1):
 
 persist 型変更の検証_計算可能1:
   contents3: "123"

@@ -31,6 +31,11 @@ public class Utility {
         return ObjectUtils.toString(str1) + ObjectUtils.toString(str2);
     }
 
+    @DslName("concatstring")
+    public static String concatstring(String str1, String str2) {
+        return str1 + str2;
+    }
+
     @DslName("フォーマット")
     public static String format(String format, String param) {
         return format.replace("{0}", param);

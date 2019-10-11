@@ -87,6 +87,7 @@ public class DslReplacementBeforeTest {
     @Test
     void testPersisterTypes() throws Exception {
         extractor.publishOneAttributeEvent("persister型変更", "型変更の検証イベント", LocalDateTime.now(), "dummy", "dummy");
+        extractor.publishOneAttributeEvent("persister型変更", "型変更の検証イベント_error1", LocalDateTime.now(), "dummy", "dummy");
 
         LOG.info("testPersisterTypes 待機");
         Thread.sleep(30000);
@@ -101,7 +102,26 @@ public class DslReplacementBeforeTest {
         Map<String, Object> notExpired = entity.getPersisterMap("persister型変更#型変更の検証_期限内");
         assertThat(Utils.getNested(notExpired, String.class, "value", "contents2")).isEqualTo(todayString);
 
+        Map<String, Object> notExpiredError = entity.getPersisterMap("persister型変更#型変更の検証_期限内_error");
+        assertThat(Utils.getNested(notExpiredError, String.class, "value", "contents2_error")).isEqualTo(todayString);
+
         Map<String, Object> calculatable = entity.getPersisterMap("persister型変更#型変更の検証_計算可能1");
         assertThat(Utils.getNested(calculatable, String.class, "value", "contents3")).isEqualTo("123");
+    }
+
+    @Test
+    void testPersistValues() throws Exception {
+        extractor.publishOneAttributeEvent("persist値の変更", "値変更の検証イベント", LocalDateTime.now(), "input", 1);
+
+        LOG.info("testPersistValues 待機");
+        Thread.sleep(30000);
+        LOG.info("testPersistValues 待機終了");
+
+        PersisterExtractor.EntityMap entity = extractor.getIdMap("[persist値変更の検証]");
+
+        Map<String, Object> persister = entity.getPersisterMap("persist値の変更#値変更の検証");
+        assertThat(Utils.getNested(persister, Number.class, "value", "contents1"))
+                .isNotNull()
+                .satisfies(n -> assertThat(n.intValue()).isEqualTo(1));
     }
 }
