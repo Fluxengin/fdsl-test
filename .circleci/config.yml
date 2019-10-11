@@ -811,17 +811,17 @@ workflows:
             tags:
               only:
                 - /^ci.*/
-      - test_fdsl:
-          requires:
-            - build_engine
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
+#      - test_fdsl:
+#          requires:
+#            - build_engine
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
 #      - deploy_batch_servlet_datastore:
 #          requires:
 #            - build_engine
