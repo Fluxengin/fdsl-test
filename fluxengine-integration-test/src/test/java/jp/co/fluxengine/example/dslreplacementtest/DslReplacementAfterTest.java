@@ -141,6 +141,9 @@ public class DslReplacementAfterTest {
 
     @Test
     void testPersistValues() throws Exception {
+        // testPersisterLifetimeによってDSLが最新バージョンに更新されるのを待つ
+        Thread.sleep(3000);
+
         extractor.publishOneAttributeEvent("persist値の変更", "値変更の検証イベント", LocalDateTime.now(), "input", 1);
 
         LOG.info("testPersistValues 待機");
