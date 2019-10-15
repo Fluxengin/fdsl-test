@@ -165,34 +165,6 @@ public class DslReplacementAfterTest {
                 .satisfies(n -> assertThat(n.intValue()).isEqualTo(5));
     }
 
-/*
-    DSLのnumberがプラグインのObjectで受け取れないことが分かった
-    @Test
-    void testEffectorTypes() throws Exception {
-        String storagePrefix = System.getenv("STORAGE_PREFIX");
-
-        Matcher storagePrefixMatcher = Pattern.compile("gs://(.*?)/(.*)").matcher(storagePrefix);
-        if (!storagePrefixMatcher.matches()) {
-            fail("STORAGE_PREFIX の書式が正しくありません: " + storagePrefix);
-        }
-
-        String bucketName = storagePrefixMatcher.group(1);
-        String blobPrefix = storagePrefixMatcher.group(2);
-
-        // testPersisterLifetimeによってDSLが最新バージョンに更新されるのを待つ
-        Thread.sleep(3000);
-
-        extractor.publishOneAttributeEvent("effector型変更", "effector型変更の検証イベント", LocalDateTime.now(), "storage_prefix", storagePrefix);
-
-        LOG.info("testEffectorTypes 待機");
-        Thread.sleep(30000);
-        LOG.info("testEffectorTypes 待機終了");
-
-        Storage storage = StorageOptions.getDefaultInstance().getService();
-        assertDoesNotThrow(() -> storage.get(bucketName, blobPrefix + "型変更の検証_変換可能_after.txt"));
-    }
-*/
-
     @Test
     void testEffectValues() throws Exception {
         String storagePrefix = System.getenv("STORAGE_PREFIX");

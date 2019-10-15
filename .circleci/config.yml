@@ -270,7 +270,7 @@ commands:
             EFFECTIVE_DATE=<< parameters.dsleffectivedate >>
             # Run regisdsl with classpath of fluxengine-dsl-register because fluxengine-dsl-register requires GCP related jars but it's not a fat jar
             env CLASSPATH=~/state-engine/fluxengine-dsl-register/target/lib/* ./regisdsl.sh << parameters.dslversion>> ${EFFECTIVE_DATE} 2>&1 | tee temp_dsl_register_output.txt
-            ! grep 'Exception:' temp_dsl_register_output.txt > /dev/null
+            grep 'Exception:' temp_dsl_register_output.txt > /dev/null && exit 1
             popd
   deploy_dsl_and_job:
     description: "Register FDSL and deploy Dataflow jobs (both batch and stream)"
