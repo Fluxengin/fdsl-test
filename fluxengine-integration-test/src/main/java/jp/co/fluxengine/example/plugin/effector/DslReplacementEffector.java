@@ -26,7 +26,7 @@ public class DslReplacementEffector {
     private String filename;
 
     @DslName("contents")
-    private Number contents;
+    private Object contents;
 
     @Post
     public void post() {
@@ -38,7 +38,7 @@ public class DslReplacementEffector {
             String message = "class = " + contents.getClass() + "\nmessage = " + ObjectUtils.toString(contents);
             STORAGE.create(blobInfo, message.getBytes(StandardCharsets.UTF_8));
         } else {
-            throw new RuntimeException("storagePrefix の書式が不正です: " + storagePrefix);
+            throw new RuntimeException("storage_prefix の書式が不正です: " + storagePrefix);
         }
     }
 }

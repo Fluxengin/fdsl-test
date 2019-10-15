@@ -145,8 +145,7 @@ public class DslReplacementBeforeTest {
         String bucketName = storagePrefixMatcher.group(1);
         String blobPrefix = storagePrefixMatcher.group(2);
 
-        extractor.publishOneAttributeEvent("effector型変更", "effector型変更の検証イベント1", LocalDateTime.now(), "storage_prefix", storagePrefix);
-        extractor.publishOneAttributeEvent("effector型変更", "effector型変更の検証イベント2", LocalDateTime.now(), "storage_prefix", storagePrefix);
+        extractor.publishOneAttributeEvent("effector型変更", "effector型変更の検証イベント", LocalDateTime.now(), "storage_prefix", storagePrefix);
 
         LOG.info("testEffectorTypes 待機");
         Thread.sleep(30000);
@@ -154,6 +153,5 @@ public class DslReplacementBeforeTest {
 
         Storage storage = StorageOptions.getDefaultInstance().getService();
         assertDoesNotThrow(() -> storage.get(bucketName, blobPrefix + "型変更の検証_変換可能_before.txt"));
-        assertDoesNotThrow(() -> storage.get(bucketName, blobPrefix + "型変更の検証_変換不可能_before.txt"));
     }
 }
