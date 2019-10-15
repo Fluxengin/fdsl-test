@@ -1,5 +1,8 @@
 package jp.co.fluxengine.example.dslreplacementtest;
 
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageException;
+import com.google.cloud.storage.StorageOptions;
 import jp.co.fluxengine.example.util.PersisterExtractor;
 import jp.co.fluxengine.example.util.Utils;
 import org.junit.jupiter.api.*;
@@ -13,8 +16,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 // このクラスは、Dataflowのジョブ(バッチタイプ)にデータを投入するので、
 // 普段は実行されないようにし、
@@ -28,7 +34,7 @@ public class DslReplacementAfterTest {
     private static PersisterExtractor extractor;
 
     @BeforeAll
-    static void setup() throws NoSuchMethodException, IOException, InstantiationException, IllegalAccessException, InvocationTargetException, ClassNotFoundException {
+    static void setup() throws NoSuchMethodException, IOException, IllegalAccessException, InvocationTargetException, ClassNotFoundException {
         extractor = PersisterExtractor.getInstance();
     }
 
@@ -156,5 +162,32 @@ public class DslReplacementAfterTest {
         assertThat(Utils.getNested(persister, Number.class, "value", "contents1"))
                 .isNotNull()
                 .satisfies(n -> assertThat(n.intValue()).isEqualTo(5));
+    }
+
+    @Test
+    void testEffectorTypes() throws Exception {
+        String storagePrefix = System.getenv("STORAGE_PREFIX");
+
+        Matcher storagePrefixMatcher = Pattern.compile("gs://(.*?)/(.*)").matcher(storagePrefix);
+        if (!storagePrefixMatcher.matches()) {
+            fail("STORAGE_PREFIX の書式が正しくありません: " + storagePrefix);
+        }
+
+        String bucketName = storagePrefixMatcher.group(1);
+        String blobPrefix = storagePrefixMatcher.group(2);
+
+        // testPersisterLifetimeによってDSLが最新バージョンに更新されるのを待つ
+        Thread.sleep(3000);
+
+        extractor.publishOneAttributeEvent("effector型変更", "effector型変更の検証イベント1", LocalDateTime.now(), "storage_prefix", storagePrefix);
+        extractor.publishOneAttributeEvent("effector型変更", "effector型変更の検証イベント2", LocalDateTime.now(), "storage_prefix", storagePrefix);
+
+        LOG.info("testEffectorTypes 待機");
+        Thread.sleep(30000);
+        LOG.info("testEffectorTypes 待機終了");
+
+        Storage storage = StorageOptions.getDefaultInstance().getService();
+        assertDoesNotThrow(() -> storage.get(bucketName, blobPrefix + "型変更の検証_変換可能_after.txt"));
+        assertThatThrownBy(() -> storage.get(bucketName, blobPrefix + "型変更の検証_変換不可能_after.txt")).isInstanceOf(StorageException.class);
     }
 }

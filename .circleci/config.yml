@@ -457,7 +457,7 @@ commands:
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test
             chmod +x gradlew
-            env << parameters.variablename >>=true ./gradlew test --tests jp.co.fluxengine.example.dslreplacementtest*
+            env << parameters.variablename >>=true STORAGE_PREFIX=gs://${BUCKET}/test_${CIRCLE_WORKFLOW_ID}/ ./gradlew test --tests jp.co.fluxengine.example.dslreplacementtest*
             popd
       - save_cache_gradle
       - upload_test_results:
