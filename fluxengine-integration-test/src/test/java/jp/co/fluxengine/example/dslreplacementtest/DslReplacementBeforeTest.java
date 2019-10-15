@@ -1,5 +1,6 @@
 package jp.co.fluxengine.example.dslreplacementtest;
 
+import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import jp.co.fluxengine.example.util.PersisterExtractor;
@@ -11,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -20,7 +22,6 @@ import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 // このクラスは、Dataflowのジョブ(バッチタイプ)にデータを投入するので、
 // 普段は実行されないようにし、
@@ -133,8 +134,33 @@ public class DslReplacementBeforeTest {
                 .satisfies(n -> assertThat(n.intValue()).isEqualTo(1));
     }
 
+    /*
+        DSLのnumberがプラグインのObjectで受け取れないことが分かった
+        @Test
+        void testEffectorTypes() throws Exception {
+            String storagePrefix = System.getenv("STORAGE_PREFIX");
+
+            Matcher storagePrefixMatcher = Pattern.compile("gs://(.*?)/(.*)").matcher(storagePrefix);
+            if (!storagePrefixMatcher.matches()) {
+                fail("STORAGE_PREFIX の書式が正しくありません: " + storagePrefix);
+            }
+
+            String bucketName = storagePrefixMatcher.group(1);
+            String blobPrefix = storagePrefixMatcher.group(2);
+
+            extractor.publishOneAttributeEvent("effector型変更", "effector型変更の検証イベント", LocalDateTime.now(), "storage_prefix", storagePrefix);
+
+            LOG.info("testEffectorTypes 待機");
+            Thread.sleep(30000);
+            LOG.info("testEffectorTypes 待機終了");
+
+            Storage storage = StorageOptions.getDefaultInstance().getService();
+            assertDoesNotThrow(() -> storage.get(bucketName, blobPrefix + "型変更の検証_変換可能_before.txt"));
+        }
+    */
+
     @Test
-    void testEffectorTypes() throws Exception {
+    void testEffectValues() throws Exception {
         String storagePrefix = System.getenv("STORAGE_PREFIX");
 
         Matcher storagePrefixMatcher = Pattern.compile("gs://(.*?)/(.*)").matcher(storagePrefix);
@@ -145,13 +171,19 @@ public class DslReplacementBeforeTest {
         String bucketName = storagePrefixMatcher.group(1);
         String blobPrefix = storagePrefixMatcher.group(2);
 
-        extractor.publishOneAttributeEvent("effector型変更", "effector型変更の検証イベント", LocalDateTime.now(), "storage_prefix", storagePrefix);
+        extractor.publishEvent("effect値の変更", "effect値の変更イベント", LocalDateTime.now(), Utils.toMap(
+                "storage_prefix", storagePrefix,
+                "attr1", "value1",
+                "attr2", "value2"
+        ));
 
-        LOG.info("testEffectorTypes 待機");
+        LOG.info("testEffectValues 待機");
         Thread.sleep(30000);
-        LOG.info("testEffectorTypes 待機終了");
+        LOG.info("testEffectValues 待機終了");
 
         Storage storage = StorageOptions.getDefaultInstance().getService();
-        assertDoesNotThrow(() -> storage.get(bucketName, blobPrefix + "型変更の検証_変換可能_before.txt"));
+        Blob fileBlob = storage.get(bucketName, blobPrefix + "値変更の検証_before.txt");
+        String value = new String(fileBlob.getContent(), StandardCharsets.UTF_8);
+        assertThat(value).isEqualTo("value1");
     }
 }

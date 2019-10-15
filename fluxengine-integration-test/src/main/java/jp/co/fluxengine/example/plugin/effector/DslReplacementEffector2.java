@@ -6,14 +6,13 @@ import com.google.cloud.storage.StorageOptions;
 import jp.co.fluxengine.stateengine.annotation.DslName;
 import jp.co.fluxengine.stateengine.annotation.Effector;
 import jp.co.fluxengine.stateengine.annotation.Post;
-import org.apache.commons.lang.ObjectUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Effector("effector型変更#型変更の検証")
-public class DslReplacementEffector {
+@Effector("effect値の変更#値変更の検証")
+public class DslReplacementEffector2 {
 
     private static final Storage STORAGE = StorageOptions.getDefaultInstance().getService();
 
@@ -26,17 +25,16 @@ public class DslReplacementEffector {
     private String filename;
 
     @DslName("contents")
-    private Object contents;
+    private String contents;
 
-    @Post
+    @Post()
     public void post() {
         Matcher storagePrefixMatcher = STORAGE_PREFIX_PATTERN.matcher(storagePrefix);
         if (storagePrefixMatcher.matches()) {
             String bucketName = storagePrefixMatcher.group(1);
             String blobPrefix = storagePrefixMatcher.group(2);
             BlobInfo blobInfo = BlobInfo.newBuilder(bucketName, blobPrefix + filename).setContentType("text/plain").build();
-            String message = "class = " + contents.getClass() + "\nmessage = " + ObjectUtils.toString(contents);
-            STORAGE.create(blobInfo, message.getBytes(StandardCharsets.UTF_8));
+            STORAGE.create(blobInfo, contents.getBytes(StandardCharsets.UTF_8));
         } else {
             throw new RuntimeException("storage_prefix の書式が不正です: " + storagePrefix);
         }

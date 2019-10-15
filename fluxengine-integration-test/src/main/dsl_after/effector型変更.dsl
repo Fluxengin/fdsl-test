@@ -1,13 +1,15 @@
-effector 型変更の検証:
-  storage_prefix: string
-  filename: string
-  contents: string
+# DSLのnumberがプラグインのObjectで受け取れないことが分かった
 
-event effector型変更の検証イベント:
-  storage_prefix: string
-
-effect 型変更の検証:
-  storage_prefix: effector型変更の検証イベント.storage_prefix
-  filename: "型変更の検証_変換可能_after.txt"
-  contents: 123
-  watch(effector型変更の検証イベント):
+#effector 型変更の検証:
+#  storage_prefix: string
+#  filename: string
+#  contents: string
+#
+#event effector型変更の検証イベント:
+#  storage_prefix: string
+#
+#effect 型変更の検証:
+#  storage_prefix: effector型変更の検証イベント.storage_prefix
+#  filename: "型変更の検証_変換可能_after.txt"
+#  contents: 123
+#  watch(effector型変更の検証イベント):
