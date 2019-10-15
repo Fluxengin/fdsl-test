@@ -18,12 +18,12 @@ pidPubsub=$!
 
 {
   for i in `seq 1 4`; do
-    STAGING_DIRECTORY=gs://fluxengine-integration-test/staging${i}_${CIRCLE_WORKFLOW_ID}
-    TEMPLATE_FILE=gs://fluxengine-integration-test/templates/MyTemplate${i}_${CIRCLE_WORKFLOW_ID}
+    STAGING_DIRECTORY=gs://${BUCKET}/staging${i}_${CIRCLE_WORKFLOW_ID}
+    TEMPLATE_FILE=gs://${BUCKET}/templates/MyTemplate${i}_${CIRCLE_WORKFLOW_ID}
     gsutil -m rm -r ${STAGING_DIRECTORY} ${TEMPLATE_FILE}
   done
-  HOUSEKEEP_STAGING_DIRECTORY=gs://fluxengine-integration-test/stagingh_${CIRCLE_WORKFLOW_ID}
-  HOUSEKEEP_TEMPLATE_FILE=gs://fluxengine-integration-test/templates/housekeepJob_${CIRCLE_WORKFLOW_ID}
+  HOUSEKEEP_STAGING_DIRECTORY=gs://${BUCKET}/stagingh_${CIRCLE_WORKFLOW_ID}
+  HOUSEKEEP_TEMPLATE_FILE=gs://${BUCKET}/templates/housekeepJob_${CIRCLE_WORKFLOW_ID}
   gsutil -m rm -r ${HOUSEKEEP_STAGING_DIRECTORY} ${HOUSEKEEP_TEMPLATE_FILE}
 } &
 pidStorage=$!
