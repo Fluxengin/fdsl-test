@@ -115,11 +115,7 @@ commands:
       - run:
           name: Install maven
           command: |
-            mkdir ~/maven
-            pushd ~/maven
-            curl https://www-us.apache.org/dist/maven/maven-3/3.6.1/binaries/apache-maven-3.6.1-bin.tar.gz | tar xzvf -
-            echo 'export PATH=$PATH:~/maven/apache-maven-3.6.1/bin' >> $BASH_ENV
-            popd
+            apt install -y maven
   restore_cache_maven:
     steps:
       - restore_cache:

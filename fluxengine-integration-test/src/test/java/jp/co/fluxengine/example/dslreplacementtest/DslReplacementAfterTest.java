@@ -177,6 +177,9 @@ public class DslReplacementAfterTest {
         String bucketName = storagePrefixMatcher.group(1);
         String blobPrefix = storagePrefixMatcher.group(2);
 
+        // testPersisterLifetimeによってDSLが最新バージョンに更新されるのを待つ
+        Thread.sleep(3000);
+
         extractor.publishEvent("effect値の変更", "effect値の変更イベント", LocalDateTime.now(), Utils.toMap(
                 "storage_prefix", storagePrefix,
                 "attr1", "value1",
