@@ -195,5 +195,22 @@ public class DslReplacementAfterTest {
         String value = new String(fileBlob.getContent(), StandardCharsets.UTF_8);
         assertThat(value).isEqualTo("value2");
     }
+
+    @Test
+    void testRuleCondition() throws Exception {
+        // testPersisterLifetimeによってDSLが最新バージョンに更新されるのを待つ
+        Thread.sleep(3000);
+
+        extractor.publishOneAttributeEvent("rule条件の変更", "rule条件変更の検証イベント", LocalDateTime.now(), "number_value", 5);
+
+        LOG.info("testRuleCondition 待機");
+        Thread.sleep(30000);
+        LOG.info("testRuleCondition 待機終了");
+
+        PersisterExtractor.EntityMap entity = extractor.getIdMap("[rule条件変更の検証]");
+        Map<String, Object> persister = entity.getPersisterMap("rule条件の変更#rule条件変更の検証");
+
+        assertThat(Utils.getNested(persister, String.class, "value", "contents")).isEqualTo("exists");
+    }
 }
 

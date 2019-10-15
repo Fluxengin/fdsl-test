@@ -161,4 +161,17 @@ public class DslReplacementBeforeTest {
         String value = new String(fileBlob.getContent(), StandardCharsets.UTF_8);
         assertThat(value).isEqualTo("value1");
     }
+
+    @Test
+    void testRuleCondition() throws Exception {
+        extractor.publishOneAttributeEvent("rule条件の変更", "rule条件変更の検証イベント", LocalDateTime.now(), "number_value", 5);
+
+        LOG.info("testRuleCondition 待機");
+        Thread.sleep(30000);
+        LOG.info("testRuleCondition 待機終了");
+
+        PersisterExtractor.EntityMap entity = extractor.getIdMap("[rule条件変更の検証]");
+
+        assertThat(entity).isNull();
+    }
 }
