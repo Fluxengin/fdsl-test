@@ -296,8 +296,11 @@ class MemorystoreExtractor extends PersisterExtractor {
         IdToEntityMap result = new IdToEntityMap();
 
         // ジョブが終了するとSQLにデータが入っているので、取得する
-        try (Connection conn = CloudSqlPool.getDataSource().getConnection()) {
-            PreparedStatement selectStmt = conn.prepareStatement("SELECT `key`, `value` FROM `memorystore_contents` WHERE `requestid` = ?");
+        try (Connection conn = CloudSqlPool.getDataSource().getConnection();
+             PreparedStatement selectStmt = conn.prepareStatement(
+                     "SELECT `key`, `value` FROM `memorystore_contents` WHERE `requestid` = ?"
+             )
+        ) {
             selectStmt.setString(1, requestId);
 
             // タイムアウトを5分とする
@@ -338,9 +341,10 @@ class MemorystoreExtractor extends PersisterExtractor {
                 }
             }
 
-            PreparedStatement deleteStmt = conn.prepareStatement("DELETE FROM `memorystore_contents` WHERE `requestid` = ?");
-            deleteStmt.setString(1, requestId);
-            deleteStmt.execute();
+            try (PreparedStatement deleteStmt = conn.prepareStatement("DELETE FROM `memorystore_contents` WHERE `requestid` = ?")) {
+                deleteStmt.setString(1, requestId);
+                deleteStmt.execute();
+            }
         }
 
         LOG.debug("Memorystore = " + result.toString());

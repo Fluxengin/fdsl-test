@@ -189,22 +189,21 @@ public class DataflowTest {
 
         // 結果のassertionを行う
         Utils.withTestDb(testDbConnection -> {
-            // message を持つ行が、1行あればOK
-            PreparedStatement selectCount = testDbConnection.prepareStatement(
+            try (PreparedStatement selectCount = testDbConnection.prepareStatement(
                     "SELECT COUNT(*) FROM integration_test_effector WHERE userid = ? AND message = ?"
-            );
-            selectCount.setString(1, "effector_check_01");
-            selectCount.setString(2, message);
+            )) {
+                // message を持つ行が、1行あればOK
+                selectCount.setString(1, "effector_check_01");
+                selectCount.setString(2, message);
 
-            try (ResultSet countResult = selectCount.executeQuery()) {
+                ResultSet countResult = selectCount.executeQuery();
                 assertThat(countResult.next()).isTrue();
                 assertThat(countResult.getInt(1)).isEqualTo(1);
-            }
 
-            selectCount.setString(1, "effector_check_02");
-            selectCount.setString(2, event2Message + " : " + event2Number);
+                selectCount.setString(1, "effector_check_02");
+                selectCount.setString(2, event2Message + " : " + event2Number);
 
-            try (ResultSet countResult2 = selectCount.executeQuery()) {
+                ResultSet countResult2 = selectCount.executeQuery();
                 assertThat(countResult2.next()).isTrue();
                 assertThat(countResult2.getInt(1)).isEqualTo(1);
             }
@@ -232,28 +231,27 @@ public class DataflowTest {
 
         // テストデータのINSERT
         Utils.withTestDb(testDbConnection -> {
-            PreparedStatement insertTestRecords = testDbConnection.prepareStatement(
+            try (PreparedStatement insertTestRecords = testDbConnection.prepareStatement(
                     "INSERT INTO getmysql_test(test_id, id, bit_field, int_field, double_field, decimal_field, datetime_field, timestamp_field, varchar_field) " +
                             "VALUES " + StringUtils.repeat("(?,?,?,?,?,?,?,?,?)", ",", 7)
-            );
-
-            for (int i = 0; i < 7; i++) {
-                insertTestRecords.setString(i * 9 + 1, testIdForMySQL);
-                insertTestRecords.setLong(i * 9 + 2, i);
-                insertTestRecords.setBoolean(i * 9 + 3, i % 2 == 0);
-                insertTestRecords.setInt(i * 9 + 4, i + 1);
-                insertTestRecords.setDouble(i * 9 + 5, i / 10.0);
-                insertTestRecords.setBigDecimal(i * 9 + 6, new BigDecimal("100.00" + i));
-                insertTestRecords.setTimestamp(i * 9 + 7, Timestamp.valueOf(String.format("2019-08-01 %1$02d:%1$02d:%1$02d", i)));
-                insertTestRecords.setTimestamp(i * 9 + 8, Timestamp.valueOf(String.format("2019-08-02 %1$02d:%1$02d:%1$02d", i)));
-                insertTestRecords.setString(i * 9 + 9, "test string " + i);
+            )) {
+                for (int i = 0; i < 7; i++) {
+                    insertTestRecords.setString(i * 9 + 1, testIdForMySQL);
+                    insertTestRecords.setLong(i * 9 + 2, i);
+                    insertTestRecords.setBoolean(i * 9 + 3, i % 2 == 0);
+                    insertTestRecords.setInt(i * 9 + 4, i + 1);
+                    insertTestRecords.setDouble(i * 9 + 5, i / 10.0);
+                    insertTestRecords.setBigDecimal(i * 9 + 6, new BigDecimal("100.00" + i));
+                    insertTestRecords.setTimestamp(i * 9 + 7, Timestamp.valueOf(String.format("2019-08-01 %1$02d:%1$02d:%1$02d", i)));
+                    insertTestRecords.setTimestamp(i * 9 + 8, Timestamp.valueOf(String.format("2019-08-02 %1$02d:%1$02d:%1$02d", i)));
+                    insertTestRecords.setString(i * 9 + 9, "test string " + i);
+                }
+                insertTestRecords.execute();
             }
 
-            insertTestRecords.execute();
-
-            PreparedStatement selectCountOfRecords = testDbConnection.prepareStatement("SELECT COUNT(*) FROM getmysql_test WHERE test_id = ?");
-            selectCountOfRecords.setString(1, testIdForMySQL);
-            try (ResultSet countResult = selectCountOfRecords.executeQuery()) {
+            try (PreparedStatement selectCountOfRecords = testDbConnection.prepareStatement("SELECT COUNT(*) FROM getmysql_test WHERE test_id = ?")) {
+                selectCountOfRecords.setString(1, testIdForMySQL);
+                ResultSet countResult = selectCountOfRecords.executeQuery();
                 while (countResult.next()) {
                     LOG.debug("test_id = {} のレコードが {} 件あります", testIdForMySQL, countResult.getInt(1));
                 }
@@ -414,11 +412,12 @@ public class DataflowTest {
     @AfterAll
     static void after() throws Exception {
         Utils.withTestDb(testDbConnection -> {
-            PreparedStatement deleteTestRecords = testDbConnection.prepareStatement(
+            try (PreparedStatement deleteTestRecords = testDbConnection.prepareStatement(
                     "DELETE FROM getmysql_test WHERE test_id = ?"
-            );
-            deleteTestRecords.setString(1, testIdForMySQL);
-            deleteTestRecords.execute();
+            )) {
+                deleteTestRecords.setString(1, testIdForMySQL);
+                deleteTestRecords.execute();
+            }
         });
     }
 }

@@ -38,20 +38,17 @@ public class WriteToCloudSqlEffector1 {
             sb.append(message);
             log.info(sb.toString());
         }
-        try (Connection conn = CloudSqlPool.getDataSource().getConnection()) {
+        try (Connection conn = CloudSqlPool.getDataSource().getConnection();
+             PreparedStatement insert = conn.prepareStatement(
+                     "INSERT INTO integration_test_effector (userid, message, createTime) VALUES (?, ? ,? );"
+             )
+        ) {
 
-            // PreparedStatements can be more efficient and project against injections.
-            PreparedStatement voteStmt = conn.prepareStatement(
-                    "INSERT INTO integration_test_effector (userid, message, createTime) VALUES (?, ? ,? );");
+            insert.setString(1, userId);
+            insert.setString(2, message);
+            insert.setTimestamp(3, Timestamp.valueOf(now));
 
-            voteStmt.setString(1, userId);
-            voteStmt.setString(2, message);
-            voteStmt.setTimestamp(3, Timestamp.valueOf(now));
-
-
-            // Finally, execute the statement. If it fails, an error will be thrown.
-            voteStmt.execute();
-
+            insert.execute();
         } catch (SQLException ex) {
             log.error("post実行中にエラーが発生しました", ex);
             throw new RuntimeException(ex);

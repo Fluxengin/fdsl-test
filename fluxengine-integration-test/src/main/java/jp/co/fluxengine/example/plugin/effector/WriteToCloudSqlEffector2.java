@@ -31,8 +31,11 @@ public class WriteToCloudSqlEffector2 {
 
     @Post
     public void post() {
-        try (Connection conn = CloudSqlPool.getDataSource().getConnection()) {
-            PreparedStatement insert = conn.prepareStatement("INSERT INTO integration_test_effector (userid, message, createTime) VALUES (?, ? ,? );");
+        try (Connection conn = CloudSqlPool.getDataSource().getConnection();
+             PreparedStatement insert = conn.prepareStatement(
+                     "INSERT INTO integration_test_effector (userid, message, createTime) VALUES (?, ? ,? );"
+             )
+        ) {
 
             insert.setString(1, userId);
             String insertedMessage = new StringBuilder(message).append(" : ").append(numberValue).toString();

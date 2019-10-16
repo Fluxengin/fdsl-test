@@ -21,7 +21,10 @@ import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
 
 @Effector("memorystore/Memorystoreの内容取得#Memorystore取得")
 public class MemorystoreExtractEffector {
@@ -104,24 +107,26 @@ public class MemorystoreExtractEffector {
                 return;
             }
 
-            PreparedStatement insertStmt = conn.prepareStatement("INSERT INTO `memorystore_contents` (`requestid`, `key`, `value`) VALUES " + StringUtils.repeat("(?,?,?)", ",", data.size()));
+            try (PreparedStatement insertStmt = conn.prepareStatement(
+                    "INSERT INTO `memorystore_contents` (`requestid`, `key`, `value`) VALUES " + StringUtils.repeat("(?,?,?)", ",", data.size()))
+            ) {
+                for (int i = 0; i < data.size(); i++) {
+                    Pair<String, byte[]> keyValue = data.get(i);
+                    String key = keyValue._1;
+                    byte[] value = keyValue._2;
 
-            for (int i = 0; i < data.size(); i++) {
-                Pair<String, byte[]> keyValue = data.get(i);
-                String key = keyValue._1;
-                byte[] value = keyValue._2;
+                    if (log.isDebugEnabled()) {
+                        Map<String, Object> valueMap = KryoUtils.deserialize(value);
+                        log.debug("inserting requestid = {}, key = {}, value = {}", requestId, key, valueMap == null ? "null" : valueMap.toString());
+                    }
 
-                if (log.isDebugEnabled()) {
-                    Map<String, Object> valueMap = KryoUtils.deserialize(value);
-                    log.debug("inserting requestid = {}, key = {}, value = {}", requestId, key, valueMap == null ? "null" : valueMap.toString());
+                    insertStmt.setString(i * 3 + 1, requestId);
+                    insertStmt.setString(i * 3 + 2, key);
+                    insertStmt.setBinaryStream(i * 3 + 3, new ByteArrayInputStream(value));
                 }
 
-                insertStmt.setString(i * 3 + 1, requestId);
-                insertStmt.setString(i * 3 + 2, key);
-                insertStmt.setBinaryStream(i * 3 + 3, new ByteArrayInputStream(value));
+                insertStmt.execute();
             }
-
-            insertStmt.execute();
         } catch (SQLException e) {
             log.error("error in MemorystoreExtractEffector#post", e);
         }
@@ -129,13 +134,15 @@ public class MemorystoreExtractEffector {
 
     // データがないときは、未取得の時と区別するために、データがないことを示すレコード(keyが空文字列)を1件追加する
     private static void insertNoDataRecord(Connection conn, String requestId) throws SQLException {
-        PreparedStatement insertNoEntries = conn.prepareStatement("INSERT INTO `memorystore_contents` (`requestid`, `key`, `value`) VALUES (?,?,?)");
+        try (PreparedStatement insertNoEntries = conn.prepareStatement(
+                "INSERT INTO `memorystore_contents` (`requestid`, `key`, `value`) VALUES (?,?,?)"
+        )) {
+            insertNoEntries.setString(1, requestId);
+            insertNoEntries.setString(2, "");
+            insertNoEntries.setBinaryStream(3, new ByteArrayInputStream("dummy".getBytes(StandardCharsets.UTF_8)));
 
-        insertNoEntries.setString(1, requestId);
-        insertNoEntries.setString(2, "");
-        insertNoEntries.setBinaryStream(3, new ByteArrayInputStream("dummy".getBytes(StandardCharsets.UTF_8)));
-
-        insertNoEntries.execute();
+            insertNoEntries.execute();
+        }
     }
 
     private static JedisPool initConnectionPool() {
