@@ -159,10 +159,10 @@ public class DataflowTest {
 
         PersisterExtractor.IdToEntityMap entities = extractor.getEntities("[transaction_key1]", "[transaction_key2]");
 
-        Map<String, Object> p1Map = entities.get("[transaction_key1]").getPersisterMap("複数のキーを同時更新#p1");
+        Map<String, Object> p1Map = entities.get("[transaction_key1]").getPersisterMap("transaction/複数のキーを同時更新#p1");
         assertThat(Utils.getNested(p1Map, Number.class, "value", "contents1")).isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(110));
 
-        Map<String, Object> p2Map = entities.get("[transaction_key2]").getPersisterMap("複数のキーを同時更新#p2");
+        Map<String, Object> p2Map = entities.get("[transaction_key2]").getPersisterMap("transaction/複数のキーを同時更新#p2");
         assertThat(Utils.getNested(p2Map, Number.class, "value", "contents2")).isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(20));
     }
 

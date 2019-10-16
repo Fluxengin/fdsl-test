@@ -807,17 +807,17 @@ workflows:
             tags:
               only:
                 - /^ci.*/
-      - test_fdsl:
-          requires:
-            - build_engine
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
+#      - test_fdsl:
+#          requires:
+#            - build_engine
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
       - deploy_batch_servlet_datastore:
           requires:
             - build_engine
@@ -888,92 +888,92 @@ workflows:
             tags:
               only:
                 - /^ci.*/
-      - deploy_dsl_and_job_dsl_replacement:
-          requires:
-            - build_engine
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
-      - test_dsl_before:
-          requires:
-            - create_cloud_resources
-            - deploy_dsl_and_job_dsl_replacement
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
-      - register_dsl_after:
-          requires:
-            - test_dsl_before
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
-      - register_dsl_dummy:
-          requires:
-            - test_dsl_before
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
-      - test_dsl_after:
-          requires:
-            - register_dsl_after
-            - register_dsl_dummy
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
-      - deploy_dsl_and_job_housekeep:
-          requires:
-            - build_engine
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
-      - test_housekeep:
-          requires:
-            - create_cloud_resources
-            - deploy_dsl_and_job_housekeep
-          filters:
-            branches:
-              only:
-                - master
-                - /.*circleci.*/
-            tags:
-              only:
-                - /^ci.*/
+#      - deploy_dsl_and_job_dsl_replacement:
+#          requires:
+#            - build_engine
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
+#      - test_dsl_before:
+#          requires:
+#            - create_cloud_resources
+#            - deploy_dsl_and_job_dsl_replacement
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
+#      - register_dsl_after:
+#          requires:
+#            - test_dsl_before
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
+#      - register_dsl_dummy:
+#          requires:
+#            - test_dsl_before
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
+#      - test_dsl_after:
+#          requires:
+#            - register_dsl_after
+#            - register_dsl_dummy
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
+#      - deploy_dsl_and_job_housekeep:
+#          requires:
+#            - build_engine
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
+#      - test_housekeep:
+#          requires:
+#            - create_cloud_resources
+#            - deploy_dsl_and_job_housekeep
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /.*circleci.*/
+#            tags:
+#              only:
+#                - /^ci.*/
       - cleanup:
           requires:
             - test_dataflow_datastore
             - test_dataflow_memorystore
-            - test_dsl_after
-            - test_housekeep
+#            - test_dsl_after
+#            - test_housekeep
           filters:
             branches:
               only:
