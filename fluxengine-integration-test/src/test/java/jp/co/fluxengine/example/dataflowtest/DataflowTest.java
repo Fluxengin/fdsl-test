@@ -168,12 +168,19 @@ public class DataflowTest {
 
     @Test
     void testEffector() throws Exception {
-        // RemoteTestRunnerを使ってデータを流す
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSSSS");
         String message = "イベント送信タイムスタンプ: " + LocalDateTime.now().format(formatter);
         String eventJson = "[{\"eventName\":\"エフェクタ送信イベント\", \"namespace\":\"effector_check/エフェクタ動作確認\", \"createTime\":null, \"property\":{\"ユーザーID\":\"effector_check_01\",\"メッセージ\":\"" + message + "\"}}]";
-        LOG.info("testEffector データ送信");
+
         extractor.publishEventString(eventJson);
+
+        String event2Message = UUID.randomUUID().toString();
+        int event2Number = 1;
+        extractor.publishEvent("effector_check/エフェクタ動作確認", "エフェクタ送信イベント2", LocalDateTime.now(), Utils.toMap(
+                "ユーザID", "effector_check_02",
+                "数値", event2Number,
+                "メッセージ", event2Message
+        ));
 
         // Dataflowが処理完了するまで少し待つ
         LOG.info("testEffector 待機");
@@ -184,13 +191,22 @@ public class DataflowTest {
         Utils.withTestDb(testDbConnection -> {
             // message を持つ行が、1行あればOK
             PreparedStatement selectCount = testDbConnection.prepareStatement(
-                    "SELECT COUNT(*) FROM integration_test_effector WHERE message = ?"
+                    "SELECT COUNT(*) FROM integration_test_effector WHERE userid = ? AND message = ?"
             );
-            selectCount.setString(1, message);
+            selectCount.setString(1, "effector_check_01");
+            selectCount.setString(2, message);
 
             try (ResultSet countResult = selectCount.executeQuery()) {
                 assertThat(countResult.next()).isTrue();
                 assertThat(countResult.getInt(1)).isEqualTo(1);
+            }
+
+            selectCount.setString(1, "effector_check_02");
+            selectCount.setString(2, event2Message + " : " + event2Number);
+
+            try (ResultSet countResult2 = selectCount.executeQuery()) {
+                assertThat(countResult2.next()).isTrue();
+                assertThat(countResult2.getInt(1)).isEqualTo(1);
             }
         });
     }

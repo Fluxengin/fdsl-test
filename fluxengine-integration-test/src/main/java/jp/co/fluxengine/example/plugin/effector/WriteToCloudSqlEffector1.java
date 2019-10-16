@@ -14,9 +14,9 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 @Effector("effector_check/エフェクタ動作確認#DB書き込み送信")
-public class MailNotificationCloudSqlEffector {
+public class WriteToCloudSqlEffector1 {
 
-    private static final Logger log = LoggerFactory.getLogger(MailNotificationCloudSqlEffector.class);
+    private static final Logger log = LoggerFactory.getLogger(WriteToCloudSqlEffector1.class);
 
     @DslName("ユーザーID")
     private String userId;
