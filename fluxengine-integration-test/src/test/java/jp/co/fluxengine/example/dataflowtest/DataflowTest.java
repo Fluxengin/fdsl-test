@@ -143,6 +143,30 @@ public class DataflowTest {
     }
 
     @Test
+    void testTransaction() throws Exception {
+        extractor.publishEvent("複数のキーを同時更新", "e", LocalDateTime.now(), Utils.toMap(
+                "attr1", 10,
+                "attr2", 20
+        ));
+        extractor.publishEvent("複数のキーを同時更新", "e", LocalDateTime.now(), Utils.toMap(
+                "attr1", 100,
+                "attr2", 20
+        ));
+
+        LOG.info("testTransaction 待機開始");
+        Thread.sleep(40000);
+        LOG.info("testTransaction 待機終了");
+
+        PersisterExtractor.IdToEntityMap entities = extractor.getEntities("[transaction_key1]", "[transaction_key2]");
+
+        Map<String, Object> p1Map = entities.get("[transaction_key1]").getPersisterMap("複数のキーを同時更新#p1");
+        assertThat(Utils.getNested(p1Map, Number.class, "value", "contents1")).isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(110));
+
+        Map<String, Object> p2Map = entities.get("[transaction_key2]").getPersisterMap("複数のキーを同時更新#p2");
+        assertThat(Utils.getNested(p2Map, Number.class, "value", "contents2")).isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(20));
+    }
+
+    @Test
     void testEffector() throws Exception {
         // RemoteTestRunnerを使ってデータを流す
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSSSS");

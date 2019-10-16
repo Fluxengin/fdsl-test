@@ -807,87 +807,87 @@ workflows:
             tags:
               only:
                 - /^ci.*/
-#      - test_fdsl:
-#          requires:
-#            - build_engine
-#          filters:
-#            branches:
-#              only:
-#                - master
-#                - /.*circleci.*/
-#            tags:
-#              only:
-#                - /^ci.*/
-#      - deploy_batch_servlet_datastore:
-#          requires:
-#            - build_engine
-#          filters:
-#            branches:
-#              only:
-#                - master
-#                - /.*circleci.*/
-#            tags:
-#              only:
-#                - /^ci.*/
-#      - deploy_dsl_and_job_datastore:
-#          requires:
-#            - create_cloud_resources
-#            - build_engine
-#          filters:
-#            branches:
-#              only:
-#                - master
-#                - /.*circleci.*/
-#            tags:
-#              only:
-#                - /^ci.*/
-#      - test_dataflow_datastore:
-#          requires:
-#            - deploy_batch_servlet_datastore
-#            - deploy_dsl_and_job_datastore
-#          filters:
-#            branches:
-#              only:
-#                - master
-#                - /.*circleci.*/
-#            tags:
-#              only:
-#                - /^ci.*/
-#      - deploy_batch_servlet_memorystore:
-#          requires:
-#            - build_engine
-#          filters:
-#            branches:
-#              only:
-#                - master
-#                - /.*circleci.*/
-#            tags:
-#              only:
-#                - /^ci.*/
-#      - deploy_dsl_and_job_memorystore:
-#          requires:
-#            - create_cloud_resources
-#            - build_engine
-#          filters:
-#            branches:
-#              only:
-#                - master
-#                - /.*circleci.*/
-#            tags:
-#              only:
-#                - /^ci.*/
-#      - test_dataflow_memorystore:
-#          requires:
-#            - deploy_batch_servlet_memorystore
-#            - deploy_dsl_and_job_memorystore
-#          filters:
-#            branches:
-#              only:
-#                - master
-#                - /.*circleci.*/
-#            tags:
-#              only:
-#                - /^ci.*/
+      - test_fdsl:
+          requires:
+            - build_engine
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - deploy_batch_servlet_datastore:
+          requires:
+            - build_engine
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - deploy_dsl_and_job_datastore:
+          requires:
+            - create_cloud_resources
+            - build_engine
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - test_dataflow_datastore:
+          requires:
+            - deploy_batch_servlet_datastore
+            - deploy_dsl_and_job_datastore
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - deploy_batch_servlet_memorystore:
+          requires:
+            - build_engine
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - deploy_dsl_and_job_memorystore:
+          requires:
+            - create_cloud_resources
+            - build_engine
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - test_dataflow_memorystore:
+          requires:
+            - deploy_batch_servlet_memorystore
+            - deploy_dsl_and_job_memorystore
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
       - deploy_dsl_and_job_dsl_replacement:
           requires:
             - build_engine
@@ -945,35 +945,35 @@ workflows:
             tags:
               only:
                 - /^ci.*/
-#      - deploy_dsl_and_job_housekeep:
-#          requires:
-#            - build_engine
-#          filters:
-#            branches:
-#              only:
-#                - master
-#                - /.*circleci.*/
-#            tags:
-#              only:
-#                - /^ci.*/
-#      - test_housekeep:
-#          requires:
-#            - create_cloud_resources
-#            - deploy_dsl_and_job_housekeep
-#          filters:
-#            branches:
-#              only:
-#                - master
-#                - /.*circleci.*/
-#            tags:
-#              only:
-#                - /^ci.*/
+      - deploy_dsl_and_job_housekeep:
+          requires:
+            - build_engine
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - test_housekeep:
+          requires:
+            - create_cloud_resources
+            - deploy_dsl_and_job_housekeep
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
       - cleanup:
           requires:
-#            - test_dataflow_datastore
-#            - test_dataflow_memorystore
+            - test_dataflow_datastore
+            - test_dataflow_memorystore
             - test_dsl_after
-#            - test_housekeep
+            - test_housekeep
           filters:
             branches:
               only:
