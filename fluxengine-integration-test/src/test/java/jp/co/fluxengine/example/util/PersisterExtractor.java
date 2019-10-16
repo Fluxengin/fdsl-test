@@ -157,6 +157,15 @@ public abstract class PersisterExtractor {
         }
 
         public abstract Map<String, Object> getPersisterMap(String persisterName);
+
+        public String getCurrentStatusOf(String namespace, String stateName) {
+            return getCurrentStatusOf(namespace + "#" + stateName);
+        }
+
+        public String getCurrentStatusOf(String stateFullName) {
+            Map<String, Object> persister = getPersisterMap(stateFullName);
+            return Utils.getNested(persister, String.class, "value", "currentState");
+        }
     }
 
     static class DatastoreEntityMap extends EntityMap {

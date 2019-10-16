@@ -12,7 +12,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Effector("effector型変更#型変更の検証")
+// TODO https://trello.com/c/I8fodXZ9
+//@Effector("effector型変更#型変更の検証")
 public class DslReplacementEffector1 {
 
     private static final Storage STORAGE = StorageOptions.getDefaultInstance().getService();

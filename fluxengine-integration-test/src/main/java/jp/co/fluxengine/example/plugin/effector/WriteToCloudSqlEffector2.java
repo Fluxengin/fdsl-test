@@ -22,12 +22,16 @@ public class WriteToCloudSqlEffector2 {
     private String userId;
 
     // DSL型に対応するJava型のスーパークラスやインタフェースでも受け取れるかのテスト
+    // であるが、state-engineが対応しておらず(優先度: 低)、DSLの登録時にエラーとなるため、いったん同じ型にする
+    // TODO https://trello.com/c/I8fodXZ9
 
     @DslName("数値")
-    private Number numberValue;
+//    private Number numberValue;
+    private int numberValue;
 
     @DslName("メッセージ")
-    private CharSequence message;
+//    private CharSequence message;
+    private String message;
 
     @Post
     public void post() {

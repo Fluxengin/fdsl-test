@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -166,30 +167,31 @@ public class DslReplacementAfterTest {
                 .satisfies(n -> assertThat(n.intValue()).isEqualTo(5));
     }
 
-    @Test
-    void testEffectorTypes() throws Exception {
-        String storagePrefix = System.getenv("STORAGE_PREFIX");
-
-        Matcher storagePrefixMatcher = Pattern.compile("gs://(.*?)/(.*)").matcher(storagePrefix);
-        if (!storagePrefixMatcher.matches()) {
-            fail("STORAGE_PREFIX の書式が正しくありません: " + storagePrefix);
-        }
-
-        String bucketName = storagePrefixMatcher.group(1);
-        String blobPrefix = storagePrefixMatcher.group(2);
-
-        // testPersisterLifetimeによってDSLが最新バージョンに更新されるのを待つ
-        Thread.sleep(3000);
-
-        extractor.publishOneAttributeEvent("effector型変更", "effector型変更の検証イベント", LocalDateTime.now(), "storage_prefix", storagePrefix);
-
-        LOG.info("testEffectorTypes 待機");
-        Thread.sleep(30000);
-        LOG.info("testEffectorTypes 待機終了");
-
-        Storage storage = StorageOptions.getDefaultInstance().getService();
-        assertDoesNotThrow(() -> storage.get(bucketName, blobPrefix + "型変更の検証_変換可能_after.txt"));
-    }
+    // TODO https://trello.com/c/I8fodXZ9
+//    @Test
+//    void testEffectorTypes() throws Exception {
+//        String storagePrefix = System.getenv("STORAGE_PREFIX");
+//
+//        Matcher storagePrefixMatcher = Pattern.compile("gs://(.*?)/(.*)").matcher(storagePrefix);
+//        if (!storagePrefixMatcher.matches()) {
+//            fail("STORAGE_PREFIX の書式が正しくありません: " + storagePrefix);
+//        }
+//
+//        String bucketName = storagePrefixMatcher.group(1);
+//        String blobPrefix = storagePrefixMatcher.group(2);
+//
+//        // testPersisterLifetimeによってDSLが最新バージョンに更新されるのを待つ
+//        Thread.sleep(3000);
+//
+//        extractor.publishOneAttributeEvent("effector型変更", "effector型変更の検証イベント", LocalDateTime.now(), "storage_prefix", storagePrefix);
+//
+//        LOG.info("testEffectorTypes 待機");
+//        Thread.sleep(30000);
+//        LOG.info("testEffectorTypes 待機終了");
+//
+//        Storage storage = StorageOptions.getDefaultInstance().getService();
+//        assertDoesNotThrow(() -> storage.get(bucketName, blobPrefix + "型変更の検証_変換可能_after.txt"));
+//    }
 
     @Test
     void testEffectValues() throws Exception {
@@ -237,6 +239,22 @@ public class DslReplacementAfterTest {
         Map<String, Object> persister = entity.getPersisterMap("rule条件の変更#rule条件変更の検証");
 
         assertThat(Utils.getNested(persister, String.class, "value", "contents")).isEqualTo("exists");
+    }
+
+    @Test
+    void testStateChange() throws Exception {
+        extractor.publishEvent("state状態の増減", "状態の増減検証イベント", LocalDateTime.now(), new HashMap<>());
+
+        LOG.info("testStateChange 待機");
+        Thread.sleep(30000);
+        LOG.info("testStateChange 待機終了");
+
+        PersisterExtractor.EntityMap entity = extractor.getIdMap("[状態の増減の検証]");
+
+        assertThat(entity.getCurrentStatusOf("state状態の増減", "状態の増加の検証")).isEqualTo("s3");
+        assertThat(entity.getCurrentStatusOf("state状態の増減", "状態の減少の検証_現在の状態あり")).isEqualTo("s3");
+        // 永続化した状態が新しいDSLに存在しないため、変化しようがない
+        assertThat(entity.getCurrentStatusOf("state状態の増減", "状態の減少の検証_現在の状態なし")).isEqualTo("s2");
     }
 }
 
