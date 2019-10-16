@@ -144,11 +144,11 @@ public class DataflowTest {
 
     @Test
     void testTransaction() throws Exception {
-        extractor.publishEvent("複数のキーを同時更新", "e", LocalDateTime.now(), Utils.toMap(
+        extractor.publishEvent("transaction/複数のキーを同時更新", "e", LocalDateTime.now(), Utils.toMap(
                 "attr1", 10,
                 "attr2", 20
         ));
-        extractor.publishEvent("複数のキーを同時更新", "e", LocalDateTime.now(), Utils.toMap(
+        extractor.publishEvent("transaction/複数のキーを同時更新", "e", LocalDateTime.now(), Utils.toMap(
                 "attr1", 100,
                 "attr2", 20
         ));
