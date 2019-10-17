@@ -88,7 +88,7 @@ public class DataflowTest {
         LOG.info("testDataflow 待機終了");
 
         // 結果のassertionを行う
-        PersisterExtractor.EntityMap result = extractor.getIdMap("[uid12345]");
+        PersisterExtractor.EntityMap result = extractor.getEntityOf("[uid12345]");
         assertThat(getNested(result.getPersisterMap("persister/パケット積算データ#パケット積算データ"), Number.class, "value", "使用量").doubleValue()).isEqualTo(usageBefore + 500);
         assertThat(getNested(result.getPersisterMap("rule/パケット積算#状態遷移"), String.class, "value", "currentState")).isEqualTo("s2");
     }
@@ -107,7 +107,7 @@ public class DataflowTest {
         LOG.info("testPersisterPut 待機終了");
 
         // [PersisterRead01]に何も永続化されていないことを確認する
-        Map<String, Object> result = extractor.getIdMap("[PersisterRead01]");
+        Map<String, Object> result = extractor.getEntityOf("[PersisterRead01]");
         assertThat(result).isNull();
     }
 
@@ -157,7 +157,7 @@ public class DataflowTest {
         Thread.sleep(40000);
         LOG.info("testTransaction 待機終了");
 
-        PersisterExtractor.IdToEntityMap entities = extractor.getEntities("[transaction_key1]", "[transaction_key2]");
+        PersisterExtractor.IdToEntityMap entities = extractor.getEntitiesOf("[transaction_key1]", "[transaction_key2]");
 
         Map<String, Object> p1Map = entities.get("[transaction_key1]").getPersisterMap("transaction/複数のキーを同時更新#p1");
         assertThat(Utils.getNested(p1Map, Number.class, "value", "contents1")).isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(110));
@@ -221,7 +221,7 @@ public class DataflowTest {
         Thread.sleep(50000);
         LOG.info("testSubscription 待機終了");
 
-        PersisterExtractor.EntityMap result = extractor.getIdMap("[" + targetUserId + "]");
+        PersisterExtractor.EntityMap result = extractor.getEntityOf("[" + targetUserId + "]");
         assertThat(getNested(result.getPersisterMap("subscription/イベントの文字列をそのまま永続化#Subscriptionイベント永続化"), String.class, "value", "文字列")).isEqualTo(targetString);
     }
 
@@ -274,7 +274,7 @@ public class DataflowTest {
         Thread.sleep(40000);
         LOG.info("testGetMySQL 待機終了");
 
-        PersisterExtractor.IdToEntityMap resultMap = extractor.getEntities(
+        PersisterExtractor.IdToEntityMap resultMap = extractor.getEntitiesOf(
                 "[getMySQL_条件分岐なしの単一属性]",
                 "[getMySQL_条件分岐なしの複数属性]",
                 "[getMySQL_条件分岐あり_20]",
@@ -389,7 +389,7 @@ public class DataflowTest {
         Thread.sleep(40000);
         LOG.info("testTimezone 待機終了");
 
-        Map<String, Object> persisterMap = extractor.getIdMap("[timezone]").getPersisterMap("timezone/現在時刻を永続化#現在時刻永続化");
+        Map<String, Object> persisterMap = extractor.getEntityOf("[timezone]").getPersisterMap("timezone/現在時刻を永続化#現在時刻永続化");
         Object datetimeObject = getNested(persisterMap, Object.class, "value", "時刻");
         // datetimeは、DatastoreだとString, MemorystoreだとLocalDateTimeで取得される
         LocalDateTime datetime = datetimeObject instanceof LocalDateTime ?

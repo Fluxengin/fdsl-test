@@ -47,7 +47,7 @@ public class HousekeepTest {
         String tomorrowString = tomorrow.format(formatter);
 
         // Housekeep実行前の状態のassetionを行う
-        PersisterExtractor.IdToEntityMap before = extractor.getEntities(
+        PersisterExtractor.IdToEntityMap before = extractor.getEntitiesOf(
                 "[user1]", "[user2]", "[user3]", "[user4]", "[user5]"
         );
 
@@ -99,7 +99,7 @@ public class HousekeepTest {
         LOG.info("testAfterHousekeep 待機終了");
 
         // Housekeep実行後の状態のassetionを行う
-        PersisterExtractor.IdToEntityMap after = extractor.getEntities(
+        PersisterExtractor.IdToEntityMap after = extractor.getEntitiesOf(
                 "[user1]", "[user2]", "[user3]", "[user4]", "[user5]"
         );
 

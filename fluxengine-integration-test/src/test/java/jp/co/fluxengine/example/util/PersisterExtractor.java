@@ -68,16 +68,16 @@ public abstract class PersisterExtractor {
 
     public abstract IdToEntityMap getAll() throws Exception;
 
-    public abstract IdToEntityMap getEntities(String... keys) throws Exception;
+    public abstract IdToEntityMap getEntitiesOf(String... keys) throws Exception;
 
-    public EntityMap getIdMap(String id) throws Exception {
-        return getEntities(id).get(id);
+    public EntityMap getEntityOf(String id) throws Exception {
+        return getEntitiesOf(id).get(id);
     }
 
     public double currentPacketUsage(String userId, String name) throws Exception {
         String todayString = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDate.now());
 
-        EntityMap idMap = getIdMap("[" + userId + "]");
+        EntityMap idMap = getEntityOf("[" + userId + "]");
         Map<String, Object> nameMap = idMap == null ? null : idMap.getPersisterMap(name);
         String lifetime = getNested(nameMap, String.class, "lifetime");
 
@@ -166,6 +166,15 @@ public abstract class PersisterExtractor {
             Map<String, Object> persister = getPersisterMap(stateFullName);
             return Utils.getNested(persister, String.class, "value", "currentState");
         }
+
+        public <T> T getValue(String namespace, String persisterName, String propertyName, Class<T> valueClass) {
+            return getValue(namespace + "#" + persisterName, persisterName, valueClass);
+        }
+
+        public <T> T getValue(String persisterFullName, String propertyName, Class<T> valueClass) {
+            Map<String, Object> persister = getPersisterMap(persisterFullName);
+            return Utils.getNested(persister, valueClass, "value", propertyName);
+        }
     }
 
     static class DatastoreEntityMap extends EntityMap {
@@ -253,7 +262,7 @@ class DatastoreExtractor extends PersisterExtractor {
     }
 
     @Override
-    public IdToEntityMap getEntities(String... keys) throws Exception {
+    public IdToEntityMap getEntitiesOf(String... keys) throws Exception {
         // Datastoreの方は、キーを絞って取得する機能はないので、全件取得してから絞る
         IdToEntityMap all = getAll();
         IdToEntityMap result = new IdToEntityMap();
@@ -276,11 +285,11 @@ class MemorystoreExtractor extends PersisterExtractor {
 
     @Override
     public IdToEntityMap getAll() throws Exception {
-        return getEntities();
+        return getEntitiesOf();
     }
 
     @Override
-    public IdToEntityMap getEntities(String... keys) throws Exception {
+    public IdToEntityMap getEntitiesOf(String... keys) throws Exception {
         // DSLのプラグインによって、MemorystoreからCloud SQLに値を移す
         String requestId = UUID.randomUUID().toString();
 

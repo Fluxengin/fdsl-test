@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -59,7 +60,7 @@ public class DslReplacementBeforeTest {
         Thread.sleep(30000);
         LOG.info("testPersisterLifetime 待機終了");
 
-        PersisterExtractor.EntityMap entity = extractor.getIdMap("[有効期限の検証]");
+        PersisterExtractor.EntityMap entity = extractor.getEntityOf("[有効期限の検証]");
         Map<String, Object> persisterMap = entity.getPersisterMap("有効期限の設定#有効期限の検証");
         assertThat(Utils.getNested(persisterMap, String.class, "value", "s")).isEqualTo("before");
         assertThat(Utils.getNested(persisterMap, String.class, "lifetime")).isEmpty();
@@ -73,7 +74,7 @@ public class DslReplacementBeforeTest {
         Thread.sleep(30000);
         LOG.info("testPersisterAttributes 待機終了");
 
-        PersisterExtractor.EntityMap entity = extractor.getIdMap("[persister項目変更の検証]");
+        PersisterExtractor.EntityMap entity = extractor.getEntityOf("[persister項目変更の検証]");
 
         Map<String, Object> increasedExpired = entity.getPersisterMap("persister項目の変更#項目変更の検証_増加_期限切れ");
         assertThat(Utils.getNested(increasedExpired, String.class, "value", "s1")).isEqualTo("項目変更の検証_増加_期限切れ_before");
@@ -101,7 +102,7 @@ public class DslReplacementBeforeTest {
         Thread.sleep(30000);
         LOG.info("testPersisterTypes 待機終了");
 
-        PersisterExtractor.EntityMap entity = extractor.getIdMap("[persister型変更の検証]");
+        PersisterExtractor.EntityMap entity = extractor.getEntityOf("[persister型変更の検証]");
 
         Map<String, Object> expired = entity.getPersisterMap("persister型変更#型変更の検証_期限切れ");
         assertThat(Utils.getNested(expired, String.class, "value", "contents1")).isEqualTo("型変更の検証_期限切れ_before");
@@ -125,7 +126,7 @@ public class DslReplacementBeforeTest {
         Thread.sleep(30000);
         LOG.info("testPersistValues 待機終了");
 
-        PersisterExtractor.EntityMap entity = extractor.getIdMap("[persist値変更の検証]");
+        PersisterExtractor.EntityMap entity = extractor.getEntityOf("[persist値変更の検証]");
 
         Map<String, Object> persister = entity.getPersisterMap("persist値の変更#値変更の検証");
         assertThat(Utils.getNested(persister, Number.class, "value", "contents1"))
@@ -191,9 +192,36 @@ public class DslReplacementBeforeTest {
         Thread.sleep(30000);
         LOG.info("testRuleCondition 待機終了");
 
-        PersisterExtractor.EntityMap entity = extractor.getIdMap("[rule条件変更の検証]");
+        PersisterExtractor.EntityMap entity = extractor.getEntityOf("[rule条件変更の検証]");
 
         assertThat(entity).isNull();
+    }
+
+    @Test
+    void testVariantChanges() throws Exception {
+        Map<String, Object> propertyMap = new HashMap<>();
+        propertyMap.put("attr1", 1);
+        propertyMap.put("attr2", 2);
+        propertyMap.put("attr3", "attr3");
+        propertyMap.put("attr4", "attr4");
+        propertyMap.put("attr5", "attr5");
+        propertyMap.put("attr6", "attr6");
+
+        extractor.publishEvent("variant値の変更", "variant変更の検証イベント", LocalDateTime.now(), propertyMap);
+
+        LOG.info("testVariantChanges 待機");
+        Thread.sleep(30000);
+        LOG.info("testVariantChanges 待機終了");
+
+        PersisterExtractor.EntityMap entity = extractor.getEntityOf("[variant変更の検証]");
+        Map<String, Object> persister = entity.getPersisterMap("variant値の変更#variant変更の検証");
+
+        assertThat(Utils.getNested(persister, Number.class, "value", "値変更の検証"))
+                .isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(1));
+        assertThat(Utils.getNested(persister, String.class, "value", "プラグインへのパラメタ変更_キャッシュ無効"))
+                .isEqualTo("attr3 accepted");
+        assertThat(Utils.getNested(persister, String.class, "value", "プラグインへのパラメタ変更_キャッシュ有効"))
+                .isEqualTo("attr5 accepted");
     }
 
 }
