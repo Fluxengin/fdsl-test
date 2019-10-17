@@ -16,7 +16,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -197,19 +196,4 @@ public class DslReplacementBeforeTest {
         assertThat(entity).isNull();
     }
 
-    // TODO https://trello.com/c/UOcP5Fhi
-//    @Test
-//    void testStateChange() throws Exception {
-//        extractor.publishEvent("state状態の増減", "状態の増減検証イベント", LocalDateTime.now(), new HashMap<>());
-//
-//        LOG.info("testStateChange 待機");
-//        Thread.sleep(30000);
-//        LOG.info("testStateChange 待機終了");
-//
-//        PersisterExtractor.EntityMap entity = extractor.getIdMap("[状態の増減の検証]");
-//
-//        assertThat(entity.getCurrentStatusOf("state状態の増減", "状態の増加の検証")).isEqualTo("s2");
-//        assertThat(entity.getCurrentStatusOf("state状態の増減", "状態の減少の検証_現在の状態あり")).isEqualTo("s2");
-//        assertThat(entity.getCurrentStatusOf("state状態の増減", "状態の減少の検証_現在の状態なし")).isEqualTo("s2");
-//    }
 }
