@@ -26,6 +26,7 @@ persister variant変更の検証:
   値変更の検証: number
   プラグインへのパラメタ変更_キャッシュ無効: string
   プラグインへのパラメタ変更_キャッシュ有効_値変更: string
+  プラグインへのパラメタ変更_キャッシュ有効_値不変: string
   persist("variant変更の検証"):
 
 persist variant変更の検証:
