@@ -177,7 +177,7 @@ public class DataflowTest {
         String event2Message = UUID.randomUUID().toString();
         int event2Number = 1;
         extractor.publishEvent("effector_check/エフェクタ動作確認", "エフェクタ送信イベント2", LocalDateTime.now(), Utils.toMap(
-                "ユーザID", "effector_check_02",
+                "ユーザーID", "effector_check_02",
                 "数値", event2Number,
                 "メッセージ", event2Message
         ));

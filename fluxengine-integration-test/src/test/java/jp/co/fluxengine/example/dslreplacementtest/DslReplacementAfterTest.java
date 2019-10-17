@@ -76,9 +76,6 @@ public class DslReplacementAfterTest {
 
     @Test
     void testPersisterAttributes() throws Exception {
-        // testPersisterLifetimeによってDSLが最新バージョンに更新されるのを待つ
-        Thread.sleep(3000);
-
         extractor.publishOneAttributeEvent("persister項目の変更", "項目変更の検証イベント", LocalDateTime.now(), "dummy", "dummy");
 
         LOG.info("testPersisterAttributes 待機");
@@ -115,9 +112,6 @@ public class DslReplacementAfterTest {
 
     @Test
     void testPersisterTypes() throws Exception {
-        // testPersisterLifetimeによってDSLが最新バージョンに更新されるのを待つ
-        Thread.sleep(3000);
-
         extractor.publishOneAttributeEvent("persister型変更", "型変更の検証イベント", LocalDateTime.now(), "dummy", "dummy");
         extractor.publishOneAttributeEvent("persister型変更", "型変更の検証イベント2", LocalDateTime.now(), "dummy", "dummy");
         extractor.publishOneAttributeEvent("persister型変更", "型変更の検証イベント2_error1", LocalDateTime.now(), "dummy", "dummy");
@@ -150,9 +144,6 @@ public class DslReplacementAfterTest {
 
     @Test
     void testPersistValues() throws Exception {
-        // testPersisterLifetimeによってDSLが最新バージョンに更新されるのを待つ
-        Thread.sleep(3000);
-
         extractor.publishOneAttributeEvent("persist値の変更", "値変更の検証イベント", LocalDateTime.now(), "input", 1);
 
         LOG.info("testPersistValues 待機");
@@ -167,34 +158,8 @@ public class DslReplacementAfterTest {
                 .satisfies(n -> assertThat(n.intValue()).isEqualTo(5));
     }
 
-    // TODO https://trello.com/c/I8fodXZ9
-//    @Test
-//    void testEffectorTypes() throws Exception {
-//        String storagePrefix = System.getenv("STORAGE_PREFIX");
-//
-//        Matcher storagePrefixMatcher = Pattern.compile("gs://(.*?)/(.*)").matcher(storagePrefix);
-//        if (!storagePrefixMatcher.matches()) {
-//            fail("STORAGE_PREFIX の書式が正しくありません: " + storagePrefix);
-//        }
-//
-//        String bucketName = storagePrefixMatcher.group(1);
-//        String blobPrefix = storagePrefixMatcher.group(2);
-//
-//        // testPersisterLifetimeによってDSLが最新バージョンに更新されるのを待つ
-//        Thread.sleep(3000);
-//
-//        extractor.publishOneAttributeEvent("effector型変更", "effector型変更の検証イベント", LocalDateTime.now(), "storage_prefix", storagePrefix);
-//
-//        LOG.info("testEffectorTypes 待機");
-//        Thread.sleep(30000);
-//        LOG.info("testEffectorTypes 待機終了");
-//
-//        Storage storage = StorageOptions.getDefaultInstance().getService();
-//        assertDoesNotThrow(() -> storage.get(bucketName, blobPrefix + "型変更の検証_変換可能_after.txt"));
-//    }
-
     @Test
-    void testEffectValues() throws Exception {
+    void testEffectorTypes() throws Exception {
         String storagePrefix = System.getenv("STORAGE_PREFIX");
 
         Matcher storagePrefixMatcher = Pattern.compile("gs://(.*?)/(.*)").matcher(storagePrefix);
@@ -207,6 +172,28 @@ public class DslReplacementAfterTest {
 
         // testPersisterLifetimeによってDSLが最新バージョンに更新されるのを待つ
         Thread.sleep(3000);
+
+        extractor.publishOneAttributeEvent("effector型変更", "effector型変更の検証イベント", LocalDateTime.now(), "storage_prefix", storagePrefix);
+
+        LOG.info("testEffectorTypes 待機");
+        Thread.sleep(30000);
+        LOG.info("testEffectorTypes 待機終了");
+
+        Storage storage = StorageOptions.getDefaultInstance().getService();
+        assertDoesNotThrow(() -> storage.get(bucketName, blobPrefix + "型変更の検証_変換可能_after.txt"));
+    }
+
+    @Test
+    void testEffectValues() throws Exception {
+        String storagePrefix = System.getenv("STORAGE_PREFIX");
+
+        Matcher storagePrefixMatcher = Pattern.compile("gs://(.*?)/(.*)").matcher(storagePrefix);
+        if (!storagePrefixMatcher.matches()) {
+            fail("STORAGE_PREFIX の書式が正しくありません: " + storagePrefix);
+        }
+
+        String bucketName = storagePrefixMatcher.group(1);
+        String blobPrefix = storagePrefixMatcher.group(2);
 
         extractor.publishEvent("effect値の変更", "effect値の変更イベント", LocalDateTime.now(), Utils.toMap(
                 "storage_prefix", storagePrefix,
@@ -226,9 +213,6 @@ public class DslReplacementAfterTest {
 
     @Test
     void testRuleCondition() throws Exception {
-        // testPersisterLifetimeによってDSLが最新バージョンに更新されるのを待つ
-        Thread.sleep(3000);
-
         extractor.publishOneAttributeEvent("rule条件の変更", "rule条件変更の検証イベント", LocalDateTime.now(), "number_value", 5);
 
         LOG.info("testRuleCondition 待機");

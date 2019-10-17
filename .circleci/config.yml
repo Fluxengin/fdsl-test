@@ -425,12 +425,27 @@ commands:
     parameters:
       variablename:
         type: string
+      replaced:
+        type: boolean
+        default: false
     steps:
       - check_update:
           dir: "fluxengine-integration-test .circleci"
       - prepare_gcp_and_locale
       - attach_workspace:
           at: ~/state-engine
+      - when:
+          condition: << parameters.replaced >>
+          steps:
+            - run:
+                name: Wait for expiration of old DSL
+                command: |
+                  sleep 60
+            - run:
+                name: Publish a dummy event to load new DSL
+                command: |
+                  PUBSUB_NAME=integration-test3_${CIRCLE_WORKFLOW_ID}
+                  gcloud pubsub topics publish projects/${PROJECT}/topics/${PUBSUB_NAME} --message="[{\"eventName\":\"__dummy_event__\",\"namespace\":\"__dummy_namespace__\",\"createTime\":null,\"property\":{}}]"
       - edit_integration_test_conf_files:
           resourcenumber: "3"
       - run:
@@ -624,11 +639,9 @@ jobs:
           dslversion: 3
           resourcenumber: "3"
       - run:
-          name: Wait for job to read new FDSL
+          name: Print registered datetime
           command: |
             echo "dsl_after registered at $(date +'%Y/%m/%d %H:%M:%S')"
-            sleep 60
-          when: on_success
   register_dsl_dummy:
     executor: my-gcp
     steps:
@@ -639,16 +652,15 @@ jobs:
           dslversion: 4
           resourcenumber: "3"
       - run:
-          name: Wait for job to read new FDSL
+          name: Print registered datetime
           command: |
             echo "dsl_dummy registered at $(date +'%Y/%m/%d %H:%M:%S')"
-            sleep 60
-          when: on_success
   test_dsl_after:
     executor: my-gcp
     steps:
       - test_dsl_replacement:
           variablename: "FLUXENGINE_INTEGRATION_TEST_DSL_REPLACEMENT_AFTER"
+          replaced: true
       - run:
           name: Stop Dataflow job
           command: |

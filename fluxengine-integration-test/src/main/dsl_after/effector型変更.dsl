@@ -1,15 +1,13 @@
-# TODO https://trello.com/c/I8fodXZ9
-
-#effector 型変更の検証:
-#  storage_prefix: string
-#  filename: string
-#  contents: string
+effector 型変更の検証:
+  storage_prefix: string
+  filename: string
+  contents: string
 
 event effector型変更の検証イベント:
   storage_prefix: string
 
-#effect 型変更の検証:
-#  storage_prefix: effector型変更の検証イベント.storage_prefix
-#  filename: "型変更の検証_変換可能_after.txt"
-#  contents: 123
-#  watch(effector型変更の検証イベント):
+effect 型変更の検証:
+  storage_prefix: effector型変更の検証イベント.storage_prefix
+  filename: "型変更の検証_変換可能_after.txt"
+  contents: 123
+  watch(effector型変更の検証イベント):
