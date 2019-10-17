@@ -234,6 +234,8 @@ public class DslReplacementAfterTest {
         propertyMap.put("attr4", "attr4");
         propertyMap.put("attr5", "attr5");
         propertyMap.put("attr6", "attr6");
+        propertyMap.put("attr7", "cached");
+        propertyMap.put("attr8", "cached");
 
         extractor.publishEvent("variant値の変更", "variant変更の検証イベント", LocalDateTime.now(), propertyMap);
 
@@ -248,8 +250,10 @@ public class DslReplacementAfterTest {
                 .isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(12));
         assertThat(Utils.getNested(persister, String.class, "value", "プラグインへのパラメタ変更_キャッシュ無効"))
                 .isEqualTo("attr4 accepted");
-        assertThat(Utils.getNested(persister, String.class, "value", "プラグインへのパラメタ変更_キャッシュ有効"))
+        assertThat(Utils.getNested(persister, String.class, "value", "プラグインへのパラメタ変更_キャッシュ有効_値変更"))
                 .isEqualTo("attr6 accepted");
+        assertThat(Utils.getNested(persister, String.class, "value", "プラグインへのパラメタ変更_キャッシュ有効_値不変"))
+                .isEqualTo("cached accepted");
     }
 }
 
