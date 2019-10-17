@@ -5,7 +5,9 @@ import jp.co.fluxengine.stateengine.annotation.Variant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Variant("variant値の変更#プラグインへのパラメタ変更_キャッシュ無効,variant値の変更#プラグインへのパラメタ変更_キャッシュ有効")
+@Variant("variant値の変更#プラグインへのパラメタ変更_キャッシュ無効," +
+        "variant値の変更#プラグインへのパラメタ変更_キャッシュ有効_値変更," +
+        "variant値の変更#プラグインへのパラメタ変更_キャッシュ有効_値不変")
 public class DslReplacementVariant {
 
     private static final Logger log = LoggerFactory.getLogger(DslReplacementVariant.class);
