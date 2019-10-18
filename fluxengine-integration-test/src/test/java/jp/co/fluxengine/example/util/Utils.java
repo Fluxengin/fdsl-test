@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.time.Instant;
 import java.util.Map;
@@ -42,7 +43,7 @@ public class Utils {
         while (Instant.now().isBefore(timeout)) {
             Process process = runtime.exec(checkStateCommand);
             process.waitFor();
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"))) {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
                 String stateLine = br.readLine();
 
                 if (stateLine != null) {
@@ -89,6 +90,22 @@ public class Utils {
         return resultClazz.cast(result);
     }
 
+    public static <T> T getNested(Map<String, Object> map, String... paths) {
+        Object result = map;
+
+        for (String path : paths) {
+            if (result == null) {
+                return null;
+            }
+            @SuppressWarnings("unchecked")
+            Map<String, Object> next = (Map<String, Object>) result;
+            result = next.get(path);
+        }
+
+        //noinspection unchecked
+        return (T) result;
+    }
+
     public static void withTestDb(ThrowableConsumer<Connection> testDbConsumer) throws Exception {
         try (Connection testDbConnection = CloudSqlPool.getDataSource().getConnection()) {
             testDbConsumer.accept(testDbConnection);
@@ -107,7 +124,7 @@ public class Utils {
     }
 
     public static Map<String, Object> toMap(String key1, Object value1,
-                                     String key2, Object value2) {
+                                            String key2, Object value2) {
         Map<String, Object> result = Maps.newHashMap();
         result.put(key1, value1);
         result.put(key2, value2);
@@ -116,8 +133,8 @@ public class Utils {
     }
 
     public static Map<String, Object> toMap(String key1, Object value1,
-                                     String key2, Object value2,
-                                     String key3, Object value3) {
+                                            String key2, Object value2,
+                                            String key3, Object value3) {
         Map<String, Object> result = Maps.newHashMap();
         result.put(key1, value1);
         result.put(key2, value2);

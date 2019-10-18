@@ -66,8 +66,8 @@ public class DslReplacementAfterTest {
 
         PersisterExtractor.EntityMap entity = extractor.getEntityOf("[有効期限の検証]");
         Map<String, Object> persisterMap = entity.getPersisterMap("有効期限の設定#有効期限の検証");
-        assertThat(Utils.getNested(persisterMap, String.class, "value", "s")).isEqualTo("after");
-        assertThat(Utils.getNested(persisterMap, String.class, "lifetime")).isEqualTo(todayString);
+        assertThat(Utils.<String>getNested(persisterMap, "value", "s")).isEqualTo("after");
+        assertThat(Utils.<String>getNested(persisterMap, "lifetime")).isEqualTo(todayString);
 
         // 有効開始日が明日のDSLが実行されていないことを念のために確認する
         // もし実行されていれば、以下のエンティティが存在してしまう
@@ -86,21 +86,21 @@ public class DslReplacementAfterTest {
         PersisterExtractor.EntityMap entity = extractor.getEntityOf("[persister項目変更の検証]");
 
         Map<String, Object> increasedExpired = entity.getPersisterMap("persister項目の変更#項目変更の検証_増加_期限切れ");
-        assertThat(Utils.getNested(increasedExpired, String.class, "value", "s1")).isEqualTo("_after");
-        assertThat(Utils.getNested(increasedExpired, Number.class, "value", "n1")).isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(1));
+        assertThat(Utils.<String>getNested(increasedExpired, "value", "s1")).isEqualTo("_after");
+        assertThat(Utils.<Number>getNested(increasedExpired, "value", "n1")).isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(1));
 
         Map<String, Object> decreasedExpired = entity.getPersisterMap("persister項目の変更#項目変更の検証_減少_期限切れ");
-        assertThat(Utils.getNested(decreasedExpired, String.class, "value", "s2")).isEqualTo("_after");
+        assertThat(Utils.<String>getNested(decreasedExpired, "value", "s2")).isEqualTo("_after");
         @SuppressWarnings("unchecked")
         Map<String, Object> s2Map = (Map<String, Object>) decreasedExpired.get("value");
         assertThat(s2Map).doesNotContainKeys("n2");
 
         Map<String, Object> increasedNotExpired = entity.getPersisterMap("persister項目の変更#項目変更の検証_増加_期限内");
-        assertThat(Utils.getNested(increasedNotExpired, String.class, "value", "s3")).isEqualTo("項目変更の検証_増加_期限内_before_after");
-        assertThat(Utils.getNested(increasedNotExpired, Number.class, "value", "n3")).isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(3));
+        assertThat(Utils.<String>getNested(increasedNotExpired, "value", "s3")).isEqualTo("項目変更の検証_増加_期限内_before_after");
+        assertThat(Utils.<Number>getNested(increasedNotExpired, "value", "n3")).isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(3));
 
         Map<String, Object> decreasedNotExpired = entity.getPersisterMap("persister項目の変更#項目変更の検証_減少_期限内");
-        assertThat(Utils.getNested(decreasedNotExpired, String.class, "value", "s4")).isEqualTo("項目変更の検証_減少_期限内_before_after");
+        assertThat(Utils.<String>getNested(decreasedNotExpired, "value", "s4")).isEqualTo("項目変更の検証_減少_期限内_before_after");
         @SuppressWarnings("unchecked")
         Map<String, Object> s4Map = (Map<String, Object>) decreasedNotExpired.get("value");
         assertThat(s4Map).doesNotContainKey("n4");
@@ -124,18 +124,18 @@ public class DslReplacementAfterTest {
         PersisterExtractor.EntityMap entity = extractor.getEntityOf("[persister型変更の検証]");
 
         Map<String, Object> expired = entity.getPersisterMap("persister型変更#型変更の検証_期限切れ");
-        assertThat(Utils.getNested(expired, Number.class, "value", "contents1")).isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(1));
+        assertThat(Utils.<Number>getNested(expired, "value", "contents1")).isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(1));
 
         String todayString = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDate.now());
         Map<String, Object> notExpired = entity.getPersisterMap("persister型変更#型変更の検証_期限内");
-        assertThat(Utils.getNested(notExpired, String.class, "value", "contents2")).isEqualTo(todayString + "_after");
+        assertThat(Utils.<String>getNested(notExpired, "value", "contents2")).isEqualTo(todayString + "_after");
 
         // エラーとなるため、Persisterの値が更新されない
         Map<String, Object> notExpiredError = entity.getPersisterMap("persister型変更#型変更の検証_期限内_error");
-        assertThat(Utils.getNested(notExpiredError, String.class, "value", "contents2_error")).isEqualTo(todayString);
+        assertThat(Utils.<String>getNested(notExpiredError, "value", "contents2_error")).isEqualTo(todayString);
 
         Map<String, Object> calculatable = entity.getPersisterMap("persister型変更#型変更の検証_計算可能1");
-        assertThat(Utils.getNested(calculatable, Number.class, "value", "contents3")).isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(369));
+        assertThat(Utils.<Number>getNested(calculatable, "value", "contents3")).isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(369));
 
         // 有効開始日が明日のDSLが実行されていないことを念のために確認する
         // もし実行されていれば、以下のエンティティが存在してしまう
@@ -154,7 +154,7 @@ public class DslReplacementAfterTest {
         PersisterExtractor.EntityMap entity = extractor.getEntityOf("[persist値変更の検証]");
 
         Map<String, Object> persister = entity.getPersisterMap("persist値の変更#値変更の検証");
-        assertThat(Utils.getNested(persister, Number.class, "value", "contents1"))
+        assertThat(Utils.<Number>getNested(persister, "value", "contents1"))
                 .isNotNull()
                 .satisfies(n -> assertThat(n.intValue()).isEqualTo(5));
     }
@@ -223,7 +223,7 @@ public class DslReplacementAfterTest {
         PersisterExtractor.EntityMap entity = extractor.getEntityOf("[rule条件変更の検証]");
         Map<String, Object> persister = entity.getPersisterMap("rule条件の変更#rule条件変更の検証");
 
-        assertThat(Utils.getNested(persister, String.class, "value", "contents")).isEqualTo("exists");
+        assertThat(Utils.<String>getNested(persister, "value", "contents")).isEqualTo("exists");
     }
 
     @Test
@@ -247,13 +247,13 @@ public class DslReplacementAfterTest {
         PersisterExtractor.EntityMap entity = extractor.getEntityOf("[variant変更の検証]");
         Map<String, Object> persister = entity.getPersisterMap("variant値の変更#variant変更の検証");
 
-        assertThat(Utils.getNested(persister, Number.class, "value", "値変更の検証"))
+        assertThat(Utils.<Number>getNested(persister, "value", "値変更の検証"))
                 .isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(12));
-        assertThat(Utils.getNested(persister, String.class, "value", "プラグインへのパラメタ変更_キャッシュ無効"))
+        assertThat(Utils.<String>getNested(persister, "value", "プラグインへのパラメタ変更_キャッシュ無効"))
                 .isEqualTo("attr4 accepted");
-        assertThat(Utils.getNested(persister, String.class, "value", "プラグインへのパラメタ変更_キャッシュ有効_値変更"))
+        assertThat(Utils.<String>getNested(persister, "value", "プラグインへのパラメタ変更_キャッシュ有効_値変更"))
                 .isEqualTo("attr6 accepted");
-        assertThat(Utils.getNested(persister, String.class, "value", "プラグインへのパラメタ変更_キャッシュ有効_値不変"))
+        assertThat(Utils.<String>getNested(persister, "value", "プラグインへのパラメタ変更_キャッシュ有効_値不変"))
                 .isEqualTo("cached accepted");
     }
 
@@ -281,15 +281,15 @@ public class DslReplacementAfterTest {
 
         PersisterExtractor.EntityMap entity = extractor.getEntityOf("[event属性の変更の検証]");
 
-        assertThat(entity.getValue("event属性の変更", "event属性の増加の検証", "contents", Map.class)).containsOnly(
+        assertThat(entity.<Map<String, Object>>getValue("event属性の変更", "event属性の増加の検証", "contents")).containsOnly(
                 FDSLMapEntry.of("contents1", "属性の増加の検証"),
                 FDSLMapEntry.of("contents2", 10)
         );
-        assertThat(entity.getValue("event属性の変更", "event属性の減少の検証", "contents", Map.class)).containsOnly(
+        assertThat(entity.<Map<String, Object>>getValue("event属性の変更", "event属性の減少の検証", "contents")).containsOnly(
                 FDSLMapEntry.of("contents1", "属性の減少の検証"),
                 FDSLMapEntry.of("contents2", 20)
         );
-        assertThat(entity.getValue("event属性の変更", "event属性の型変更の検証", "contents", Map.class)).containsOnly(
+        assertThat(entity.<Map<String, Object>>getValue("event属性の変更", "event属性の型変更の検証", "contents")).containsOnly(
                 FDSLMapEntry.of("contents1", "属性の型変更の検証"),
                 FDSLMapEntry.of("contents2", 30)
         );

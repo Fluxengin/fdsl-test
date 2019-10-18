@@ -167,13 +167,13 @@ public abstract class PersisterExtractor {
             return Utils.getNested(persister, String.class, "value", "currentState");
         }
 
-        public <T> T getValue(String namespace, String persisterName, String propertyName, Class<T> valueClass) {
-            return getValue(namespace + "#" + persisterName, persisterName, valueClass);
+        public <T> T getValue(String namespace, String persisterName, String propertyName) {
+            return getValue(namespace + "#" + persisterName, propertyName);
         }
 
-        public <T> T getValue(String persisterFullName, String propertyName, Class<T> valueClass) {
+        public <T> T getValue(String persisterFullName, String propertyName) {
             Map<String, Object> persister = getPersisterMap(persisterFullName);
-            return Utils.getNested(persister, valueClass, "value", propertyName);
+            return Utils.getNested(persister, "value", propertyName);
         }
     }
 
