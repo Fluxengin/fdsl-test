@@ -118,7 +118,7 @@ public class DslReplacementAfterTest {
         extractor.publishOneAttributeEvent("persister型変更", "型変更の検証イベント2_error1", LocalDateTime.now(), "dummy", "dummy");
 
         LOG.info("testPersisterTypes 待機");
-        Thread.sleep(30000);
+        Thread.sleep(35000);
         LOG.info("testPersisterTypes 待機終了");
 
         PersisterExtractor.EntityMap entity = extractor.getEntityOf("[persister型変更の検証]");
