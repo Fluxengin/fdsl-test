@@ -73,7 +73,7 @@ public class MemorystoreExtractEffector {
 
     @Post
     public void post() {
-        log.info("requestid = {}", requestId);
+        log.info("requestid = {}, keys = {}", requestId, keys.toString());
 
         // Redis to MySQL
         try (Jedis jedis = pool.getResource();
@@ -90,13 +90,16 @@ public class MemorystoreExtractEffector {
 
             List<byte[]> values = jedis.mget(targetKeys);
 
+            log.debug("{} keys and {} values obtained", targetKeys.length, values.size());
+
             List<Pair<String, byte[]>> data = Lists.newArrayList();
 
             for (int i = 0; i < targetKeys.length; i++) {
                 byte[] value = values.get(i);
 
+                String key = new String(targetKeys[i], StandardCharsets.UTF_8);
+                log.debug("got key = {}, value = {}", key, value);
                 if (value != null) {
-                    String key = new String(targetKeys[i], StandardCharsets.UTF_8);
                     data.add(new Pair<>(key, value));
                 }
             }
