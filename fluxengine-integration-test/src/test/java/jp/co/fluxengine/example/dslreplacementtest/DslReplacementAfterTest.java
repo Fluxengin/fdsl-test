@@ -61,7 +61,7 @@ public class DslReplacementAfterTest {
 
         // Dataflowが処理完了するまで少し待つ
         LOG.info("testLifetime 待機");
-        Thread.sleep(35000);
+        Thread.sleep(40000);
         LOG.info("testLifetime 待機終了");
 
         PersisterExtractor.EntityMap entity = extractor.getEntityOf("[有効期限の検証]");
@@ -80,7 +80,7 @@ public class DslReplacementAfterTest {
         extractor.publishOneAttributeEvent("persister項目の変更", "項目変更の検証イベント", LocalDateTime.now(), "dummy", "dummy");
 
         LOG.info("testPersisterAttributes 待機");
-        Thread.sleep(35000);
+        Thread.sleep(40000);
         LOG.info("testPersisterAttributes 待機終了");
 
         PersisterExtractor.EntityMap entity = extractor.getEntityOf("[persister項目変更の検証]");
@@ -118,7 +118,7 @@ public class DslReplacementAfterTest {
         extractor.publishOneAttributeEvent("persister型変更", "型変更の検証イベント2_error1", LocalDateTime.now(), "dummy", "dummy");
 
         LOG.info("testPersisterTypes 待機");
-        Thread.sleep(35000);
+        Thread.sleep(40000);
         LOG.info("testPersisterTypes 待機終了");
 
         PersisterExtractor.EntityMap entity = extractor.getEntityOf("[persister型変更の検証]");
@@ -148,7 +148,7 @@ public class DslReplacementAfterTest {
         extractor.publishOneAttributeEvent("persist値の変更", "値変更の検証イベント", LocalDateTime.now(), "input", 1);
 
         LOG.info("testPersistValues 待機");
-        Thread.sleep(35000);
+        Thread.sleep(40000);
         LOG.info("testPersistValues 待機終了");
 
         PersisterExtractor.EntityMap entity = extractor.getEntityOf("[persist値変更の検証]");
@@ -174,7 +174,7 @@ public class DslReplacementAfterTest {
         extractor.publishOneAttributeEvent("effector型変更", "effector型変更の検証イベント", LocalDateTime.now(), "storage_prefix", storagePrefix);
 
         LOG.info("testEffectorTypes 待機");
-        Thread.sleep(35000);
+        Thread.sleep(40000);
         LOG.info("testEffectorTypes 待機終了");
 
         Storage storage = StorageOptions.getDefaultInstance().getService();
@@ -200,7 +200,7 @@ public class DslReplacementAfterTest {
         ));
 
         LOG.info("testEffectValues 待機");
-        Thread.sleep(35000);
+        Thread.sleep(40000);
         LOG.info("testEffectValues 待機終了");
 
         Storage storage = StorageOptions.getDefaultInstance().getService();
@@ -214,7 +214,7 @@ public class DslReplacementAfterTest {
         extractor.publishOneAttributeEvent("rule条件の変更", "rule条件変更の検証イベント", LocalDateTime.now(), "number_value", 5);
 
         LOG.info("testRuleCondition 待機");
-        Thread.sleep(35000);
+        Thread.sleep(40000);
         LOG.info("testRuleCondition 待機終了");
 
         PersisterExtractor.EntityMap entity = extractor.getEntityOf("[rule条件変更の検証]");
@@ -238,7 +238,7 @@ public class DslReplacementAfterTest {
         extractor.publishEvent("variant値の変更", "variant変更の検証イベント", LocalDateTime.now(), propertyMap);
 
         LOG.info("testVariantChanges 待機");
-        Thread.sleep(35000);
+        Thread.sleep(40000);
         LOG.info("testVariantChanges 待機終了");
 
         PersisterExtractor.EntityMap entity = extractor.getEntityOf("[variant変更の検証]");
@@ -273,7 +273,7 @@ public class DslReplacementAfterTest {
         ));
 
         LOG.info("testEventChanges 待機");
-        Thread.sleep(35000);
+        Thread.sleep(40000);
         LOG.info("testEventChanges 待機終了");
 
         PersisterExtractor.EntityMap entity = extractor.getEntityOf("[event属性の変更の検証]");
