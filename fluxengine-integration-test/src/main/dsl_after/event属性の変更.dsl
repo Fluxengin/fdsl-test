@@ -13,10 +13,10 @@ event 属性の型変更の検証:
 map m1:
   contents1: 属性の増加の検証.attr1
   contents2: 属性の増加の検証.attr2
+  contents3: 属性の増加の検証.attr3
 
 map m2:
   contents1: 属性の減少の検証.attr1
-  contents2: 属性の減少の検証.attr2
 
 map m3:
   contents1: 属性の型変更の検証.attr1
