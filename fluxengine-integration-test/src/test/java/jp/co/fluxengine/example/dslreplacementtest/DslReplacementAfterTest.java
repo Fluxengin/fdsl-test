@@ -3,6 +3,7 @@ package jp.co.fluxengine.example.dslreplacementtest;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
+import jp.co.fluxengine.example.util.FDSLMapEntry;
 import jp.co.fluxengine.example.util.PersisterExtractor;
 import jp.co.fluxengine.example.util.Utils;
 import org.junit.jupiter.api.*;
@@ -254,6 +255,44 @@ public class DslReplacementAfterTest {
                 .isEqualTo("attr6 accepted");
         assertThat(Utils.getNested(persister, String.class, "value", "プラグインへのパラメタ変更_キャッシュ有効_値不変"))
                 .isEqualTo("cached accepted");
+    }
+
+    @Test
+    void testEventChanges() throws Exception {
+        // 指定していない属性があるのでエラーとなる
+        extractor.publishEvent("event属性の変更", "属性の増加の検証", LocalDateTime.now(), Utils.toMap(
+                "attr1", "属性の増加の検証",
+                "attr2", 10
+        ));
+        // 存在しない属性をしてしているのでエラーとなる
+        extractor.publishEvent("event属性の変更", "属性の減少の検証", LocalDateTime.now(), Utils.toMap(
+                "attr1", "属性の減少の検証",
+                "attr2", 20
+        ));
+        // attr2の型が違うためエラーとなる
+        extractor.publishEvent("event属性の変更", "属性の型変更の検証", LocalDateTime.now(), Utils.toMap(
+                "attr1", "属性の型変更の検証",
+                "attr2", 30
+        ));
+
+        LOG.info("testEventChanges 待機");
+        Thread.sleep(30000);
+        LOG.info("testEventChanges 待機終了");
+
+        PersisterExtractor.EntityMap entity = extractor.getEntityOf("[event属性の変更の検証]");
+
+        assertThat(entity.getValue("event属性の変更", "event属性の増加の検証", "contents", Map.class)).containsOnly(
+                FDSLMapEntry.of("contents1", "属性の増加の検証"),
+                FDSLMapEntry.of("contents2", 10)
+        );
+        assertThat(entity.getValue("event属性の変更", "event属性の減少の検証", "contents", Map.class)).containsOnly(
+                FDSLMapEntry.of("contents1", "属性の減少の検証"),
+                FDSLMapEntry.of("contents2", 20)
+        );
+        assertThat(entity.getValue("event属性の変更", "event属性の型変更の検証", "contents", Map.class)).containsOnly(
+                FDSLMapEntry.of("contents1", "属性の型変更の検証"),
+                FDSLMapEntry.of("contents2", 30)
+        );
     }
 }
 
