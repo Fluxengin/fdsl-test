@@ -36,12 +36,12 @@ persister event属性の型変更の検証:
 
 persist event属性の増加の検証:
   contents: m1
-  persist("event属性の変更の検証"):
+  watch("属性の増加の検証"):
 
 persist event属性の減少の検証:
   contents: m2
-  persist("event属性の変更の検証"):
+  watch("属性の減少の検証"):
 
 persist event属性の型変更の検証:
   contents: m3
-  persist("event属性の変更の検証"):
+  watch("属性の型変更の検証"):
