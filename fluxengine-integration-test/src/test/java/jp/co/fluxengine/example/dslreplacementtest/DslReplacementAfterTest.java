@@ -118,7 +118,7 @@ public class DslReplacementAfterTest {
         extractor.publishOneAttributeEvent("persister型変更", "型変更の検証イベント2_error1", LocalDateTime.now(), "dummy", "dummy");
 
         LOG.info("testPersisterTypes 待機");
-        Thread.sleep(40000);
+        Thread.sleep(50000);
         LOG.info("testPersisterTypes 待機終了");
 
         PersisterExtractor.EntityMap entity = extractor.getEntityOf("[persister型変更の検証]");
@@ -126,13 +126,14 @@ public class DslReplacementAfterTest {
         Map<String, Object> expired = entity.getPersisterMap("persister型変更#型変更の検証_期限切れ");
         assertThat(Utils.<Number>getNested(expired, "value", "contents1")).isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(1));
 
-        String todayString = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDate.now());
+        LocalDate today = LocalDate.now();
+        String todayString = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(today);
         Map<String, Object> notExpired = entity.getPersisterMap("persister型変更#型変更の検証_期限内");
         assertThat(Utils.<String>getNested(notExpired, "value", "contents2")).isEqualTo(todayString + "_after");
 
         // エラーとなるため、Persisterの値が更新されない
         Map<String, Object> notExpiredError = entity.getPersisterMap("persister型変更#型変更の検証_期限内_error");
-        assertThat(Utils.<String>getNested(notExpiredError, "value", "contents2_error")).isEqualTo(todayString);
+        assertThat(Utils.<String>getNested(notExpiredError, "value", "contents2_error")).isIn(todayString, today);
 
         Map<String, Object> calculatable = entity.getPersisterMap("persister型変更#型変更の検証_計算可能1");
         assertThat(Utils.<Number>getNested(calculatable, "value", "contents3")).isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(369));

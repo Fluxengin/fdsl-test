@@ -108,12 +108,14 @@ public class DslReplacementBeforeTest {
         Map<String, Object> expired = entity.getPersisterMap("persister型変更#型変更の検証_期限切れ");
         assertThat(Utils.<String>getNested(expired, "value", "contents1")).isEqualTo("型変更の検証_期限切れ_before");
 
-        String todayString = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDate.now());
+        LocalDate today = LocalDate.now();
+        String todayString = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(today);
         Map<String, Object> notExpired = entity.getPersisterMap("persister型変更#型変更の検証_期限内");
-        assertThat(Utils.<String>getNested(notExpired, "value", "contents2")).isEqualTo(todayString);
+        // dateは、DatastoreだとString, MemorystoreだとLocalDateで取得される
+        assertThat(Utils.<Object>getNested(notExpired, "value", "contents2")).isIn(todayString, today);
 
         Map<String, Object> notExpiredError = entity.getPersisterMap("persister型変更#型変更の検証_期限内_error");
-        assertThat(Utils.<String>getNested(notExpiredError, "value", "contents2_error")).isEqualTo(todayString);
+        assertThat(Utils.<String>getNested(notExpiredError, "value", "contents2_error")).isIn(todayString, today);
 
         Map<String, Object> calculatable = entity.getPersisterMap("persister型変更#型変更の検証_計算可能1");
         assertThat(Utils.<String>getNested(calculatable, "value", "contents3")).isEqualTo("123");
