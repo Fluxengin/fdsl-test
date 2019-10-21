@@ -423,7 +423,10 @@ commands:
   test_dsl_replacement:
     description: "Test FDSL replacement"
     parameters:
-      variablename:
+      persisterdb:
+        type: enum
+        enum: ["datastore", "memorystore"]
+      resourcenumber:
         type: string
       replaced:
         type: boolean
@@ -444,14 +447,14 @@ commands:
             - run:
                 name: Publish a dummy event to load new DSL
                 command: |
-                  PUBSUB_NAME=integration-test3_${CIRCLE_WORKFLOW_ID}
+                  PUBSUB_NAME=integration-test<< parameters.resourcenumber >>_${CIRCLE_WORKFLOW_ID}
                   gcloud pubsub topics publish projects/${PROJECT}/topics/${PUBSUB_NAME} --message="[{\"eventName\":\"__dummy_event__\",\"namespace\":\"__dummy_namespace__\",\"createTime\":null,\"property\":{}}]"
       - edit_integration_test_conf_files:
-          resourcenumber: "3"
+          resourcenumber: << parameters.resourcenumber >>
       - run:
           name: Edit persister db setting
           command: |
-            sed -i -e "s/persister\.db=.*/persister.db=datastore/" ~/fdsl-test/fluxengine-integration-test/conf/fluxengine.properties
+            sed -i -e "s/persister\.db=.*/persister.db=<< parameters.persisterdb >>/" ~/fdsl-test/fluxengine-integration-test/conf/fluxengine.properties
       - run:
           name: Replace jar
           command: |
@@ -464,11 +467,19 @@ commands:
             popd
       - restore_cache_gradle
       - run:
+          name: Set environment variable for test execution
+          command: |
+            if "<< parameters.replaced >>"; then
+              echo 'export FLUXENGINE_INTEGRATION_TEST_DSL_REPLACEMENT_AFTER=true' >> $BASH_ENV
+            else
+              echo 'export FLUXENGINE_INTEGRATION_TEST_DSL_REPLACEMENT_BEFORE=true' >> $BASH_ENV
+            fi
+      - run:
           name: Test Dataflow job
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test
             chmod +x gradlew
-            env << parameters.variablename >>=true STORAGE_PREFIX=gs://${BUCKET}/test_${CIRCLE_WORKFLOW_ID}/ ./gradlew test --tests jp.co.fluxengine.example.dslreplacementtest*
+            env STORAGE_PREFIX=gs://${BUCKET}/test_${CIRCLE_WORKFLOW_ID}/ ./gradlew test --tests jp.co.fluxengine.example.dslreplacementtest*
             popd
       - save_cache_gradle
       - upload_test_results:
@@ -609,7 +620,7 @@ jobs:
       - test_dataflow:
           persisterdb: "memorystore"
           resourcenumber: "2"
-  deploy_dsl_and_job_dsl_replacement:
+  deploy_dsl_and_job_dsl_replacement_datastore:
     executor: my-gcp
     steps:
       - deploy_dsl_and_job:
@@ -618,11 +629,13 @@ jobs:
           persisterdb: "datastore"
           presubmitevent: false
           resourcenumber: "3"
-  test_dsl_before:
+  test_dsl_before_datastore:
     executor: my-gcp
     steps:
       - test_dsl_replacement:
-          variablename: "FLUXENGINE_INTEGRATION_TEST_DSL_REPLACEMENT_BEFORE"
+          persisterdb: "datastore"
+          resourcenumber: "3"
+          replaced: false
       - run:
           name: Stop Dataflow job
           command: |
@@ -631,7 +644,7 @@ jobs:
               gcloud dataflow jobs cancel $dataflowJobId --region=asia-northeast1
             done < ~/state-engine/dataflow_job_id.txt
           when: on_fail
-  register_dsl_after:
+  register_dsl_after_datastore:
     executor: my-gcp
     steps:
       - register_dsl:
@@ -639,10 +652,18 @@ jobs:
           dslversion: 3
           resourcenumber: "3"
       - run:
+          name: Stop Dataflow job
+          command: |
+            while read dataflowJobId; do
+              echo "Stopping $dataflowJobId"
+              gcloud dataflow jobs cancel $dataflowJobId --region=asia-northeast1
+            done < ~/state-engine/dataflow_job_id.txt
+          when: on_fail
+      - run:
           name: Print registered datetime
           command: |
             echo "dsl_after registered at $(date +'%Y/%m/%d %H:%M:%S')"
-  register_dsl_dummy:
+  register_dsl_dummy_datastore:
     executor: my-gcp
     steps:
       # register dsl_dummy with its effective start date set tomorrow to make sure it's not executed
@@ -652,14 +673,102 @@ jobs:
           dslversion: 4
           resourcenumber: "3"
       - run:
+          name: Stop Dataflow job
+          command: |
+            while read dataflowJobId; do
+              echo "Stopping $dataflowJobId"
+              gcloud dataflow jobs cancel $dataflowJobId --region=asia-northeast1
+            done < ~/state-engine/dataflow_job_id.txt
+          when: on_fail
+      - run:
           name: Print registered datetime
           command: |
             echo "dsl_dummy registered at $(date +'%Y/%m/%d %H:%M:%S')"
-  test_dsl_after:
+  test_dsl_after_datastore:
     executor: my-gcp
     steps:
       - test_dsl_replacement:
-          variablename: "FLUXENGINE_INTEGRATION_TEST_DSL_REPLACEMENT_AFTER"
+          persisterdb: "datastore"
+          resourcenumber: "3"
+          replaced: true
+      - run:
+          name: Stop Dataflow job
+          command: |
+            while read dataflowJobId; do
+              echo "Stopping $dataflowJobId"
+              gcloud dataflow jobs cancel $dataflowJobId --region=asia-northeast1
+            done < ~/state-engine/dataflow_job_id.txt
+          when: always
+  deploy_dsl_and_job_dsl_replacement_memorystore:
+    executor: my-gcp
+    steps:
+      - deploy_dsl_and_job:
+          dsldirectory: "dsl_before"
+          dslversion: 2
+          persisterdb: "memorystore"
+          presubmitevent: false
+          resourcenumber: "4"
+  test_dsl_before_memorystore:
+    executor: my-gcp
+    steps:
+      - test_dsl_replacement:
+          persisterdb: "memorystore"
+          resourcenumber: "4"
+          replaced: false
+      - run:
+          name: Stop Dataflow job
+          command: |
+            while read dataflowJobId; do
+              echo "Stopping $dataflowJobId"
+              gcloud dataflow jobs cancel $dataflowJobId --region=asia-northeast1
+            done < ~/state-engine/dataflow_job_id.txt
+          when: on_fail
+  register_dsl_after_memorystore:
+    executor: my-gcp
+    steps:
+      - register_dsl:
+          dsldirectory: "dsl_after"
+          dslversion: 3
+          resourcenumber: "4"
+      - run:
+          name: Stop Dataflow job
+          command: |
+            while read dataflowJobId; do
+              echo "Stopping $dataflowJobId"
+              gcloud dataflow jobs cancel $dataflowJobId --region=asia-northeast1
+            done < ~/state-engine/dataflow_job_id.txt
+          when: on_fail
+      - run:
+          name: Print registered datetime
+          command: |
+            echo "dsl_after registered at $(date +'%Y/%m/%d %H:%M:%S')"
+  register_dsl_dummy_memorystore:
+    executor: my-gcp
+    steps:
+      # register dsl_dummy with its effective start date set tomorrow to make sure it's not executed
+      - register_dsl:
+          dsldirectory: "dsl_dummy"
+          dsleffectivedate: "`date +'%Y%m%d' -d '1 days'`"
+          dslversion: 4
+          resourcenumber: "4"
+      - run:
+          name: Stop Dataflow job
+          command: |
+            while read dataflowJobId; do
+              echo "Stopping $dataflowJobId"
+              gcloud dataflow jobs cancel $dataflowJobId --region=asia-northeast1
+            done < ~/state-engine/dataflow_job_id.txt
+          when: on_fail
+      - run:
+          name: Print registered datetime
+          command: |
+            echo "dsl_dummy registered at $(date +'%Y/%m/%d %H:%M:%S')"
+  test_dsl_after_memorystore:
+    executor: my-gcp
+    steps:
+      - test_dsl_replacement:
+          persisterdb: "memorystore"
+          resourcenumber: "4"
           replaced: true
       - run:
           name: Stop Dataflow job
@@ -676,9 +785,11 @@ jobs:
           dsldirectory: "dsl"
           persisterdb: "datastore"
           presubmitevent: false
-          resourcenumber: "4"
+          resourcenumber: "5"
   test_housekeep:
     executor: my-gcp
+    environment:
+      RESOURCE_NUMBER: 5
     steps:
       - check_update:
           dir: "fluxengine-integration-test .circleci"
@@ -688,7 +799,7 @@ jobs:
           command: |
             TODAY_STRING=`date "+%Y-%m-%d"`
             TOMORROW_STRING=`date "+%Y-%m-%d" -d '1 days'`
-            PUBSUB_NAME=integration-test4_${CIRCLE_WORKFLOW_ID}
+            PUBSUB_NAME=integration-test${RESOURCE_NUMBER}_${CIRCLE_WORKFLOW_ID}
 
             gcloud pubsub topics publish projects/${PROJECT}/topics/${PUBSUB_NAME} --message="[{\"eventName\":\"Housekeepパケット使用A\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user1\",\"使用量\":500}},{\"eventName\":\"Housekeepパケット使用B\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user2\",\"使用量\":500,\"期限1\":\"${TODAY_STRING}\"}},{\"eventName\":\"Housekeepパケット使用C\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user3\",\"使用量\":500,\"期限2\":\"${TODAY_STRING}\"}},{\"eventName\":\"Housekeepパケット使用D\",\"namespace\":\"housekeep/様々なlifetimeで永続化\",\"createTime\":null,\"property\":{\"ユーザーID\":\"user5\",\"使用量\":500,\"期限1\":\"${TODAY_STRING}\",\"期限2\":\"${TOMORROW_STRING}\"}}]" &
             pidHousekeepEvent=$!
@@ -706,7 +817,7 @@ jobs:
             sed -i -e "s@HOUSEKEEP_JOB_STAGING_LOCATION=.*@HOUSEKEEP_JOB_STAGING_LOCATION=${HOUSEKEEP_JOB_STAGING_LOCATION}@" fluxengine_housekeep.env
             sed -i -e "s@TEMPLATE_LOCATION=.*@TEMPLATE_LOCATION=${TEMPLATE_LOCATION}@" fluxengine_housekeep.env
 
-            NAMESPACE=INTEGRATION_TEST4_${CIRCLE_WORKFLOW_ID}
+            NAMESPACE=INTEGRATION_TEST${RESOURCE_NUMBER}_${CIRCLE_WORKFLOW_ID}
             sed -i -e "s/namespace=.*/namespace=${NAMESPACE}/" src/main/resources/persisterDataStore.properties
             sed -i -e "s/\[PROJECT\]/${PROJECT}/g" src/main/resources/persisterDataStore.properties
 
@@ -748,7 +859,7 @@ jobs:
             popd
       - save_cache_maven
       - edit_integration_test_conf_files:
-          resourcenumber: "4"
+          resourcenumber: "5"
       - run:
           name: Replace jar
           command: |
@@ -900,7 +1011,7 @@ workflows:
             tags:
               only:
                 - /^ci.*/
-      - deploy_dsl_and_job_dsl_replacement:
+      - deploy_dsl_and_job_dsl_replacement_datastore:
           requires:
             - build_engine
           filters:
@@ -911,10 +1022,10 @@ workflows:
             tags:
               only:
                 - /^ci.*/
-      - test_dsl_before:
+      - test_dsl_before_datastore:
           requires:
             - create_cloud_resources
-            - deploy_dsl_and_job_dsl_replacement
+            - deploy_dsl_and_job_dsl_replacement_datastore
           filters:
             branches:
               only:
@@ -923,9 +1034,9 @@ workflows:
             tags:
               only:
                 - /^ci.*/
-      - register_dsl_after:
+      - register_dsl_after_datastore:
           requires:
-            - test_dsl_before
+            - test_dsl_before_datastore
           filters:
             branches:
               only:
@@ -934,9 +1045,9 @@ workflows:
             tags:
               only:
                 - /^ci.*/
-      - register_dsl_dummy:
+      - register_dsl_dummy_datastore:
           requires:
-            - test_dsl_before
+            - test_dsl_before_datastore
           filters:
             branches:
               only:
@@ -945,10 +1056,67 @@ workflows:
             tags:
               only:
                 - /^ci.*/
-      - test_dsl_after:
+      - test_dsl_after_datastore:
           requires:
-            - register_dsl_after
-            - register_dsl_dummy
+            - register_dsl_after_datastore
+            - register_dsl_dummy_datastore
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - deploy_dsl_and_job_dsl_replacement_memorystore:
+          requires:
+            - build_engine
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - test_dsl_before_memorystore:
+          requires:
+            - create_cloud_resources
+            - deploy_dsl_and_job_dsl_replacement_memorystore
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - register_dsl_after_memorystore:
+          requires:
+            - test_dsl_before_memorystore
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - register_dsl_dummy_memorystore:
+          requires:
+            - test_dsl_before_memorystore
+          filters:
+            branches:
+              only:
+                - master
+                - /.*circleci.*/
+            tags:
+              only:
+                - /^ci.*/
+      - test_dsl_after_memorystore:
+          requires:
+            - register_dsl_after_memorystore
+            - register_dsl_dummy_memorystore
           filters:
             branches:
               only:
@@ -984,7 +1152,8 @@ workflows:
           requires:
             - test_dataflow_datastore
             - test_dataflow_memorystore
-            - test_dsl_after
+            - test_dsl_after_datastore
+            - test_dsl_after_memorystore
             - test_housekeep
           filters:
             branches:

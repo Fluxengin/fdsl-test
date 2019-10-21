@@ -3,21 +3,21 @@
 {
   pushd ~/fdsl-test/datastore-cleaner
   chmod +x gradlew
-  ALL_NAMESPACES=`seq --format="INTEGRATION_TEST%g_${CIRCLE_WORKFLOW_ID}" --separator=' ' 1 4`
+  ALL_NAMESPACES=`seq --format="INTEGRATION_TEST%g_${CIRCLE_WORKFLOW_ID}" --separator=' ' 1 5`
   env NAMESPACE="${ALL_NAMESPACES}" ./gradlew run
   popd
 } &
 pidDatastore=$!
 
 {
-  PUBSUBS=`seq --format="integration-test%g_${CIRCLE_WORKFLOW_ID}" --separator=' ' 1 4`
+  PUBSUBS=`seq --format="integration-test%g_${CIRCLE_WORKFLOW_ID}" --separator=' ' 1 5`
   gcloud pubsub subscriptions delete ${PUBSUBS}
   gcloud pubsub topics delete ${PUBSUBS}
 } &
 pidPubsub=$!
 
 {
-  for i in `seq 1 4`; do
+  for i in `seq 1 5`; do
     STAGING_DIRECTORY=gs://${BUCKET}/staging${i}_${CIRCLE_WORKFLOW_ID}
     TEMPLATE_FILE=gs://${BUCKET}/templates/MyTemplate${i}_${CIRCLE_WORKFLOW_ID}
     gsutil -m rm -r ${STAGING_DIRECTORY} ${TEMPLATE_FILE}
