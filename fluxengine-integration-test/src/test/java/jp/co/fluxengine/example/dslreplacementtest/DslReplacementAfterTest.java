@@ -118,7 +118,7 @@ public class DslReplacementAfterTest {
         extractor.publishOneAttributeEvent("persister型変更", "型変更の検証イベント2_error1", LocalDateTime.now(), "dummy", "dummy");
 
         LOG.info("testPersisterTypes 待機");
-        Thread.sleep(50000);
+        Thread.sleep(70000);
         LOG.info("testPersisterTypes 待機終了");
 
         PersisterExtractor.EntityMap entity = extractor.getEntityOf("[persister型変更の検証]");
@@ -133,7 +133,7 @@ public class DslReplacementAfterTest {
 
         // エラーとなるため、Persisterの値が更新されない
         Map<String, Object> notExpiredError = entity.getPersisterMap("persister型変更#型変更の検証_期限内_error");
-        assertThat(Utils.<String>getNested(notExpiredError, "value", "contents2_error")).isIn(todayString, today);
+        assertThat(Utils.<Object>getNested(notExpiredError, "value", "contents2_error")).isIn(todayString, today);
 
         Map<String, Object> calculatable = entity.getPersisterMap("persister型変更#型変更の検証_計算可能1");
         assertThat(Utils.<Number>getNested(calculatable, "value", "contents3")).isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(369));
