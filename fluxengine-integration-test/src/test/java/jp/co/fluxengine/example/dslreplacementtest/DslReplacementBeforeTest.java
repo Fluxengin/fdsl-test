@@ -280,7 +280,7 @@ public class DslReplacementBeforeTest {
                 FDSLMapEntry.of("contents2", 30)
         );
 
-        PersisterExtractor.EntityMap entity2 = entities.get("[event属性の変更の検証]");
+        PersisterExtractor.EntityMap entity2 = entities.get("[event属性の変更の検証2]");
 
         assertThat(entity2.<Map<String, Object>>getValue("event属性の変更2", "event属性の増加の検証", "contents")).containsOnly(
                 FDSLMapEntry.of("contents1", "属性の増加の検証"),
