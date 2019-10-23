@@ -73,8 +73,8 @@ public class DslReplacementAfterTest {
         assertThat(Utils.<String>getNested(persisterMap1, "lifetime")).isEqualTo(todayString);
 
         Map<String, Object> persisterMap2 = entity.getPersisterMap("有効期限の設定#有効期限の検証2");
-        assertThat(Utils.<String>getNested(persisterMap1, "value", "s")).isEqualTo("after");
-        assertThat(Utils.<String>getNested(persisterMap1, "lifetime")).isEmpty();
+        assertThat(Utils.<String>getNested(persisterMap2, "value", "s")).isEqualTo("after");
+        assertThat(Utils.<String>getNested(persisterMap2, "lifetime")).isEmpty();
 
         // 有効開始日が明日のDSLが実行されていないことを念のために確認する
         // もし実行されていれば、以下のエンティティが存在してしまう
