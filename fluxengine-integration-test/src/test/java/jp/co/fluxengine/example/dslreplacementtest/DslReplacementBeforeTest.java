@@ -54,6 +54,9 @@ public class DslReplacementBeforeTest {
 
     @Test
     void testPersisterLifetime() throws Exception {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String todayString = LocalDate.now().format(formatter);
+
         extractor.publishOneAttributeEvent("有効期限の設定", "有効期限の検証イベント", LocalDateTime.now(), "s", "before");
 
         // Dataflowが処理完了するまで少し待つ
@@ -62,9 +65,14 @@ public class DslReplacementBeforeTest {
         LOG.info("testPersisterLifetime 待機終了");
 
         PersisterExtractor.EntityMap entity = extractor.getEntityOf("[有効期限の検証]");
-        Map<String, Object> persisterMap = entity.getPersisterMap("有効期限の設定#有効期限の検証");
-        assertThat(Utils.<String>getNested(persisterMap, "value", "s")).isEqualTo("before");
-        assertThat(Utils.<String>getNested(persisterMap, "lifetime")).isEmpty();
+
+        Map<String, Object> persisterMap1 = entity.getPersisterMap("有効期限の設定#有効期限の検証");
+        assertThat(Utils.<String>getNested(persisterMap1, "value", "s")).isEqualTo("before");
+        assertThat(Utils.<String>getNested(persisterMap1, "lifetime")).isEmpty();
+
+        Map<String, Object> persisterMap2 = entity.getPersisterMap("有効期限の設定#有効期限の検証2");
+        assertThat(Utils.<String>getNested(persisterMap2, "value", "s")).isEqualTo("before");
+        assertThat(Utils.<String>getNested(persisterMap2, "lifetime")).isEqualTo(todayString);
     }
 
     @Test

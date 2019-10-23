@@ -67,9 +67,14 @@ public class DslReplacementAfterTest {
         LOG.info("testLifetime 待機終了");
 
         PersisterExtractor.EntityMap entity = extractor.getEntityOf("[有効期限の検証]");
-        Map<String, Object> persisterMap = entity.getPersisterMap("有効期限の設定#有効期限の検証");
-        assertThat(Utils.<String>getNested(persisterMap, "value", "s")).isEqualTo("after");
-        assertThat(Utils.<String>getNested(persisterMap, "lifetime")).isEqualTo(todayString);
+
+        Map<String, Object> persisterMap1 = entity.getPersisterMap("有効期限の設定#有効期限の検証");
+        assertThat(Utils.<String>getNested(persisterMap1, "value", "s")).isEqualTo("after");
+        assertThat(Utils.<String>getNested(persisterMap1, "lifetime")).isEqualTo(todayString);
+
+        Map<String, Object> persisterMap2 = entity.getPersisterMap("有効期限の設定#有効期限の検証2");
+        assertThat(Utils.<String>getNested(persisterMap1, "value", "s")).isEqualTo("after");
+        assertThat(Utils.<String>getNested(persisterMap1, "lifetime")).isEmpty();
 
         // 有効開始日が明日のDSLが実行されていないことを念のために確認する
         // もし実行されていれば、以下のエンティティが存在してしまう
