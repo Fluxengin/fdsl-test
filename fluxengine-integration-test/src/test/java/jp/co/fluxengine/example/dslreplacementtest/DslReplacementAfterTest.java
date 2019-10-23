@@ -312,15 +312,15 @@ public class DslReplacementAfterTest {
 
         PersisterExtractor.EntityMap entity2 = entities.get("[event属性の変更の検証2]");
 
-        assertThat(entity2.<Map<String, Object>>getValue("event属性の変更", "event属性の増加の検証", "contents")).containsOnly(
+        assertThat(entity2.<Map<String, Object>>getValue("event属性の変更2", "event属性の増加の検証", "contents")).containsOnly(
                 FDSLMapEntry.of("contents1", "属性の増加の検証_after"),
                 FDSLMapEntry.of("contents2", 11),
                 FDSLMapEntry.of("contents3", true)
         );
-        assertThat(entity2.<Map<String, Object>>getValue("event属性の変更", "event属性の減少の検証", "contents")).containsOnly(
+        assertThat(entity2.<Map<String, Object>>getValue("event属性の変更2", "event属性の減少の検証", "contents")).containsOnly(
                 FDSLMapEntry.of("contents1", "属性の減少の検証_after")
         );
-        assertThat(entity2.<Map<String, Object>>getValue("event属性の変更", "event属性の型変更の検証", "contents")).hasSize(2).contains(
+        assertThat(entity2.<Map<String, Object>>getValue("event属性の変更2", "event属性の型変更の検証", "contents")).hasSize(2).contains(
                 FDSLMapEntry.of("contents1", "属性の型変更の検証_after")
         ).containsKey("contents2").satisfies(map ->
                 assertThat(map.get("contents2")).isInstanceOf(List.class).asList().containsExactly("elem1", "elem2")
