@@ -3,6 +3,7 @@ package jp.co.fluxengine.example.dslreplacementtest;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
+import com.google.common.collect.Lists;
 import jp.co.fluxengine.example.util.FDSLMapEntry;
 import jp.co.fluxengine.example.util.PersisterExtractor;
 import jp.co.fluxengine.example.util.Utils;
@@ -18,6 +19,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -259,37 +261,69 @@ public class DslReplacementAfterTest {
     void testEventChanges() throws Exception {
         // 指定していない属性があるのでエラーとなる
         extractor.publishEvent("event属性の変更", "属性の増加の検証", LocalDateTime.now(), Utils.toMap(
-                "attr1", "属性の増加の検証",
-                "attr2", 10
+                "attr1", "属性の増加の検証_after",
+                "attr2", 11
         ));
         // 存在しない属性をしてしているのでエラーとなる
         extractor.publishEvent("event属性の変更", "属性の減少の検証", LocalDateTime.now(), Utils.toMap(
-                "attr1", "属性の減少の検証",
-                "attr2", 20
+                "attr1", "属性の減少の検証_after",
+                "attr2", 21
         ));
         // attr2の型が違うためエラーとなる
         extractor.publishEvent("event属性の変更", "属性の型変更の検証", LocalDateTime.now(), Utils.toMap(
-                "attr1", "属性の型変更の検証",
-                "attr2", 30
+                "attr1", "属性の型変更の検証_after",
+                "attr2", 31
+        ));
+
+        // 入れ替え後のイベント定義に合致するので、エラーなく処理できる
+        extractor.publishEvent("event属性の変更2", "属性の増加の検証", LocalDateTime.now(), Utils.toMap(
+                "attr1", "属性の増加の検証_after",
+                "attr2", 11,
+                "attr3", true
+        ));
+        extractor.publishEvent("event属性の変更2", "属性の減少の検証", LocalDateTime.now(), Utils.toMap(
+                "attr1", "属性の減少の検証_after"
+        ));
+        extractor.publishEvent("event属性の変更2", "属性の型変更の検証", LocalDateTime.now(), Utils.toMap(
+                "attr1", "属性の型変更の検証_after",
+                "attr2", Lists.newArrayList("elem1", "elem2")
         ));
 
         LOG.info("testEventChanges 待機");
         Thread.sleep(40000);
         LOG.info("testEventChanges 待機終了");
 
-        PersisterExtractor.EntityMap entity = extractor.getEntityOf("[event属性の変更の検証]");
+        PersisterExtractor.IdToEntityMap entities = extractor.getEntitiesOf("[event属性の変更の検証]", "[event属性の変更の検証2]");
 
-        assertThat(entity.<Map<String, Object>>getValue("event属性の変更", "event属性の増加の検証", "contents")).containsOnly(
+        PersisterExtractor.EntityMap entity1 = entities.get("[event属性の変更の検証]");
+
+        assertThat(entity1.<Map<String, Object>>getValue("event属性の変更", "event属性の増加の検証", "contents")).containsOnly(
                 FDSLMapEntry.of("contents1", "属性の増加の検証"),
                 FDSLMapEntry.of("contents2", 10)
         );
-        assertThat(entity.<Map<String, Object>>getValue("event属性の変更", "event属性の減少の検証", "contents")).containsOnly(
+        assertThat(entity1.<Map<String, Object>>getValue("event属性の変更", "event属性の減少の検証", "contents")).containsOnly(
                 FDSLMapEntry.of("contents1", "属性の減少の検証"),
                 FDSLMapEntry.of("contents2", 20)
         );
-        assertThat(entity.<Map<String, Object>>getValue("event属性の変更", "event属性の型変更の検証", "contents")).containsOnly(
+        assertThat(entity1.<Map<String, Object>>getValue("event属性の変更", "event属性の型変更の検証", "contents")).containsOnly(
                 FDSLMapEntry.of("contents1", "属性の型変更の検証"),
                 FDSLMapEntry.of("contents2", 30)
+        );
+
+        PersisterExtractor.EntityMap entity2 = entities.get("[event属性の変更の検証2]");
+
+        assertThat(entity2.<Map<String, Object>>getValue("event属性の変更", "event属性の増加の検証", "contents")).containsOnly(
+                FDSLMapEntry.of("contents1", "属性の増加の検証_after"),
+                FDSLMapEntry.of("contents2", 11),
+                FDSLMapEntry.of("contents3", true)
+        );
+        assertThat(entity2.<Map<String, Object>>getValue("event属性の変更", "event属性の減少の検証", "contents")).containsOnly(
+                FDSLMapEntry.of("contents1", "属性の減少の検証_after")
+        );
+        assertThat(entity2.<Map<String, Object>>getValue("event属性の変更", "event属性の型変更の検証", "contents")).hasSize(2).contains(
+                FDSLMapEntry.of("contents1", "属性の型変更の検証_after")
+        ).containsKey("contents2").satisfies(map ->
+                assertThat(map.get("contents2")).isInstanceOf(List.class).asList().containsExactly("elem1", "elem2")
         );
     }
 }

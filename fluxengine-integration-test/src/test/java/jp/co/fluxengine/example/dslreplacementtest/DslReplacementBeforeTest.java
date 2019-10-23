@@ -246,21 +246,51 @@ public class DslReplacementBeforeTest {
                 "attr2", 30
         ));
 
+        extractor.publishEvent("event属性の変更2", "属性の増加の検証", LocalDateTime.now(), Utils.toMap(
+                "attr1", "属性の増加の検証",
+                "attr2", 10
+        ));
+        extractor.publishEvent("event属性の変更2", "属性の減少の検証", LocalDateTime.now(), Utils.toMap(
+                "attr1", "属性の減少の検証",
+                "attr2", 20
+        ));
+        extractor.publishEvent("event属性の変更2", "属性の型変更の検証", LocalDateTime.now(), Utils.toMap(
+                "attr1", "属性の型変更の検証",
+                "attr2", 30
+        ));
+
         LOG.info("testEventChanges 待機");
         Thread.sleep(35000);
         LOG.info("testEventChanges 待機終了");
 
-        PersisterExtractor.EntityMap entity = extractor.getEntityOf("[event属性の変更の検証]");
+        PersisterExtractor.IdToEntityMap entities = extractor.getEntitiesOf("[event属性の変更の検証]", "[event属性の変更の検証2]");
 
-        assertThat(entity.<Map<String, Object>>getValue("event属性の変更", "event属性の増加の検証", "contents")).containsOnly(
+        PersisterExtractor.EntityMap entity1 = entities.get("[event属性の変更の検証]");
+
+        assertThat(entity1.<Map<String, Object>>getValue("event属性の変更", "event属性の増加の検証", "contents")).containsOnly(
                 FDSLMapEntry.of("contents1", "属性の増加の検証"),
                 FDSLMapEntry.of("contents2", 10)
         );
-        assertThat(entity.<Map<String, Object>>getValue("event属性の変更", "event属性の減少の検証", "contents")).containsOnly(
+        assertThat(entity1.<Map<String, Object>>getValue("event属性の変更", "event属性の減少の検証", "contents")).containsOnly(
                 FDSLMapEntry.of("contents1", "属性の減少の検証"),
                 FDSLMapEntry.of("contents2", 20)
         );
-        assertThat(entity.<Map<String, Object>>getValue("event属性の変更", "event属性の型変更の検証", "contents")).containsOnly(
+        assertThat(entity1.<Map<String, Object>>getValue("event属性の変更", "event属性の型変更の検証", "contents")).containsOnly(
+                FDSLMapEntry.of("contents1", "属性の型変更の検証"),
+                FDSLMapEntry.of("contents2", 30)
+        );
+
+        PersisterExtractor.EntityMap entity2 = entities.get("[event属性の変更の検証]");
+
+        assertThat(entity2.<Map<String, Object>>getValue("event属性の変更2", "event属性の増加の検証", "contents")).containsOnly(
+                FDSLMapEntry.of("contents1", "属性の増加の検証"),
+                FDSLMapEntry.of("contents2", 10)
+        );
+        assertThat(entity2.<Map<String, Object>>getValue("event属性の変更2", "event属性の減少の検証", "contents")).containsOnly(
+                FDSLMapEntry.of("contents1", "属性の減少の検証"),
+                FDSLMapEntry.of("contents2", 20)
+        );
+        assertThat(entity2.<Map<String, Object>>getValue("event属性の変更2", "event属性の型変更の検証", "contents")).containsOnly(
                 FDSLMapEntry.of("contents1", "属性の型変更の検証"),
                 FDSLMapEntry.of("contents2", 30)
         );
