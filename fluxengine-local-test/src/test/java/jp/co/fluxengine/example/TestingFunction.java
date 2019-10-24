@@ -60,4 +60,10 @@ public class TestingFunction {
     void invalidateEffector2(String dslPath) {
         assertThat(testDslAndGetResults(dslPath)).hasSize(2).allMatch(TestResult::isSucceeded);
     }
+
+    @Test
+    @DslPath("SQLのモック化")
+    void mockSQL(String dslPath) {
+        assertThat(testDslAndGetResults(dslPath)).hasSize(4).allMatch(TestResult::isSucceeded);
+    }
 }
