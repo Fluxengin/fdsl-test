@@ -123,6 +123,8 @@ public class DslReplacementAfterTest {
         extractor.publishOneAttributeEvent("persister型変更", "型変更の検証イベント", LocalDateTime.now(), "dummy", "dummy");
         extractor.publishOneAttributeEvent("persister型変更", "型変更の検証イベント2", LocalDateTime.now(), "dummy", "dummy");
         extractor.publishOneAttributeEvent("persister型変更", "型変更の検証イベント2_error1", LocalDateTime.now(), "dummy", "dummy");
+        extractor.publishOneAttributeEvent("persister型変更", "型変更の検証イベント_string_to_enum", LocalDateTime.now(), "dummy", "dummy");
+        extractor.publishOneAttributeEvent("persister型変更", "型変更の検証イベント_enum_to_number", LocalDateTime.now(), "dummy", "dummy");
 
         LOG.info("testPersisterTypes 待機");
         Thread.sleep(70000);
@@ -144,6 +146,11 @@ public class DslReplacementAfterTest {
 
         Map<String, Object> calculatable = entity.getPersisterMap("persister型変更#型変更の検証_計算可能1");
         assertThat(Utils.<Number>getNested(calculatable, "value", "contents3")).isNotNull().satisfies(n -> assertThat(n.intValue()).isEqualTo(369));
+
+        // enumの内部値が正しく処理されたか検証
+        assertThat(entity.<Boolean>getValue("persister型変更", "型変更の検証_string_to_enum_判定", "contents4_判定")).isTrue();
+
+        assertThat(entity.<Boolean>getValue("persister型変更", "型変更の検証_enum_to_number_判定", "contents5_判定")).isTrue();
 
         // 有効開始日が明日のDSLが実行されていないことを念のために確認する
         // もし実行されていれば、以下のエンティティが存在してしまう

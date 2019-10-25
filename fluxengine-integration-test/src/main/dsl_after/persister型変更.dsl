@@ -51,3 +51,49 @@ number n3: 型変更の検証_計算可能1.contents3 * 3
 persist 型変更の検証_計算可能1:
   contents3: n3
   watch(型変更の検証イベント):
+
+# enumと内部値の変換
+
+enum 型変更の検証イベント_string_to_enum:
+  "A": CODE_A
+  "B": CODE_B
+  "C": CODE_C
+
+event 型変更の検証イベント_string_to_enum:
+  dummy: string
+
+persister 型変更の検証_string_to_enum:
+  contents4: 型変更の検証イベント_string_to_enum
+  persist("persister型変更の検証"):
+
+persister 型変更の検証_string_to_enum_判定:
+  contents4_判定: bool
+  persist("persister型変更の検証"):
+
+bool contents4_判定:
+  型変更の検証_string_to_enum.contents4 == CODE_A: true
+  else: false
+
+persist 型変更の検証_string_to_enum_判定:
+  contents4_判定: contents4_判定
+  watch(型変更の検証イベント_string_to_enum):
+
+event 型変更の検証イベント_enum_to_number:
+  dummy: string
+
+persister 型変更の検証_enum_to_number:
+  contents5: number
+  persist("persister型変更の検証"):
+
+persister 型変更の検証_enum_to_number_判定:
+  contents5_判定: number
+  persist("persister型変更の検証"):
+
+number contents5_演算: 型変更の検証_enum_to_number.contents5 * 2
+bool contents5_判定:
+  contents5_演算 == 10: true
+  else: false
+
+persist 型変更の検証_enum_to_number_判定:
+  contents5_判定: contents5_判定
+  watch(型変更の検証イベント_enum_to_number):

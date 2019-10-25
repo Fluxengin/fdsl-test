@@ -106,6 +106,8 @@ public class DslReplacementBeforeTest {
     void testPersisterTypes() throws Exception {
         extractor.publishOneAttributeEvent("persister型変更", "型変更の検証イベント", LocalDateTime.now(), "dummy", "dummy");
         extractor.publishOneAttributeEvent("persister型変更", "型変更の検証イベント_error1", LocalDateTime.now(), "dummy", "dummy");
+        extractor.publishOneAttributeEvent("persister型変更", "型変更の検証イベント_string_to_enum", LocalDateTime.now(), "dummy", "dummy");
+        extractor.publishOneAttributeEvent("persister型変更", "型変更の検証イベント_enum_to_number", LocalDateTime.now(), "dummy", "dummy");
 
         LOG.info("testPersisterTypes 待機");
         Thread.sleep(35000);
@@ -127,6 +129,12 @@ public class DslReplacementBeforeTest {
 
         Map<String, Object> calculatable = entity.getPersisterMap("persister型変更#型変更の検証_計算可能1");
         assertThat(Utils.<String>getNested(calculatable, "value", "contents3")).isEqualTo("123");
+
+        // enumの内部値の検証
+        assertThat(entity.<String>getValue("persister型変更", "型変更の検証_string_to_enum", "contents4")).isEqualTo("A");
+
+        assertThat(entity.<Number>getValue("persister型変更", "型変更の検証_enum_to_number", "contents5")).isNotNull()
+                .satisfies(n -> assertThat(n.intValue()).isEqualTo(5));
     }
 
     @Test
