@@ -65,5 +65,5 @@ persister 型変更の検証_enum_to_number:
   persist("persister型変更の検証"):
 
 persist 型変更の検証_enum_to_number:
-  型変更の検証イベント: ON
+  contents5: ON
   watch(型変更の検証イベント_enum_to_number):
