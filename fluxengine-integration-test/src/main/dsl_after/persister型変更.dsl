@@ -54,7 +54,7 @@ persist 型変更の検証_計算可能1:
 
 # enumと内部値の変換
 
-enum 型変更の検証イベント_string_to_enum:
+enum enum型変更の検証イベント_string_to_enum:
   "A": CODE_A
   "B": CODE_B
   "C": CODE_C
@@ -63,7 +63,7 @@ event 型変更の検証イベント_string_to_enum:
   dummy: string
 
 persister 型変更の検証_string_to_enum:
-  contents4: 型変更の検証イベント_string_to_enum
+  contents4: enum型変更の検証イベント_string_to_enum
   persist("persister型変更の検証"):
 
 persister 型変更の検証_string_to_enum_判定:

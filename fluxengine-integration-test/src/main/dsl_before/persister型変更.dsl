@@ -53,7 +53,7 @@ persist 型変更の検証_string_to_enum:
   contents4: "A"
   watch(型変更の検証イベント_string_to_enum):
 
-enum 型変更の検証_enum_to_number:
+enum enum型変更の検証_enum_to_number:
   5: ON
   0: OFF
 
@@ -61,7 +61,7 @@ event 型変更の検証イベント_enum_to_number:
   dummy: string
 
 persister 型変更の検証_enum_to_number:
-  contents5: 型変更の検証_enum_to_number
+  contents5: enum型変更の検証_enum_to_number
   persist("persister型変更の検証"):
 
 persist 型変更の検証_enum_to_number:
