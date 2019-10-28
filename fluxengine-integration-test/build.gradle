@@ -30,7 +30,7 @@ dependencies {
     implementation('mysql:mysql-connector-java:8.0.16') {
         exclude group: 'com.google.protobuf', module: 'protobuf-java'
     }
-    implementation group: 'redis.clients', name: 'jedis', version: '3.0.1'
+    implementation group: 'redis.clients', name: 'jedis', version: '3.1.0'
     implementation group: 'com.google.cloud', name: 'google-cloud-storage', version: '1.96.0'
 
     testImplementation group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: '2.11.2'
