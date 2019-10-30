@@ -550,6 +550,9 @@ jobs:
             wait $pidCloudSql
             buildEngine fluxengine-dataflow
             wait $pidDataflowHousekeepServlet $pidDslRegister $pidEventPublisher $pidDataflowBatchServlet $pidLocalTestRunner $pidRemoteTestRunner $pidDataflowHousekeep
+
+            # Stop if any build failed
+            grep "BUILD FAILURE" ~/logs/*.log && exit 1
       - save_cache_maven
       - store_artifacts:
           path: ~/logs
