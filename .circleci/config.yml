@@ -552,7 +552,7 @@ jobs:
             wait $pidDataflowHousekeepServlet $pidDslRegister $pidEventPublisher $pidDataflowBatchServlet $pidLocalTestRunner $pidRemoteTestRunner $pidDataflowHousekeep
 
             # Stop if any build failed
-            grep "BUILD FAILURE" ~/logs/*.log && exit 1
+            ! grep "BUILD FAILURE" ~/logs/*.log
       - save_cache_maven
       - store_artifacts:
           path: ~/logs
