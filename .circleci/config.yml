@@ -256,7 +256,7 @@ jobs:
             mkdir -p ~/.ssh
             echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
             pushd ~/
-            git clone git@github.com:Fluxengin/state-engine.git
+            git clone --depth 1 git@github.com:Fluxengin/state-engine.git
             popd
       - restore_cache_maven
       - run:
@@ -483,9 +483,8 @@ jobs:
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test/lib
             rm -f fluxengine-*.jar
-            for projectDir in local-test-runner remote-test-runner event-publisher
-            do
-            cp -f ~/state-engine/fluxengine-${projectDir}/target/fluxengine-${projectDir}-*.jar ./
+            for projectDir in local-test-runner remote-test-runner event-publisher; do
+              cp -f ~/state-engine/fluxengine-${projectDir}/target/fluxengine-${projectDir}-*.jar ./
             done
             popd
       - restore_cache_gradle
@@ -516,10 +515,9 @@ jobs:
       - run:
           name: Stop Dataflow job
           command: |
-            while read dataflowJobId
-            do
-            echo "Stopping $dataflowJobId"
-            gcloud dataflow jobs cancel $dataflowJobId --region=asia-northeast1
+            while read dataflowJobId; do
+              echo "Stopping $dataflowJobId"
+              gcloud dataflow jobs cancel $dataflowJobId --region=asia-northeast1
             done < ~/state-engine/dataflow_job_id.txt
           when: always
       - upload_test_results:
@@ -565,9 +563,8 @@ jobs:
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test/lib
             rm -f fluxengine-*.jar
-            for projectDir in local-test-runner remote-test-runner event-publisher
-            do
-            cp -f ~/state-engine/fluxengine-${projectDir}/target/fluxengine-${projectDir}-*.jar ./
+            for projectDir in local-test-runner remote-test-runner event-publisher; do
+              cp -f ~/state-engine/fluxengine-${projectDir}/target/fluxengine-${projectDir}-*.jar ./
             done
             popd
       - restore_cache_gradle
@@ -717,9 +714,8 @@ jobs:
           command: |
             pushd ~/fdsl-test/fluxengine-integration-test/lib
             rm -f fluxengine-*.jar
-            for projectDir in local-test-runner remote-test-runner event-publisher
-            do
-            cp -f ~/state-engine/fluxengine-${projectDir}/target/fluxengine-${projectDir}-*.jar ./
+            for projectDir in local-test-runner remote-test-runner event-publisher; do
+              cp -f ~/state-engine/fluxengine-${projectDir}/target/fluxengine-${projectDir}-*.jar ./
             done
             popd
       - restore_cache_gradle
