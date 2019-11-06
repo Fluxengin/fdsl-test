@@ -31,7 +31,14 @@ public class MemorystoreExtractEffector {
 
     private static final Logger log = LoggerFactory.getLogger(MemorystoreExtractEffector.class);
 
-    private static final JedisPool pool = initConnectionPool();
+    private static JedisPool pool = null;
+    static {
+        try {
+            pool = initConnectionPool();
+        } catch (Exception e) {
+            log.error("error in initConnectionPool", e);
+        }
+    }
 
     @DslName("requestid")
     private String requestId;
@@ -148,14 +155,11 @@ public class MemorystoreExtractEffector {
         }
     }
 
-    private static JedisPool initConnectionPool() {
+    private static JedisPool initConnectionPool() throws IOException {
         Properties props = new Properties();
 
         try (InputStream in = MemorystoreExtractEffector.class.getResourceAsStream("/fluxengine.properties")) {
             props.load(in);
-        } catch (IOException e) {
-            log.error("error in initConnectionPool", e);
-            throw new UncheckedIOException(e);
         }
 
         String host = props.getProperty("persister.memorystore.host");
