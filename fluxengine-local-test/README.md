@@ -7,7 +7,7 @@ CIでも本プロジェクトのテストが実行される。
 ビルドツール：gradle
 
 # Version
-Fluxengine 2.0.0
+Fluxengine 1.1.1
 
 # SetUp
 

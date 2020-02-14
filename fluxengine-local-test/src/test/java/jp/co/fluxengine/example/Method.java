@@ -100,13 +100,19 @@ public class Method {
     void endsWith(String dslPath) {
       assertThat(testDslAndGetResults(dslPath)).hasSize(1).allMatch(TestResult::isSucceeded);
     }
+
+    @Test
+    @DslPath("substring")
+    void substring(String dslPath) {
+      assertThat(testDslAndGetResults(dslPath)).hasSize(4).allMatch(TestResult::isSucceeded);
+    }
   }
 
   @Test
   @DslPath("メソッドチェーン")
   void methodChain(String dslPath) {
     assertThat(testDslAndGetResults(dslPath))
-        .hasSize(2)
+        .hasSize(3)
         .allMatch(TestResult::isSucceeded);
   }
 }
