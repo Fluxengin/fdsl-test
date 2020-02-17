@@ -448,9 +448,9 @@ jobs:
             # also deploy batch job
             env CLASSPATH=~/state-engine/fluxengine-dataflow/target/lib/* ./dataflow_job_publisher.sh batch conf/dataflow_job_publisher_sample.env debug &
             pidDeployBatch=$!
-            env CLASSPATH=~/state-engine/fluxengine-dataflow/target/lib/* ./dataflow_job_publisher.sh stream conf/dataflow_job_publisher_sample.env debug | tee temp_dataflow_job_register_output.txt
+            env CLASSPATH=~/state-engine/fluxengine-dataflow/target/lib/* ./dataflow_job_publisher.sh stream conf/dataflow_job_publisher_sample.env debug 2>&1 | tee temp_dataflow_job_register_output.txt
             # Obtain deployed job ID in order to stop it later
-            grep 'Submitted job:' temp_dataflow_job_register_output.txt | awk '{print $3}' > ~/state-engine/dataflow_job_id.txt
+            grep -oP '(?<=Submitted job: )\S+' temp_dataflow_job_register_output.txt > ~/state-engine/dataflow_job_id.txt
             wait $pidDeployBatch
             popd
       - persist_to_workspace:
